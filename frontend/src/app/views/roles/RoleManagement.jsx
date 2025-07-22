@@ -156,7 +156,7 @@ function hasRolePermission(moduleId, permissionId) {
         setSaving(true);
         try {
             if (roleDialogMode === "add") {
-                await createRole({ name: roleDialogName, description: roleDialogDesc }, token);
+                await createRole(roleDialogName, roleDialogDesc, token);
                 enqueueSnackbar("Thêm role thành công!", { variant: "success" });
             } else {
                 // You may need to implement updateRole in your API
