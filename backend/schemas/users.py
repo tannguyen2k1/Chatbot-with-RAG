@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 # Pydantic schemas for user operations
 class UserCreate(BaseModel):
     username: str
@@ -10,7 +9,6 @@ class UserCreate(BaseModel):
     phone: str | None = None
     is_active: int = 1
     role: str = "user"
-
 
 class UserUpdate(BaseModel):
     username: str | None = None
@@ -28,7 +26,15 @@ class UserResponse(BaseModel):
     phone: str | None = None
     is_active: int
     role: str
-
-
+    permissions: dict[str, list[str]] = {}
     class Config:
         from_attributes = True
+
+
+# Paginated response for users
+from typing import List
+class PaginatedUserResponse(BaseModel):
+    data: List[UserResponse]
+    total: int
+    page: int
+    page_size: int

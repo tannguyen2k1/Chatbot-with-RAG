@@ -84,7 +84,7 @@ def seed_default_accounts():
 # Seed demo mẫu (nếu chưa có)
 def seed_default_demos():
     from services.demo import DemoService
-    from validators.demos import DemoCreate
+    from schemas.demos import DemoCreate
     db = SessionLocal()
     demo_service = DemoService(db)
     if not demo_service.get_all_demos():

@@ -1,4 +1,4 @@
-from schemas.user import UserResponse, PaginatedUserResponse  # Pydantic response model for users
+from schemas.users import UserResponse, PaginatedUserResponse  # Pydantic response model for users
 from services.rbac import RBACService
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session

@@ -7,7 +7,7 @@ from middleware.dependencies import get_db, get_current_user
 from security import verify_token
 from services.auth import AuthService
 from config.settings import settings
-from validators.auth import (
+from schemas.auth import (
     RefreshTokenRequest, TokenResponse, Login, 
     ChangePasswordRequest, SimpleResetPasswordRequest, MessageResponse,
     LoginRequest, ResetPasswordRequest, ResetPasswordConfirm
@@ -82,7 +82,7 @@ from middleware.dependencies import get_db, get_current_user
 from security import verify_token
 from services.auth import AuthService
 from config.settings import settings
-from validators.auth import (
+from schemas.auth import (
     RefreshTokenRequest, TokenResponse, Login, 
     ChangePasswordRequest, SimpleResetPasswordRequest, MessageResponse
 )

@@ -5,7 +5,7 @@ from typing import List
 from middleware.dependencies import get_db, get_current_user
 from services.rbac import RBACService
 from services.demo import DemoService
-from validators.demos import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
+from schemas.demos import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
 
 router = APIRouter(prefix="/demos", tags=["Demos"])
 
