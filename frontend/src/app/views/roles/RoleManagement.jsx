@@ -107,12 +107,12 @@ export default function RoleManagement() {
     }, [token]);
 
     // Helpers
-    function hasRolePermission(moduleId, permissionId) {
-        if (!selectedRole || !selectedRole.permissions) return false;
-        return selectedRole.permissions.some(
-            (p) => p.moduleId === moduleId && p.permissionId === permissionId
-        );
-    }
+function hasRolePermission(moduleId, permissionId) {
+    if (!selectedRole || !selectedRole.permissions) return false;
+    return selectedRole.permissions.some(
+        (p) => (p.module_id ?? p.moduleId) === moduleId && (p.permission_id ?? p.permissionId) === permissionId
+    );
+}
 
     // Dialog handlers
     function handleOpenDialog(role) {
@@ -224,33 +224,42 @@ export default function RoleManagement() {
                                     <TableCell colSpan={5} align="center" sx={{ color: "text.secondary" }}>Không có role nào</TableCell>
                                 </TableRow>
                             ) : (
-                                roles.map((role) => (
-                                    <TableRow key={role.id} hover>
-                                        <TableCell>{role.id}</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>{role.name}</TableCell>
-                                        <TableCell>{role.description || "-"}</TableCell>
-                                        <TableCell>{role.permissions?.length || 0}</TableCell>
-                                        <TableCell align="right">
-                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                <Tooltip title="Sửa role">
-                                                    <IconButton color="primary" size="small" onClick={() => handleOpenEditRole(role)}>
-                                                        <EditIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Phân quyền">
-                                                    <IconButton color="info" size="small" onClick={() => handleOpenDialog(role)}>
-                                                        <EditIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Xoá role">
-                                                    <IconButton color="error" size="small" disabled={saving} onClick={() => setDeletingRoleId(role.id)}>
-                                                        <DeleteIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                roles.map((role) => {
+                                    const isRoot = role.name === "root";
+                                    return (
+                                        <TableRow key={role.id} hover selected={isRoot}>
+                                            <TableCell>{role.id}</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>{role.name}</TableCell>
+                                            <TableCell>{role.description || "-"}</TableCell>
+                                            <TableCell>{role.permissions?.length || 0}</TableCell>
+                                            <TableCell align="right">
+                                                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                    {/* <Tooltip title="Sửa role">
+                                                        <span>
+                                                            <IconButton color="primary" size="small" onClick={() => handleOpenEditRole(role)} disabled={isRoot}>
+                                                                <EditIcon />
+                                                            </IconButton>
+                                                        </span>
+                                                    </Tooltip> */}
+                                                    <Tooltip title="Phân quyền">
+                                                        <span>
+                                                            <IconButton color="info" size="small" onClick={() => handleOpenDialog(role)} disabled={isRoot}>
+                                                                <EditIcon />
+                                                            </IconButton>
+                                                        </span>
+                                                    </Tooltip>
+                                                    <Tooltip title="Xoá role">
+                                                        <span>
+                                                            <IconButton color="error" size="small" disabled={saving || isRoot} onClick={() => setDeletingRoleId(role.id)}>
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        </span>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             )}
                         </TableBody>
                     </Table>
