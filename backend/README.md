@@ -47,7 +47,7 @@ uvicorn main:app --reload
 ## Sử dụng
 
 - API Docs: http://127.0.0.1:8000/docs
-- Tài khoản mặc định: `root` / `admin123456`
+- Tài khoản mặc định: `root` / root123456
 - Đăng nhập tại `/auth/login` để lấy token
 - Sử dụng token với header: `Authorization: Bearer YOUR_TOKEN`
 

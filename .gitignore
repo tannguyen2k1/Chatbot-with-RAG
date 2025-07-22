@@ -1,6 +1,8 @@
 # Root .gitignore for monorepo
 # Backend ignores
 /backend/**/__pycache__/
+**/__pycache__/
+**/*.pyc
 /backend/*.py[cod]
 /backend/*$py.class
 /backend/.venv/

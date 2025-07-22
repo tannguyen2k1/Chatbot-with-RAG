@@ -24,10 +24,6 @@ root_logger.setLevel(logging.INFO)
 if not root_logger.handlers:
     root_logger.addHandler(handler)
 
-
-
-from database.seeds.rbac_seed import seed_rbac_data
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables if they don't exist
@@ -35,72 +31,10 @@ async def lifespan(app: FastAPI):
     # Auto seed RBAC (roles, modules, permissions)
     db = SessionLocal()
     try:
-        seed_rbac_data(db)
-        # Auto seed demo data (only if empty)
-        from database.seeds.demo_seed import seed_demo_data
-        from database.models.demos import Demo
-        if not db.query(Demo).first():
-            seed_demo_data(db)
-            print("✅ Seeded demo data!")
-    finally:
-        db.close()
-    # Then seed root & admin user + mapping role
-    db = SessionLocal()
-    try:
-        from passlib.context import CryptContext
-        from database.models.auth_models import User, Role, UserRole
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        # Root user
-        root_user = db.query(User).filter_by(username="root").first()
-        root_role = db.query(Role).filter_by(name="root").first()
-        if not root_user:
-            hashed_password = pwd_context.hash("admin123456")
-            user = User(
-                username="root",
-                email="root@admin.com",
-                hashed_password=hashed_password,
-                full_name="Super Admin",
-                phone=None,
-                is_active=1,
-                role="root"
-            )
-            db.add(user)
-            db.commit()
-            root_user = user
-            print("✅ Created root admin user")
-        # Gán role root cho user root
-        if root_user and root_role:
-            if not db.query(UserRole).filter_by(user_id=root_user.id, role_id=root_role.id).first():
-                db.add(UserRole(user_id=root_user.id, role_id=root_role.id))
-                db.commit()
-        # Admin user
-        admin_user = db.query(User).filter_by(username="admin").first()
-        admin_role = db.query(Role).filter_by(name="admin").first()
-        if not admin_user:
-            hashed_password = pwd_context.hash("admin123456")
-            user = User(
-                username="admin",
-                email="admin@admin.com",
-                hashed_password=hashed_password,
-                full_name="Admin",
-                phone=None,
-                is_active=1,
-                role="admin"
-            )
-            db.add(user)
-            db.commit()
-            admin_user = user
-            print("✅ Created admin user")
-        # Gán role admin cho user admin
-        if admin_user and admin_role:
-            if not db.query(UserRole).filter_by(user_id=admin_user.id, role_id=admin_role.id).first():
-                db.add(UserRole(user_id=admin_user.id, role_id=admin_role.id))
-                db.commit()
-        else:
-            print("ℹ️ Root/admin user already exists")
-    except Exception as e:
-        print(f"❌ Error creating root/admin user: {e}")
-        db.rollback()
+        from database.seeds.auto_seed_data import seed_modules_and_permissions, seed_default_accounts, seed_default_demos
+        seed_modules_and_permissions()
+        seed_default_accounts()
+        seed_default_demos()
     finally:
         db.close()
     yield

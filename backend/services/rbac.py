@@ -1,8 +1,16 @@
-    
 from sqlalchemy.orm import Session
 from database.models.auth_models import Role, Module, Permission, RolePermission, UserRole
 
 class RBACService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_module_by_name(self, name: str):
+        return self.db.query(Module).filter_by(name=name).first()
+
+    def get_permission_by_name(self, name: str):
+        return self.db.query(Permission).filter_by(name=name).first()
+
     def delete_role(self, role_id: int):
         role = self.db.query(Role).filter_by(id=role_id).first()
         if not role:
@@ -13,9 +21,7 @@ class RBACService:
         self.db.delete(role)
         self.db.commit()
         return True
-    def __init__(self, db: Session):
-        self.db = db
-
+    
     def is_root(self, user):
         """Trả về True nếu user có role là root"""
         user_roles = self.db.query(UserRole).filter_by(user_id=user.id).all()
@@ -68,8 +74,8 @@ class RBACService:
         for rp in role_perms:
             module_name = modules.get(rp.module_id)
             perm_name = perms.get(rp.permission_id)
-            if module_name and perm_name:
-                permissions_dict.setdefault(module_name, []).append(perm_name)
+            if module_name is not None and perm_name is not None:
+                permissions_dict.setdefault(str(module_name), []).append(str(perm_name))
         return permissions_dict
     
     def remove_permission_from_role(self, role_id: int, module_id: int, permission_id: int):
@@ -89,7 +95,7 @@ class RBACService:
         role_names = [r.name for r in roles]
         return any(rn in ("admin", "root") for rn in role_names)
 
-    def create_role(self, name: str, description: str = None):
+    def create_role(self, name: str, description: str = ""):
         role = Role(name=name, description=description)
         self.db.add(role)
         self.db.commit()
@@ -120,7 +126,7 @@ class RBACService:
             result.append(role_dict)
         return result
     
-    def create_module(self, name: str, description: str = None):
+    def create_module(self, name: str, description: str = ""):
         module = Module(name=name, description=description)
         self.db.add(module)
         self.db.commit()
@@ -130,7 +136,7 @@ class RBACService:
     def get_all_modules(self):
         return self.db.query(Module).all()
 
-    def create_permission(self, name: str, description: str = None):
+    def create_permission(self, name: str, description: str = ""):
         permission = Permission(name=name, description=description)
         self.db.add(permission)
         self.db.commit()
