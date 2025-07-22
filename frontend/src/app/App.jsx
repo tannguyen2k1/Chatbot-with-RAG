@@ -4,10 +4,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { MatxTheme } from "./components";
 // ALL CONTEXTS
 import SettingsProvider from "./contexts/SettingsContext";
-import { AuthProvider } from "./contexts/FirebaseAuthContext";
 import { UserProvider } from "./contexts/UserContext";
 import { AuthProviderCustom } from "./contexts/AuthContext";
 import { SnackbarProvider } from "notistack";
+import BaseProvider from "app/contexts/BaseProvider";
 // ROUTES
 import routes from "./routes";
 // FAKE SERVER
@@ -17,19 +17,18 @@ export default function App() {
   const content = useRoutes(routes);
 
   return (
-    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
-      <SettingsProvider>
-        <AuthProvider>
+    <BaseProvider>
+      <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+        <SettingsProvider>
           <AuthProviderCustom>
-            <UserProvider>
-              <MatxTheme>
-                <CssBaseline />
-                {content}
-              </MatxTheme>
-            </UserProvider>
+            {/* Không bọc toàn bộ app bằng UserProvider nữa */}
+            <MatxTheme>
+              <CssBaseline />
+              {content}
+            </MatxTheme>
           </AuthProviderCustom>
-        </AuthProvider>
-      </SettingsProvider>
-    </SnackbarProvider>
+        </SettingsProvider>
+      </SnackbarProvider>
+    </BaseProvider>
   );
 }

@@ -13,11 +13,11 @@ import {
   Paper
 } from "@mui/material";
 import { useParams } from "react-router-dom";
-import { useUsers } from "app/contexts/UserContext";
+import { useUsers, UserProvider } from "app/contexts/UserContext";
 import SecurityIcon from "@mui/icons-material/Security";
 import { useSnackbar } from "notistack";
 
-export default function PermissionManagement() {
+function PermissionManagementContent() {
   const { userId } = useParams();
   const { fetchUserModulePermissions, updateUserPermissions, users, fetchUserById } = useUsers();
   const [modulePermissions, setModulePermissions] = useState([]); // dữ liệu từ API
@@ -37,9 +37,13 @@ export default function PermissionManagement() {
         const user = await fetchUserById(userId);
         if (!isMounted) return;
         setUserInfo(user);
-        setPermissions(user.permissions || {});
-        if (!user.permissions || !user.permissions.demo) {
-          setPermissions((prev) => ({ ...prev, demo: [] }));
+        if (["root", "admin"].includes(user.role)) {
+          setPermissions({ demo: ["view", "create", "update", "delete"] });
+        } else {
+          setPermissions(user.permissions || {});
+          if (!user.permissions || !user.permissions.demo) {
+            setPermissions((prev) => ({ ...prev, demo: [] }));
+          }
         }
       } catch (e) {
         if (isMounted) setError(e.message);
@@ -121,6 +125,7 @@ export default function PermissionManagement() {
                       }));
                     }}
                     color="primary"
+                    disabled={["root", "admin"].includes(userInfo?.role)}
                   />
                 }
                 label={
@@ -140,13 +145,21 @@ export default function PermissionManagement() {
             color="primary"
             size="large"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || ["root", "admin"].includes(userInfo?.role)}
             sx={{ minWidth: 140 }}
           >
-            {saving ? "Đang lưu..." : "Lưu quyền"}
+            {saving ? "Đang lưu..." : "Lưu"}
           </Button>
         </Box>
       </Paper>
     </Box>
+  );
+}
+
+export default function PermissionManagementWrapper(props) {
+  return (
+    <UserProvider>
+      <PermissionManagementContent {...props} />
+    </UserProvider>
   );
 }

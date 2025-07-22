@@ -14,14 +14,15 @@ router = APIRouter(prefix="/demos", tags=["Demos"])
 def get_demos(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    search: str = Query("", alias="search"),
     current_user = Depends(require_demo_view),
     db: Session = Depends(get_db)
 ):
-    """Lấy danh sách tất cả demos (chỉ user có quyền demo_view mới xem được)"""
+    """Lấy danh sách tất cả demos (có tìm kiếm)"""
     demo_service = DemoService(db)
     skip = (page - 1) * page_size
-    demos = demo_service.get_all_demos(skip=skip, limit=page_size)
-    total = demo_service.count_demos()
+    demos = demo_service.get_all_demos(skip=skip, limit=page_size, search=search or None)
+    total = demo_service.count_demos(search=search or None)
     return {
         "data": demos,
         "total": total,

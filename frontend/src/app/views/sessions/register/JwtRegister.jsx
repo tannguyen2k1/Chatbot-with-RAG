@@ -11,7 +11,7 @@ import styled from "@mui/material/styles/styled";
 import useTheme from "@mui/material/styles/useTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
 
-import useAuth from "app/hooks/useAuth";
+import { useAuthCustom } from "app/contexts/AuthContext";
 import { Paragraph } from "app/components/Typography";
 
 // STYLED COMPONENTS
@@ -24,7 +24,7 @@ const ContentBox = styled("div")(() => ({
   background: "rgba(0, 0, 0, 0.01)"
 }));
 
-const JWTRegister = styled(JustifyBox)(() => ({
+const JWTRegister = styled(Box)(() => ({
   background: "#1A2038",
   minHeight: "100vh !important",
   "& .card": {
@@ -55,7 +55,7 @@ const validationSchema = Yup.object().shape({
 
 export default function JwtRegister() {
   const theme = useTheme();
-  const { register } = useAuth();
+  const { register } = useAuthCustom(); // TODO: Nếu chưa có hàm register trong useAuthCustom, cần bổ sung
   const navigate = useNavigate();
 
   const handleFormSubmit = (values) => {

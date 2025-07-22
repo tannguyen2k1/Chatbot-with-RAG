@@ -36,6 +36,12 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         seed_rbac_data(db)
+        # Auto seed demo data (only if empty)
+        from database.seeds.demo_seed import seed_demo_data
+        from database.models.demos import Demo
+        if not db.query(Demo).first():
+            seed_demo_data(db)
+            print("✅ Seeded demo data!")
     finally:
         db.close()
     # Then seed root & admin user + mapping role

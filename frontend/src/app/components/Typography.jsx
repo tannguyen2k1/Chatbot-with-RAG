@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import styled from "@mui/material/styles/styled";
 import clsx from "clsx";
+import React from "react";
 
 const StyledBox = styled(Box)(({ ellipsis }) => ({
   textTransform: "none",
@@ -148,9 +149,10 @@ export const H6 = ({ children, className, ellipsis, ...props }) => {
  * @param {Other & {ellipsis: boolean}}
  * @returns {JSX.Element}
  */
-export const Paragraph = ({ children, className, ellipsis, ...props }) => {
+export const Paragraph = React.forwardRef(function Paragraph({ children, className, ellipsis, ...props }, ref) {
   return (
     <StyledBox
+      ref={ref}
       mb={0}
       mt={0}
       component="p"
@@ -161,16 +163,17 @@ export const Paragraph = ({ children, className, ellipsis, ...props }) => {
       {children}
     </StyledBox>
   );
-};
+});
 
 /**
  * @typedef {import("@mui/material").BoxProps} Other
  * @param {Other & {ellipsis: boolean}}
  * @returns {JSX.Element}
  */
-export const Small = ({ children, className, ellipsis, ...props }) => {
+export const Small = React.forwardRef(function Small({ children, className, ellipsis, ...props }, ref) {
   return (
     <StyledBox
+      ref={ref}
       fontSize="12px"
       fontWeight="500"
       lineHeight="1.5"
@@ -181,16 +184,17 @@ export const Small = ({ children, className, ellipsis, ...props }) => {
       {children}
     </StyledBox>
   );
-};
+});
 
 /**
  * @typedef {import("@mui/material").BoxProps} Other
  * @param {Other & {ellipsis: boolean}}
  * @returns {JSX.Element}
  */
-export const Span = ({ children, className, ellipsis, ...props }) => {
+export const Span = React.forwardRef(function Span({ children, className, ellipsis, ...props }, ref) {
   return (
     <StyledBox
+      ref={ref}
       component="span"
       lineHeight="1.5"
       ellipsis={ellipsis}
@@ -199,16 +203,17 @@ export const Span = ({ children, className, ellipsis, ...props }) => {
       {children}
     </StyledBox>
   );
-};
+});
 
 /**
  * @typedef {import("@mui/material").BoxProps} Other
  * @param {Other & {ellipsis: boolean}}
  * @returns {JSX.Element}
  */
-export const Tiny = ({ children, className, ellipsis, ...props }) => {
+export const Tiny = React.forwardRef(function Tiny({ children, className, ellipsis, ...props }, ref) {
   return (
     <StyledBox
+      ref={ref}
       fontSize="10px"
       lineHeight="1.5"
       component="small"
@@ -218,4 +223,4 @@ export const Tiny = ({ children, className, ellipsis, ...props }) => {
       {children}
     </StyledBox>
   );
-};
+});

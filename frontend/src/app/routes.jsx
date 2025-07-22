@@ -15,9 +15,14 @@ import NavigationGuard from "./components/NavigationGuard";
 const AppEchart = Loadable(lazy(() => import("app/views/charts/echarts/AppEchart")));
 // DASHBOARD PAGE
 const Analytics = Loadable(lazy(() => import("app/views/dashboard/Analytics")));
+
 // USER MANAGEMENT PAGE
 const UserList = Loadable(lazy(() => import("app/views/users/UserList")));
 const UserProfile = Loadable(lazy(() => import("app/views/users/UserProfile")));
+
+// DEMO MANAGEMENT PAGE (fix for React element)
+const DemoList = lazy(() => import("app/views/demos/DemoList"));
+const LoadableComponentDemoList = Loadable(DemoList);
 
 const routes = [
   { path: "/", element: <Navigate to="dashboard/default" /> },
@@ -48,6 +53,8 @@ const routes = [
             element: <PermissionManagement />,
             auth: authRoles.admin
           },
+          // demo management
+          { path: "/demos", element: <LoadableComponentDemoList />, auth: authRoles.admin },
           // user profile
           { path: "/profile", element: <UserProfile /> }
         ]

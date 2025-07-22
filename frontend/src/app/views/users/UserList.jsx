@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -36,10 +36,10 @@ import { Link } from "react-router-dom";
 import SecurityIcon from "@mui/icons-material/Security";
 import TablePagination from "@mui/material/TablePagination";
 import { useSnackbar } from "notistack";
+import { UserProvider } from "app/contexts/UserContext";
 
-export default function UserList() {
-  const { user, hasPermission } = useAuthCustom();
-  const [search, setSearch] = useState("");
+function UserListContent() {
+  const { user, hasPermission, hasRole } = useAuthCustom();
   const {
     users,
     loading,
@@ -52,73 +52,13 @@ export default function UserList() {
     setPage,
     pageSize,
     setPageSize,
-    total
+    total,
+    search,
+    setSearch
   } = useUsers();
-  // Dialog sửa role
-  const [openRoleDialog, setOpenRoleDialog] = useState(false);
-  const [roleEditUser, setRoleEditUser] = useState(null);
-  const [roleValue, setRoleValue] = useState("");
-  const [roleError, setRoleError] = useState("");
+  // Xoá các state, biến, dialog, hàm liên quan đến sửa role (openRoleDialog, roleEditUser, roleValue, roleError, handleEditRole, handleSaveRole, v.v.)
 
-  // Dialog sửa permissions
-  const [openPermDialog, setOpenPermDialog] = useState(false);
-  const [permEditUser, setPermEditUser] = useState(null);
-  const [permValue, setPermValue] = useState({});
-  const [permError, setPermError] = useState("");
-
-  // Mở dialog sửa role
-  const handleEditRole = (user) => {
-    setRoleEditUser(user);
-    setRoleValue(user.role);
-    setRoleError("");
-    setOpenRoleDialog(true);
-  };
-
-  // Mở dialog sửa permissions
-  const handleEditPerm = (user) => {
-    setPermEditUser(user);
-    setPermValue(user.permissions || {});
-    setPermError("");
-    setOpenPermDialog(true);
-  };
-
-  // Lưu role
-  const handleSaveRole = async () => {
-    try {
-      await updateUserRole(roleEditUser.id, roleValue);
-      setOpenRoleDialog(false);
-      setRoleEditUser(null);
-      enqueueSnackbar("Lưu vai trò thành công!", {
-        variant: "success",
-        anchorOrigin: { vertical: "top", horizontal: "right" }
-      });
-    } catch (e) {
-      setRoleError("Lưu role thất bại!");
-      enqueueSnackbar("Lưu role thất bại!", {
-        variant: "error",
-        anchorOrigin: { vertical: "top", horizontal: "right" }
-      });
-    }
-  };
-
-  // Lưu permissions
-  const handleSavePerm = async () => {
-    try {
-      await updateUserPermissions(permEditUser.id, permValue);
-      setOpenPermDialog(false);
-      setPermEditUser(null);
-      enqueueSnackbar("Lưu quyền thành công!", {
-        variant: "success",
-        anchorOrigin: { vertical: "top", horizontal: "right" }
-      });
-    } catch (e) {
-      setPermError("Lưu permissions thất bại!");
-      enqueueSnackbar("Lưu permissions thất bại!", {
-        variant: "error",
-        anchorOrigin: { vertical: "top", horizontal: "right" }
-      });
-    }
-  };
+ 
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState("add"); // "add" | "edit"
   const [selectedUser, setSelectedUser] = useState(null);
@@ -134,17 +74,19 @@ export default function UserList() {
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, user: null });
   const [errorMsg, setErrorMsg] = useState("");
   const { enqueueSnackbar } = useSnackbar();
+  const filteredUsers = Array.isArray(users) ? users : [];
 
-  const filteredUsers = Array.isArray(users)
-    ? users.filter(
-        (u) =>
-          u.username?.toLowerCase().includes(search.toLowerCase()) ||
-          u.email?.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
+  // Nếu context không trả về setSearch (cũ), fallback về useState local
+  const [localSearch, setLocalSearch] = useState("");
+  const searchValue = typeof search === "string" ? search : localSearch;
+  const setSearchValue = typeof setSearch === "function" ? setSearch : setLocalSearch;
 
-  // Mở dialog thêm
+  // Mở dialog thêm (chỉ admin/root mới được thêm)
   const handleAdd = () => {
+    if (!(hasPermission && hasPermission("user", "create"))) {
+      enqueueSnackbar("Bạn không có quyền thêm người dùng!", { variant: "warning" });
+      return;
+    }
     setDialogMode("add");
     setForm({
       username: "",
@@ -159,25 +101,50 @@ export default function UserList() {
     setErrorMsg("");
   };
 
-  // Mở dialog sửa
-  const handleEdit = (user) => {
+  // Mở dialog sửa (chỉ admin/root, không sửa user có role cao hơn hoặc bằng mình)
+  const handleEdit = (editUser) => {
+    if (!(hasPermission && hasPermission("user", "update"))) {
+      enqueueSnackbar("Bạn không có quyền sửa người dùng!", { variant: "warning" });
+      return;
+    }
+    // Không cho phép sửa user có role cao hơn hoặc bằng mình
+    if (hasRole && editUser.role && ["root"].includes(editUser.role)) {
+      enqueueSnackbar("Không thể sửa người dùng có vai trò root!", { variant: "warning" });
+      return;
+    }
+    if (hasRole && hasRole("admin") && ["admin", "root"].includes(editUser.role)) {
+      enqueueSnackbar("Admin không thể sửa admin hoặc root!", { variant: "warning" });
+      return;
+    }
     setDialogMode("edit");
-    setSelectedUser(user);
+    setSelectedUser(editUser);
     setForm({
-      username: user.username,
-      email: user.email,
-      full_name: user.full_name || "",
-      phone: user.phone || "",
-      is_active: user.is_active ? 1 : 0,
-      role: user.role || "user"
+      username: editUser.username,
+      email: editUser.email,
+      full_name: editUser.full_name || "",
+      phone: editUser.phone || "",
+      is_active: editUser.is_active ? 1 : 0,
+      role: editUser.role || "user"
     });
     setOpenDialog(true);
     setErrorMsg("");
   };
 
-  // Xác nhận xoá
-  const handleDelete = (user) => {
-    setDeleteConfirm({ open: true, user });
+  // Xác nhận xoá (chỉ admin/root, không xoá user có role cao hơn hoặc bằng mình)
+  const handleDelete = (delUser) => {
+    if (!(hasPermission && hasPermission("user", "delete"))) {
+      enqueueSnackbar("Bạn không có quyền xoá người dùng!", { variant: "warning" });
+      return;
+    }
+    if (hasRole && delUser.role && ["root"].includes(delUser.role)) {
+      enqueueSnackbar("Không thể xoá người dùng có vai trò root!", { variant: "warning" });
+      return;
+    }
+    if (hasRole && hasRole("admin") && ["admin", "root"].includes(delUser.role)) {
+      enqueueSnackbar("Admin không thể xoá admin hoặc root!", { variant: "warning" });
+      return;
+    }
+    setDeleteConfirm({ open: true, user: delUser });
   };
 
   // Thực hiện xoá
@@ -229,7 +196,8 @@ export default function UserList() {
           email: form.email,
           full_name: form.full_name,
           phone: form.phone,
-          is_active: form.is_active
+          is_active: form.is_active,
+          role: form.role
         });
         enqueueSnackbar("Cập nhật người dùng thành công!", {
           variant: "success",
@@ -248,6 +216,23 @@ export default function UserList() {
     }
   };
 
+  // Debounce search để gọi backend, giống DemoList
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (typeof setSearch === "function") {
+        setPage(1); // reset page về 1 khi search
+        setSearch(searchValue);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchValue, setSearch, setPage]);
+
+  // Trigger backend fetch khi page, pageSize, search thay đổi (nếu context không tự fetch)
+  // Nếu context User chưa tự fetch, có thể cần gọi fetchUsers ở đây
+  useEffect(() => {
+    // Gọi fetchUsers nếu context chưa tự động fetch
+  }, [page, pageSize, search]); // Thêm dependency nếu cần thiết
+
   return (
     <Box p={3}>
       <Paper elevation={3} sx={{ p: 2 }}>
@@ -261,13 +246,16 @@ export default function UserList() {
               size="small"
               variant="outlined"
               placeholder="Tìm kiếm username hoặc email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              autoComplete="off" 
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               sx={{ minWidth: 220, background: "#fff" }}
             />
-            <Button variant="contained" color="primary" onClick={handleAdd} sx={{ ml: 2 }}>
-              Thêm người dùng
-            </Button>
+            {(hasPermission && hasPermission("user", "create")) && (
+              <Button variant="contained" color="primary" onClick={handleAdd} sx={{ ml: 2 }}>
+                Thêm người dùng
+              </Button>
+            )}
           </Stack>
         </Toolbar>
         <TableContainer>
@@ -299,11 +287,15 @@ export default function UserList() {
                 </TableRow>
               ) : (
                 filteredUsers.map((rowUser) => {
-                  // Logic disable
+                  // RBAC logic using hasRole
                   let disableActions = false;
-                  if (rowUser.role === "root") {
+                  // Disable if rowUser is root
+                  if (rowUser.roles?.includes("root") || (typeof rowUser.role === "string" && rowUser.role === "root")) {
                     disableActions = true;
-                  } else if (user?.role === "admin" && ["admin", "root"].includes(rowUser.role)) {
+                  } else if (
+                    hasRole("admin") &&
+                    (rowUser.roles?.some((r) => ["admin", "root"].includes(r)) || ["admin", "root"].includes(rowUser.role))
+                  ) {
                     disableActions = true;
                   }
 
@@ -315,13 +307,13 @@ export default function UserList() {
                       <TableCell>{rowUser.full_name || "-"}</TableCell>
                       <TableCell>{rowUser.phone || "-"}</TableCell>
                       <TableCell>{rowUser.is_active ? "Hoạt động" : "Khoá"}</TableCell>
-                      <TableCell>{rowUser.role}</TableCell>
+                      <TableCell>{Array.isArray(rowUser.roles) ? rowUser.roles.join(", ") : rowUser.role}</TableCell>
                       <TableCell align="right">
                         <IconButton
                           color="primary"
                           size="small"
                           onClick={() => handleEdit(rowUser)}
-                          disabled={disableActions}
+                          disabled={disableActions || !(hasPermission && hasPermission("user", "update"))}
                         >
                           <EditIcon />
                         </IconButton>
@@ -329,127 +321,22 @@ export default function UserList() {
                           color="error"
                           size="small"
                           onClick={() => handleDelete(rowUser)}
-                          disabled={disableActions}
+                          disabled={disableActions || !(hasPermission && hasPermission("user", "delete"))}
                         >
                           <DeleteIcon />
                         </IconButton>
                         {/* Nút chuyển sang màn hình quản lý quyền */}
-                        <IconButton
-                          component={Link}
-                          to={`/users/${rowUser.id}/permissions`}
-                          title="Quản lý quyền"
-                          disabled={disableActions}
-                        >
-                          <SecurityIcon />
-                        </IconButton>
+                        {(hasPermission && hasPermission("user", "update")) && (
+                          <IconButton
+                            component={Link}
+                            to={`/users/${rowUser.id}/permissions`}
+                            title="Quản lý quyền"
+                            disabled={disableActions}
+                          >
+                            <SecurityIcon />
+                          </IconButton>
+                        )}
                       </TableCell>
-                      {/* Dialog sửa role */}
-                      <Dialog open={openRoleDialog} onClose={() => setOpenRoleDialog(false)}>
-                        <DialogTitle>Sửa vai trò</DialogTitle>
-                        <DialogContent>
-                          <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel>Vai trò</InputLabel>
-                            <Select
-                              value={roleValue}
-                              label="Vai trò"
-                              onChange={(e) => setRoleValue(e.target.value)}
-                            >
-                              <MenuItem value="user">User</MenuItem>
-                              <MenuItem value="admin">Admin</MenuItem>
-                              <MenuItem value="root">Root</MenuItem>
-                            </Select>
-                          </FormControl>
-                          {roleError && <Typography color="error">{roleError}</Typography>}
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={() => setOpenRoleDialog(false)}>Huỷ</Button>
-                          <Button onClick={handleSaveRole} variant="contained" color="primary">
-                            Lưu
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
-
-                      {/* Dialog sửa permissions */}
-                      <Dialog open={openPermDialog} onClose={() => setOpenPermDialog(false)}>
-                        <DialogTitle>Sửa quyền user</DialogTitle>
-                        <DialogContent>
-                          <Stack spacing={2} sx={{ mt: 1 }}>
-                            {/* Ví dụ: demo phân hệ, có thể mở rộng thêm các phân hệ khác */}
-                            <Typography fontWeight={600}>Phân hệ: demo</Typography>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={permValue.demo?.includes("view") || false}
-                                  onChange={(e) => {
-                                    setPermValue((v) => ({
-                                      ...v,
-                                      demo: e.target.checked
-                                        ? [...(v.demo || []), "view"]
-                                        : (v.demo || []).filter((x) => x !== "view")
-                                    }));
-                                  }}
-                                />
-                              }
-                              label="Xem"
-                            />
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={permValue.demo?.includes("create") || false}
-                                  onChange={(e) => {
-                                    setPermValue((v) => ({
-                                      ...v,
-                                      demo: e.target.checked
-                                        ? [...(v.demo || []), "create"]
-                                        : (v.demo || []).filter((x) => x !== "create")
-                                    }));
-                                  }}
-                                />
-                              }
-                              label="Thêm"
-                            />
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={permValue.demo?.includes("update") || false}
-                                  onChange={(e) => {
-                                    setPermValue((v) => ({
-                                      ...v,
-                                      demo: e.target.checked
-                                        ? [...(v.demo || []), "update"]
-                                        : (v.demo || []).filter((x) => x !== "update")
-                                    }));
-                                  }}
-                                />
-                              }
-                              label="Sửa"
-                            />
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={permValue.demo?.includes("delete") || false}
-                                  onChange={(e) => {
-                                    setPermValue((v) => ({
-                                      ...v,
-                                      demo: e.target.checked
-                                        ? [...(v.demo || []), "delete"]
-                                        : (v.demo || []).filter((x) => x !== "delete")
-                                    }));
-                                  }}
-                                />
-                              }
-                              label="Xoá"
-                            />
-                            {permError && <Typography color="error">{permError}</Typography>}
-                          </Stack>
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={() => setOpenPermDialog(false)}>Huỷ</Button>
-                          <Button onClick={handleSavePerm} variant="contained" color="primary">
-                            Lưu
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
                     </TableRow>
                   );
                 })
@@ -527,10 +414,10 @@ export default function UserList() {
                   value={form.role}
                   label="Vai trò"
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                  disabled={dialogMode === "edit"}
                 >
                   <MenuItem value="user">User</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
+                  {/* Chỉ root mới được tạo admin */}
+                  {hasRole("root") && <MenuItem value="admin">Admin</MenuItem>}
                 </Select>
               </FormControl>
               {errorMsg && <Typography color="error">{errorMsg}</Typography>}
@@ -563,5 +450,13 @@ export default function UserList() {
         </DialogActions>
       </Dialog>
     </Box>
+  );
+}
+
+export default function UserListWrapper(props) {
+  return (
+    <UserProvider>
+      <UserListContent {...props} />
+    </UserProvider>
   );
 }

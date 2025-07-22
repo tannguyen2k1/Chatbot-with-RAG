@@ -12,6 +12,7 @@ export function AuthProviderCustom({ children }) {
   const [checking, setChecking] = useState(false);
   const [user, setUser] = useState(null); // lưu thông tin user
   const [permissions, setPermissions] = useState({}); // lưu quyền
+  const [roles, setRoles] = useState([]); // lưu roles
 
   // Hàm refresh access token
   const refreshAccessToken = useCallback(async () => {
@@ -48,9 +49,11 @@ export function AuthProviderCustom({ children }) {
       const data = await res.json();
       setUser(data);
       setPermissions(data.permissions || {});
+      setRoles(data.roles || []);
     } catch (e) {
       setUser(null);
       setPermissions({});
+      setRoles([]);
     }
   }, [token]);
 
@@ -100,6 +103,15 @@ export function AuthProviderCustom({ children }) {
     [permissions]
   );
 
+  // Hàm kiểm tra role
+  const hasRole = useCallback(
+    (role) => {
+      if (!roles) return false;
+      return roles.includes(role);
+    },
+    [roles]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -111,7 +123,9 @@ export function AuthProviderCustom({ children }) {
         checking,
         user,
         permissions,
-        hasPermission
+        roles,
+        hasPermission,
+        hasRole
       }}
     >
       {children}

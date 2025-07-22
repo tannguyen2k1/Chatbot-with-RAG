@@ -6,29 +6,21 @@ from datetime import datetime
 class DemoCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    status: str = "active"
-    priority: int = 1
-    is_public: bool = True
 
 
 class DemoUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[str] = None
-    priority: Optional[int] = None
-    is_public: Optional[bool] = None
 
 
 class DemoResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
-    status: str
-    priority: int
-    is_public: bool
-    user_id: int
     created_at: datetime
     updated_at: Optional[datetime]
+    class Config:
+        from_attributes = True
     
     class Config:
         from_attributes = True

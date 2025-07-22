@@ -14,10 +14,11 @@ export function UserProvider({ children }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${BASE_API_URL}/users?page=${page}&page_size=${pageSize}`, {
+    fetch(`${BASE_API_URL}/users?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(search)}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     })
       .then((res) => res.json())
@@ -36,7 +37,7 @@ export function UserProvider({ children }) {
         setError(err);
         setLoading(false);
       });
-  }, [token, page, pageSize]);
+  }, [token, page, pageSize, search]);
 
   // Thêm user
   const addUser = async (userData) => {
@@ -56,6 +57,7 @@ export function UserProvider({ children }) {
 
   // Sửa user
   const updateUser = async (userId, userData) => {
+    debugger;
     const res = await fetch(`${BASE_API_URL}/users/${userId}`, {
       method: "PUT",
       headers: {
@@ -99,7 +101,8 @@ export function UserProvider({ children }) {
 
   // Sửa permissions user (root, admin có quyền sửa user)
   const updateUserPermissions = async (userId, permissions) => {
-    const res = await fetch(`${BASE_API_URL}/users/${userId}/permissions`, {
+    // Gọi đúng endpoint backend: PUT /users/{user_id}
+    const res = await fetch(`${BASE_API_URL}/users/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -124,7 +127,8 @@ export function UserProvider({ children }) {
 
   // Sửa permissions của chính mình
   const updateMePermissions = async (userId, permissions) => {
-    const res = await fetch(`${BASE_API_URL}/users/${userId}/permissions`, {
+    // Gọi đúng endpoint backend: PUT /users/{user_id}
+    const res = await fetch(`${BASE_API_URL}/users/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -173,7 +177,9 @@ export function UserProvider({ children }) {
         setPage,
         pageSize,
         setPageSize,
-        total
+        total,
+        search,
+        setSearch
       }}
     >
       {children}

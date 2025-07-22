@@ -22,7 +22,14 @@ def create_user(
     
     service = UserService(db)
     user = service.create_user(user_data)
-    return user
+    # Lấy roles dạng mảng
+    from database.models.auth_models import UserRole, Role
+    user_roles = db.query(UserRole).filter_by(user_id=user.id).all()
+    role_ids = [ur.role_id for ur in user_roles]
+    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+    user_dict = user.__dict__.copy()
+    user_dict["roles"] = [r.name for r in roles]
+    return UserResponse(**user_dict)
 
 # Endpoint: Retrieve profile for the currently logged-in user
 @router.get("/me", response_model=UserResponse)
@@ -30,9 +37,16 @@ def get_my_profile(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # RBAC: permissions can be fetched from role/privileges if needed
+    # RBAC: build permissions từ role/privileges
+    role_service = RBACService(db)
     user_dict = current_user.__dict__.copy()
-    user_dict["permissions"] = getattr(current_user, "permissions", {})
+    user_dict["permissions"] = role_service.get_user_permissions(current_user.id)
+    # Chuẩn RBAC: trả về roles là mảng tên role
+    from database.models.auth_models import UserRole, Role
+    user_roles = db.query(UserRole).filter_by(user_id=current_user.id).all()
+    role_ids = [ur.role_id for ur in user_roles]
+    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+    user_dict["roles"] = [r.name for r in roles]
     return UserResponse(**user_dict)
 
 # Endpoint: Retrieve a list of users (Admin/Root only)
@@ -40,6 +54,7 @@ def get_my_profile(
 def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    search: str = Query("", description="Search by username or email"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -49,22 +64,23 @@ def list_users(
         raise HTTPException(status_code=403, detail="You don't have permission to view users")
     service = UserService(db)
     skip = (page - 1) * page_size
-    users = service.list_users(skip=skip, limit=page_size)
-    total = service.count_users()
+    users = service.list_users(skip=skip, limit=page_size, search=search)
+    total = service.count_users(search=search)
     result = []
+    from database.models.auth_models import UserRole, Role
     for u in users:
         status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
-        result.append(UserResponse(
-            id=u.id,
-            username=u.username,
-            email=u.email,
-            full_name=u.full_name,
-            phone=u.phone,
-            is_active=u.is_active,
-            role=u.role,
-            permissions=getattr(u, "permissions", {}),
-            status=status
-        ))
+        role_service = RBACService(db)
+        permissions = role_service.get_user_permissions(u.id)
+        # Lấy roles dạng mảng
+        user_roles = db.query(UserRole).filter_by(user_id=u.id).all()
+        role_ids = [ur.role_id for ur in user_roles]
+        roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+        user_dict = u.__dict__.copy()
+        user_dict["roles"] = [r.name for r in roles]
+        user_dict["permissions"] = permissions
+        user_dict["status"] = status
+        result.append(UserResponse(**user_dict))
     return {
         "data": result,
         "total": total,
@@ -89,17 +105,18 @@ def get_user(
     if not role_service.can_manage_user(current_user, user):
         raise HTTPException(status_code=403, detail="Not authorized to view this user")
     status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        full_name=user.full_name,
-        phone=user.phone,
-        is_active=user.is_active,
-        role=user.role,
-        permissions=getattr(user, "permissions", {}),
-        status=status
-    )
+    role_service = RBACService(db)
+    permissions = role_service.get_user_permissions(user.id)
+    # Lấy roles dạng mảng
+    from database.models.auth_models import UserRole, Role
+    user_roles = db.query(UserRole).filter_by(user_id=user.id).all()
+    role_ids = [ur.role_id for ur in user_roles]
+    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+    user_dict = user.__dict__.copy()
+    user_dict["roles"] = [r.name for r in roles]
+    user_dict["permissions"] = permissions
+    user_dict["status"] = status
+    return UserResponse(**user_dict)
 
 # Endpoint: Update user details by ID (Root/Admin có thể quản lý theo cấp độ)
 @router.put("/{user_id}", response_model=UserResponse)

@@ -86,31 +86,41 @@ const StyledScrollBar = styled(Scrollbar)(() => ({
   paddingRight: "16px"
 }));
 
-export default function MatxCustomizer() {
-  const [open, setOpen] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
+export default function MatxCustomizer({ open: openProp, onClose }) {
+  const [openState, setOpenState] = useState(false);
+  // Remove tabIndex and tab logic
   const { settings, updateSettings } = useSettings();
 
-  const tooglePanel = () => setOpen(!open);
+  // Determine if controlled or uncontrolled
+  const isControlled = typeof openProp === 'boolean';
+  const open = isControlled ? openProp : openState;
+  const handleToggle = () => {
+    if (isControlled) {
+      if (onClose) onClose();
+    } else {
+      setOpenState((prev) => !prev);
+    }
+  };
 
-  const handleTabChange = (index) => setTabIndex(index);
-
+  // Remove handleTabChange
   let activeTheme = { ...settings.themes[settings.activeTheme] };
 
   return (
     <Fragment>
-      <Tooltip title="Theme Settings" placement="left">
-        <Label className="open" onClick={tooglePanel}>
-          DEMOS
-        </Label>
-      </Tooltip>
-
+      {/* Hide Label if controlled and open */}
+      {!(isControlled && open) && (
+        <Tooltip title="Theme Settings" placement="left">
+          <Label className={open ? "open" : ""} onClick={handleToggle}>
+            THEMES
+          </Label>
+        </Tooltip>
+      )}
       <ThemeProvider theme={activeTheme}>
         <Drawer
           open={open}
           anchor="right"
           variant="temporary"
-          onClose={tooglePanel}
+          onClose={handleToggle}
           ModalProps={{ keepMounted: true }}>
           <MaxCustomaizer>
             <Controller>
@@ -120,70 +130,36 @@ export default function MatxCustomizer() {
                   Theme Settings
                 </H5>
               </Box>
-
-              <IconButton onClick={tooglePanel}>
+              <IconButton onClick={handleToggle}>
                 <Close className="icon" />
               </IconButton>
             </Controller>
-
-            <Box px={3} mb={2} display="flex">
-              <Button
-                variant="outlined"
-                onClick={() => handleTabChange(0)}
-                color={tabIndex === 0 ? "secondary" : "primary"}
-                sx={{ mr: 2 }}>
-                Demos
-              </Button>
-
-              <Button
-                variant="outlined"
-                onClick={() => handleTabChange(1)}
-                color={tabIndex === 1 ? "secondary" : "primary"}>
-                Settings
-              </Button>
-            </Box>
-
+            {/* Remove tab buttons, always show Demos content */}
             <StyledScrollBar options={{ suppressScrollX: true }}>
-              {tabIndex === 0 && (
-                <Box mb={4} mx={3}>
-                  <Box color="text.secondary">Layouts</Box>
-
-                  <Box display="flex" flexDirection="column">
-                    {demoLayouts.map((layout) => (
-                      <LayoutBox
-                        key={layout.name}
-                        color="secondary"
-                        badgeContent={"Pro"}
-                        invisible={!layout.isPro}>
-                        <Card
-                          elevation={4}
-                          sx={{ position: "relative" }}
-                          onClick={() => updateSettings(layout.options)}>
-                          <Box overflow="hidden" className="layout-name">
-                            <Button variant="contained" color="secondary">
-                              {layout.name}
-                            </Button>
-                          </Box>
-
-                          <IMG src={layout.thumbnail} alt={layout.name} />
-                        </Card>
-                      </LayoutBox>
-                    ))}
-                  </Box>
+              <Box mb={4} mx={3}>
+                <Box color="text.secondary">Layouts</Box>
+                <Box display="flex" flexDirection="column">
+                  {demoLayouts.map((layout) => (
+                    <LayoutBox
+                      key={layout.name}
+                      color="secondary"
+                      badgeContent={"Pro"}
+                      invisible={!layout.isPro}>
+                      <Card
+                        elevation={4}
+                        sx={{ position: "relative" }}
+                        onClick={() => updateSettings(layout.options)}>
+                        <Box overflow="hidden" className="layout-name">
+                          <Button variant="contained" color="secondary">
+                            {layout.name}
+                          </Button>
+                        </Box>
+                        <IMG src={layout.thumbnail} alt={layout.name} />
+                      </Card>
+                    </LayoutBox>
+                  ))}
                 </Box>
-              )}
-
-              {/* END LAYOUT */}
-              {tabIndex === 1 && (
-                <div>
-                  <div className="helpText">
-                    We used React context API to control layout. Check out the{" "}
-                    <Link href="http://demos.ui-lib.com/matx-react-doc/layout.html" target="_blank">
-                      Documentation
-                    </Link>
-                  </div>
-                </div>
-              )}
+              </Box>
             </StyledScrollBar>
           </MaxCustomaizer>
         </Drawer>

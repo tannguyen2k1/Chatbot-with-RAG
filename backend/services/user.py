@@ -20,6 +20,7 @@ class UserUpdate(BaseModel):
     full_name: str | None = None
     phone: str | None = None
     is_active: int | None = None
+    role: str | None = None
 
 
 class UserService:
@@ -89,8 +90,22 @@ class UserService:
         return True
 
 
-    def list_users(self, skip: int = 0, limit: int = 10) -> list[User]:
-        return self.db.query(User).offset(skip).limit(limit).all()
+    def list_users(self, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
+        query = self.db.query(User)
+        if search:
+            search_lower = f"%{search.lower()}%"
+            query = query.filter(
+                (User.username.ilike(search_lower)) |
+                (User.email.ilike(search_lower))
+            )
+        return query.order_by(User.id.asc()).offset(skip).limit(limit).all()
 
-    def count_users(self) -> int:
-        return self.db.query(User).count()
+    def count_users(self, search: str = "") -> int:
+        query = self.db.query(User)
+        if search:
+            search_lower = f"%{search.lower()}%"
+            query = query.filter(
+                (User.username.ilike(search_lower)) |
+                (User.email.ilike(search_lower))
+            )
+        return query.count()

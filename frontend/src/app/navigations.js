@@ -1,16 +1,19 @@
 const navigations = [
   { name: "Dashboard", path: "/dashboard/default", icon: "dashboard" },
   { label: "PAGES", type: "label" },
-  {
-    name: "Session/Auth",
-    icon: "security",
-    children: [
-      { name: "Sign in", iconText: "SI", path: "/session/signin" },
-      { name: "Sign up", iconText: "SU", path: "/session/signup" },
-      { name: "Forgot Password", iconText: "FP", path: "/session/forgot-password" },
-      { name: "Error", iconText: "404", path: "/session/404" }
-    ]
-  },
+  { name: "Quản lý Demo", icon: "list", path: "/demos", iconText: "D" },
+  { name: "Quản lý người dùng", icon: "person", path: "/users", iconText: "U" },
+  // {
+  //   name: "Session/Auth",
+  //   icon: "security",
+  //   children: [
+  //     // { name: "Sign in", iconText: "SI", path: "/session/signin" },
+  //     // { name: "Sign up", iconText: "SU", path: "/session/signup" },
+  //     // { name: "Forgot Password", iconText: "FP", path: "/session/forgot-password" },
+  //     // { name: "Error", iconText: "404", path: "/session/404" }
+      
+  //   ]
+  // },
   { label: "Components", type: "label" },
   {
     name: "Components",
@@ -32,12 +35,6 @@ const navigations = [
       { name: "Snackbar", path: "/material/snackbar", iconText: "S" },
       { name: "Table", path: "/material/table", iconText: "T" }
     ]
-  },
-  {
-    name: "Quản lý người dùng",
-    icon: "person",
-    path: "/users",
-    iconText: "U"
   },
   {
     name: "Charts",

@@ -77,7 +77,6 @@ export default function JwtLogin() {
       await login(values.username, values.password);
       navigate("/");
     } catch (e) {
-      alert("Đăng nhập thất bại!");
       console.error(e);
     }
   };
@@ -166,14 +165,6 @@ export default function JwtLogin() {
                       Login
                     </LoadingButton>
 
-                    <Paragraph>
-                      Don't have an account?
-                      <NavLink
-                        to="/session/signup"
-                        style={{ color: theme.palette.primary.main, marginLeft: 5 }}>
-                        Register
-                      </NavLink>
-                    </Paragraph>
                   </form>
                 )}
               </Formik>

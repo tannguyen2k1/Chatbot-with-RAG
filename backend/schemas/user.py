@@ -21,7 +21,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    role: str
+    roles: list[str] = []
     permissions: dict[str, list[str]] = {}
     status: str = "active"
     full_name: Optional[str] = None
