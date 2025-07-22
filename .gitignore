@@ -20,7 +20,7 @@
 /backend/.mypy_cache/
 /backend/.pytest_cache/
 /backend/.pyright/
-/backend/*.log
+/backend/logs/*.log
 /backend/*.tmp
 /backend/*.sqlite3
 /backend/*.db
@@ -41,3 +41,5 @@
 /frontend/npm-debug.log*
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
+backend/logs/app_20250722.log
+backend/logs/app_20250722.log
