@@ -24,11 +24,15 @@ export function UserProvider({ children }) {
       .then((res) => res.json())
       .then((data) => {
         // Giả định backend trả về { data: [...], total: ... }
+        const normalizeUser = (u) => ({
+          ...u,
+          role: u.role || (Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : "user")
+        });
         if (Array.isArray(data)) {
-          setUsers(data);
+          setUsers(data.map(normalizeUser));
           setTotal(0); // fallback nếu backend chưa trả về tổng
         } else {
-          setUsers(data.data || []);
+          setUsers((data.data || []).map(normalizeUser));
           setTotal(data.total || 0);
         }
         setLoading(false);
@@ -40,6 +44,26 @@ export function UserProvider({ children }) {
   }, [token, page, pageSize, search]);
 
   // Thêm user
+  const fetchUsers = async () => {
+    setLoading(true);
+    const res = await fetch(`${BASE_API_URL}/users?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(search)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    const normalizeUser = (u) => ({
+      ...u,
+      role: u.role || (Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : "user")
+    });
+    if (Array.isArray(data)) {
+      setUsers(data.map(normalizeUser));
+      setTotal(0);
+    } else {
+      setUsers((data.data || []).map(normalizeUser));
+      setTotal(data.total || 0);
+    }
+    setLoading(false);
+  };
+
   const addUser = async (userData) => {
     const res = await fetch(`${BASE_API_URL}/users`, {
       method: "POST",
@@ -50,14 +74,13 @@ export function UserProvider({ children }) {
       body: JSON.stringify(userData)
     });
     if (!res.ok) throw new Error("Thêm user thất bại");
-    const newUser = await res.json();
-    setUsers((prev) => [...prev, newUser]);
-    return newUser;
+    await res.json();
+    await fetchUsers();
+    return true;
   };
 
   // Sửa user
   const updateUser = async (userId, userData) => {
-    debugger;
     const res = await fetch(`${BASE_API_URL}/users/${userId}`, {
       method: "PUT",
       headers: {
@@ -67,9 +90,9 @@ export function UserProvider({ children }) {
       body: JSON.stringify(userData)
     });
     if (!res.ok) throw new Error("Sửa user thất bại");
-    const updatedUser = await res.json();
-    setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
-    return updatedUser;
+    await res.json();
+    await fetchUsers();
+    return true;
   };
 
   // Xoá user
@@ -79,7 +102,7 @@ export function UserProvider({ children }) {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     if (!res.ok) throw new Error("Xoá user thất bại");
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    await fetchUsers();
     return true;
   };
 
@@ -94,7 +117,11 @@ export function UserProvider({ children }) {
       body: JSON.stringify({ role })
     });
     if (!res.ok) throw new Error("Sửa role thất bại");
-    const updatedUser = await res.json();
+    let updatedUser = await res.json();
+    updatedUser = {
+      ...updatedUser,
+      role: updatedUser.role || (Array.isArray(updatedUser.roles) && updatedUser.roles.length > 0 ? updatedUser.roles[0] : "user")
+    };
     setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
     return updatedUser;
   };
@@ -111,7 +138,11 @@ export function UserProvider({ children }) {
       body: JSON.stringify({ permissions })
     });
     if (!res.ok) throw new Error("Sửa permissions thất bại");
-    const updatedUser = await res.json();
+    let updatedUser = await res.json();
+    updatedUser = {
+      ...updatedUser,
+      role: updatedUser.role || (Array.isArray(updatedUser.roles) && updatedUser.roles.length > 0 ? updatedUser.roles[0] : "user")
+    };
     setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
     return updatedUser;
   };
@@ -122,7 +153,12 @@ export function UserProvider({ children }) {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     if (!res.ok) throw new Error("Không lấy được thông tin user");
-    return await res.json();
+    let me = await res.json();
+    me = {
+      ...me,
+      role: me.role || (Array.isArray(me.roles) && me.roles.length > 0 ? me.roles[0] : "user")
+    };
+    return me;
   };
 
   // Sửa permissions của chính mình
@@ -155,7 +191,12 @@ export function UserProvider({ children }) {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     if (!res.ok) throw new Error("Không lấy được thông tin user");
-    return await res.json();
+    let user = await res.json();
+    user = {
+      ...user,
+      role: user.role || (Array.isArray(user.roles) && user.roles.length > 0 ? user.roles[0] : "user")
+    };
+    return user;
   };
 
   return (
@@ -173,6 +214,7 @@ export function UserProvider({ children }) {
         updateMePermissions,
         fetchUserModulePermissions,
         fetchUserById,
+        fetchUsers,
         page,
         setPage,
         pageSize,

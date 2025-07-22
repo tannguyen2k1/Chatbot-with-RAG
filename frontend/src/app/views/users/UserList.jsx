@@ -48,8 +48,7 @@ function UserListContent() {
     addUser,
     updateUser,
     deleteUser,
-    updateUserRole,
-    updateUserPermissions,
+    fetchUsers,
     page,
     setPage,
     pageSize,
@@ -104,7 +103,7 @@ function UserListContent() {
   };
 
   // Mở dialog sửa (chỉ admin/root, không sửa user có role cao hơn hoặc bằng mình)
-  const handleEdit = (editUser) => {
+  const handleEdit = async (editUser) => {
     if (!(hasPermission && hasPermission("user", "update"))) {
       enqueueSnackbar("Bạn không có quyền sửa người dùng!", { variant: "warning" });
       return;
@@ -128,12 +127,13 @@ function UserListContent() {
       is_active: editUser.is_active ? 1 : 0,
       role: editUser.role || "user"
     });
+    
     setOpenDialog(true);
     setErrorMsg("");
   };
 
   // Xác nhận xoá (chỉ admin/root, không xoá user có role cao hơn hoặc bằng mình)
-  const handleDelete = (delUser) => {
+  const handleDelete = async (delUser) => {
     if (!(hasPermission && hasPermission("user", "delete"))) {
       enqueueSnackbar("Bạn không có quyền xoá người dùng!", { variant: "warning" });
       return;
@@ -158,6 +158,8 @@ function UserListContent() {
         variant: "success",
         anchorOrigin: { vertical: "top", horizontal: "right" }
       });
+      setErrorMsg("");
+
     } catch (e) {
       setErrorMsg("Xoá thất bại!");
       enqueueSnackbar("Xoá thất bại!", {
@@ -192,6 +194,10 @@ function UserListContent() {
           variant: "success",
           anchorOrigin: { vertical: "top", horizontal: "right" }
         });
+        setOpenDialog(false);
+        setSelectedUser(null);
+        setErrorMsg("");
+        await fetchUsers();
       } else if (dialogMode === "edit" && selectedUser) {
         await updateUser(selectedUser.id, {
           username: form.username,
@@ -205,10 +211,11 @@ function UserListContent() {
           variant: "success",
           anchorOrigin: { vertical: "top", horizontal: "right" }
         });
+        setOpenDialog(false);
+        setSelectedUser(null);
+        setErrorMsg("");
+        await fetchUsers();
       }
-      setOpenDialog(false);
-      setSelectedUser(null);
-      setErrorMsg("");
     } catch (e) {
       setErrorMsg("Lưu thất bại!");
       enqueueSnackbar("Lưu thất bại!", {
@@ -218,22 +225,16 @@ function UserListContent() {
     }
   };
 
-  // Debounce search để gọi backend, giống DemoList
+  // Debounce search để gọi backend
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (typeof setSearch === "function") {
-        setPage(1); // reset page về 1 khi search
-        setSearch(searchValue);
-      }
+      setPage(1); // reset page về 1 khi search
+      setSearch(searchValue);
     }, 400);
     return () => clearTimeout(timeout);
   }, [searchValue, setSearch, setPage]);
 
-  // Trigger backend fetch khi page, pageSize, search thay đổi (nếu context không tự fetch)
-  // Nếu context User chưa tự fetch, có thể cần gọi fetchUsers ở đây
-  useEffect(() => {
-    // Gọi fetchUsers nếu context chưa tự động fetch
-  }, [page, pageSize, search]); // Thêm dependency nếu cần thiết
+
 
   return (
     <Box p={3}>
@@ -399,12 +400,28 @@ function UserListContent() {
                 }
                 label="Hoạt động"
               />
-              <TextField
-                label="Vai trò"
-                value={form.role}
-                InputProps={{ readOnly: true }}
-                disabled
-              />
+              <FormControl fullWidth>
+                <InputLabel id="role-label">Vai trò</InputLabel>
+                <Select
+                  labelId="role-label"
+                  label="Vai trò"
+                  value={form.role}
+                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  required
+                >
+                  {Array.isArray(allRoles) && allRoles.length > 0 ? (
+                    allRoles
+                      .filter((r) => r.name !== "root") // Không cho phép chọn root
+                      .map((r) => (
+                        <MenuItem key={r.name} value={r.name}>{r.name}</MenuItem>
+                      ))
+                  ) : (
+                    <MenuItem value="" disabled>
+                      Không có vai trò nào
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
               {errorMsg && <Typography color="error">{errorMsg}</Typography>}
             </Stack>
           </DialogContent>

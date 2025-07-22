@@ -23,58 +23,74 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import TablePagination from "@mui/material/TablePagination";
-import { useDemo } from "app/contexts/DemoContext";
+import { useSnackbar } from "notistack";
+import { fetchDemos, createDemo, updateDemo, deleteDemo } from "app/utils/demoApi";
+import { useAuthCustom } from "app/contexts/AuthContext";
 
 const emptyDemo = { title: "", description: "" };
 
 const DemoList = () => {
-  const {
-    demos,
-    loading,
-    error,
-    createDemo,
-    updateDemo,
-    deleteDemo,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-    total,
-    search,
-    setSearch,
-    fetchDemos, // <-- lấy từ context
-  } = useDemo();
+  const [demos, setDemos] = useState([]);
+  const auth = useAuthCustom();
+  const token = auth?.token || "";
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(emptyDemo);
   const [editId, setEditId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
+  const { enqueueSnackbar } = useSnackbar();
 
-  // Luôn reload lại data khi vào trang
+  const loadDemos = async (params = {}) => {
+    setLoading(true);
+    try {
+      const { demos: arr, total } = await fetchDemos({
+        token,
+        page,
+        pageSize,
+        search,
+        ...params
+      });
+      setDemos(arr);
+      setTotal(total);
+      setError(null);
+    } catch (err) {
+      setError("Lỗi tải dữ liệu demo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchDemos();
+    loadDemos();
     // eslint-disable-next-line
-  }, []);
-
-  // Debounce search to avoid too many backend calls
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setPage(1); // reset to first page when search changes
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [search, setPage]);
-
-  // Trigger backend search when page, pageSize, or search changes
-  useEffect(() => {
-    // fetchDemos sẽ được gọi trong context mỗi khi page, pageSize, search thay đổi
-    // Không cần gọi lại ở đây nếu context đã tự động fetch
   }, [page, pageSize, search]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this demo?")) return;
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const handleDelete = (id) => {
+    setDeleteConfirm({ open: true, id });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await deleteDemo(id);
-    } catch {
-      alert("Delete failed");
+      await deleteDemo({ token, demoId: deleteConfirm.id });
+      enqueueSnackbar("Xoá demo thành công!", { variant: "success", anchorOrigin: { vertical: "top", horizontal: "right" } });
+      loadDemos();
+    } catch (err) {
+      enqueueSnackbar("Xoá demo thất bại!", { variant: "error", anchorOrigin: { vertical: "top", horizontal: "right" } });
+    } finally {
+      setDeleteConfirm({ open: false, id: null });
     }
   };
 
@@ -99,15 +115,18 @@ const DemoList = () => {
     setSubmitting(true);
     try {
       if (editId) {
-        await updateDemo(editId, formData);
+        await updateDemo({ token, demoId: editId, demoData: formData });
+        enqueueSnackbar("Cập nhật demo thành công!", { variant: "success", anchorOrigin: { vertical: "top", horizontal: "right" } });
       } else {
-        await createDemo(formData);
+        await createDemo({ token, demoData: formData });
+        enqueueSnackbar("Thêm demo thành công!", { variant: "success", anchorOrigin: { vertical: "top", horizontal: "right" } });
       }
       setShowForm(false);
       setFormData(emptyDemo);
       setEditId(null);
-    } catch {
-      alert("Save failed");
+      loadDemos();
+    } catch (err) {
+      enqueueSnackbar("Lưu demo thất bại!", { variant: "error", anchorOrigin: { vertical: "top", horizontal: "right" } });
     } finally {
       setSubmitting(false);
     }
@@ -219,6 +238,20 @@ const DemoList = () => {
         />
       </Paper>
       {/* Dialog thêm/sửa demo */}
+      {/* Dialog xác nhận xoá demo */}
+      <Dialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, id: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Xác nhận xoá demo</DialogTitle>
+        <DialogContent>Bạn có chắc chắn muốn xoá demo này?</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirm({ open: false, id: null })}>Huỷ</Button>
+          <Button onClick={confirmDelete} color="error" variant="contained">Xoá</Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={showForm}
         onClose={() => setShowForm(false)}

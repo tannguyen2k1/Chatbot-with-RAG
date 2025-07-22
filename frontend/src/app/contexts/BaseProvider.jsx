@@ -1,8 +1,7 @@
 import React from "react";
-import { DemoProvider } from "./DemoContext";
 import { AuthProviderCustom } from "./AuthContext";
 
-const providers = [AuthProviderCustom, DemoProvider];
+const providers = [AuthProviderCustom];
 
 export default function BaseProvider({ children }) {
   return providers.reduceRight(

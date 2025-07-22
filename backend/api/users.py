@@ -22,13 +22,23 @@ def create_user(
     
     service = UserService(db)
     user = service.create_user(user_data)
-    # Lấy roles dạng mảng
+    # Ensure user has at least one role assigned if role is provided in user_data
     from database.models.auth_models import UserRole, Role
+    if hasattr(user_data, 'role') and user_data.role:
+        # Find role by name
+        role_obj = db.query(Role).filter_by(name=user_data.role).first()
+        if role_obj:
+            # Check if user already has this role
+            existing = db.query(UserRole).filter_by(user_id=user.id, role_id=role_obj.id).first()
+            if not existing:
+                db.add(UserRole(user_id=user.id, role_id=role_obj.id))
+                db.commit()
+    # Lấy roles dạng mảng
     user_roles = db.query(UserRole).filter_by(user_id=user.id).all()
     role_ids = [ur.role_id for ur in user_roles]
     roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
     user_dict = user.__dict__.copy()
-    user_dict["roles"] = [r.name for r in roles]
+    user_dict["roles"] = [r.name for r in roles] if roles else []
     return UserResponse(**user_dict)
 
 # Endpoint: Retrieve profile for the currently logged-in user
@@ -71,7 +81,10 @@ def list_users(
     for u in users:
         status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
         role_service = RBACService(db)
-        permissions = role_service.get_user_permissions(u.id)
+        if hasattr(u, "id") and isinstance(u.id, int):
+            permissions = role_service.get_user_permissions(u.id)
+        else:
+            permissions = {}
         # Lấy roles dạng mảng
         user_roles = db.query(UserRole).filter_by(user_id=u.id).all()
         role_ids = [ur.role_id for ur in user_roles]
@@ -106,7 +119,10 @@ def get_user(
         raise HTTPException(status_code=403, detail="Not authorized to view this user")
     status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
     role_service = RBACService(db)
-    permissions = role_service.get_user_permissions(user.id)
+    if hasattr(user, "id") and isinstance(user.id, int):
+        permissions = role_service.get_user_permissions(user.id)
+    else:
+        permissions = {}
     # Lấy roles dạng mảng
     from database.models.auth_models import UserRole, Role
     user_roles = db.query(UserRole).filter_by(user_id=user.id).all()
@@ -141,7 +157,16 @@ def update_user(
     elif update_data.role == "root":
         raise HTTPException(status_code=403, detail="Không được gán role là root")
     updated_user = service.update_user(user_id, update_data)
-    return updated_user
+    # Lấy roles dạng mảng giống các API khác
+    from database.models.auth_models import UserRole, Role
+    if updated_user is None:
+        raise HTTPException(status_code=404, detail="User not found after update")
+    user_roles = db.query(UserRole).filter_by(user_id=getattr(updated_user, "id", None)).all()
+    role_ids = [ur.role_id for ur in user_roles]
+    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+    user_dict = updated_user.__dict__.copy()
+    user_dict["roles"] = [r.name for r in roles]
+    return UserResponse(**user_dict)
 
 # Endpoint: Delete a user by ID (Root có thể xóa tất cả, Admin chỉ xóa user)
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)

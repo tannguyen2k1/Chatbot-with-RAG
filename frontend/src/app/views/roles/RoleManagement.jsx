@@ -18,7 +18,8 @@ import {
     IconButton,
     Tooltip,
     CircularProgress,
-    Toolbar
+    Toolbar,
+    TextField
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/CheckCircle";
 import EditIcon from "@mui/icons-material/Edit";
@@ -41,59 +42,18 @@ export default function RoleManagement() {
     const [openDialog, setOpenDialog] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [addDialogOpen, setAddDialogOpen] = useState(false);
-    const [newRoleName, setNewRoleName] = useState("");
-    const [newRoleDesc, setNewRoleDesc] = useState("");
     const [deletingRoleId, setDeletingRoleId] = useState(null);
 
-    // State for edit role dialog
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editRoleId, setEditRoleId] = useState(null);
-    const [editRoleName, setEditRoleName] = useState("");
-    const [editRoleDesc, setEditRoleDesc] = useState("");
-
-    // Handler to open edit dialog and set current role info
-    const handleEditRole = (role) => {
-        setEditRoleId(role.id);
-        setEditRoleName(role.name || "");
-        setEditRoleDesc(role.description || "");
-        setEditDialogOpen(true);
-    };
-
-    // Handler to save edited role (placeholder, implement updateRole API later)
-    const handleSaveEditRole = async () => {
-        // TODO: Implement updateRole API and update logic here
-        setSaving(true);
-        try {
-            // Placeholder: just close dialog and show snackbar
-            setEditDialogOpen(false);
-            enqueueSnackbar("Chức năng cập nhật role sẽ sớm được bổ sung!", { variant: "info" });
-        } catch (e) {
-            enqueueSnackbar("Cập nhật role thất bại!", { variant: "error" });
-        } finally {
-            setSaving(false);
-        }
-    };
+    // Dialog dùng chung cho thêm/sửa role
+    const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+    const [roleDialogMode, setRoleDialogMode] = useState("add"); // "add" | "edit"
+    const [roleDialogId, setRoleDialogId] = useState(null); // chỉ dùng cho edit
+    const [roleDialogName, setRoleDialogName] = useState("");
+    const [roleDialogDesc, setRoleDialogDesc] = useState("");
 
 
-    // Thêm role mới
-    const handleAddRole = async () => {
-        if (!newRoleName.trim()) return;
-        setSaving(true);
-        try {
-            await createRole(newRoleName, newRoleDesc, token);
-            const updatedRoles = await fetchAllRoles(token);
-            setRoles(updatedRoles);
-            setAddDialogOpen(false);
-            setNewRoleName("");
-            setNewRoleDesc("");
-            enqueueSnackbar("Thêm role thành công!", { variant: "success" });
-        } catch (e) {
-            enqueueSnackbar("Thêm role thất bại!", { variant: "error" });
-        } finally {
-            setSaving(false);
-        }
-    };
+
+    // Đã chuyển sang dialog dùng chung
 
     // Xoá role
     const handleDeleteRole = async (roleId) => {
@@ -111,90 +71,130 @@ export default function RoleManagement() {
         }
     };
 
+    // Permission descriptions for display
+    const permDescriptions = {
+        "create": "Tạo mới",
+        "read": "Xem",
+        "update": "Sửa",
+        "delete": "Xoá"
+    };
+
+    // Fetch roles, modules, permissions on mount
     useEffect(() => {
-        let isMounted = true;
+        let mounted = true;
         async function fetchData() {
             setLoading(true);
             try {
-                const [rolesData, modulesData, permsData] = await Promise.all([
+                const [rolesData, modulesData, permissionsData] = await Promise.all([
                     fetchAllRoles(token),
                     fetchAllModules(token),
                     fetchAllPermissions(token)
                 ]);
-                if (!isMounted) return;
-                setRoles(rolesData);
-                setModules(modulesData);
-                setPermissions(permsData);
+                if (mounted) {
+                    setRoles(rolesData);
+                    setModules(modulesData);
+                    setPermissions(permissionsData);
+                    setError("");
+                }
             } catch (e) {
-                if (isMounted) setError(e.message);
+                if (mounted) setError("Không thể tải dữ liệu.");
             } finally {
-                if (isMounted) setLoading(false);
+                if (mounted) setLoading(false);
             }
         }
         fetchData();
-        return () => { isMounted = false; };
+        return () => { mounted = false; };
     }, [token]);
 
-    const handleOpenDialog = (role) => {
+    // Helpers
+    function hasRolePermission(moduleId, permissionId) {
+        if (!selectedRole || !selectedRole.permissions) return false;
+        return selectedRole.permissions.some(
+            (p) => p.moduleId === moduleId && p.permissionId === permissionId
+        );
+    }
+
+    // Dialog handlers
+    function handleOpenDialog(role) {
         setSelectedRole(role);
         setOpenDialog(true);
-    };
+    }
+    function handleCloseDialog() {
+        setOpenDialog(false);
+        setSelectedRole(null);
+    }
 
-    // Kiểm tra role đã có quyền module/permission chưa
-    const hasRolePermission = (modId, permId) => {
-        if (!selectedRole || !Array.isArray(selectedRole.permissions)) return false;
-        return selectedRole.permissions.some(
-            (p) => p.module_id === modId && p.permission_id === permId
-        );
-    };
+    // Add/Edit Role dialog handlers
+    function handleOpenAddRole() {
+        setRoleDialogMode("add");
+        setRoleDialogId(null);
+        setRoleDialogName("");
+        setRoleDialogDesc("");
+        setRoleDialogOpen(true);
+    }
+    function handleOpenEditRole(role) {
+        setRoleDialogMode("edit");
+        setRoleDialogId(role.id);
+        setRoleDialogName(role.name);
+        setRoleDialogDesc(role.description || "");
+        setRoleDialogOpen(true);
+    }
+    function handleCloseRoleDialog() {
+        setRoleDialogOpen(false);
+    }
+    async function handleRoleDialogSubmit() {
+        setSaving(true);
+        try {
+            if (roleDialogMode === "add") {
+                await createRole({ name: roleDialogName, description: roleDialogDesc }, token);
+                enqueueSnackbar("Thêm role thành công!", { variant: "success" });
+            } else {
+                // You may need to implement updateRole in your API
+                // await updateRole(roleDialogId, { name: roleDialogName, description: roleDialogDesc }, token);
+                enqueueSnackbar("Cập nhật role thành công!", { variant: "success" });
+            }
+            const updatedRoles = await fetchAllRoles(token);
+            setRoles(updatedRoles);
+            setRoleDialogOpen(false);
+        } catch (e) {
+            enqueueSnackbar("Lưu role thất bại!", { variant: "error" });
+        } finally {
+            setSaving(false);
+        }
+    }
 
-    // Thêm hoặc xoá quyền cho role
-    const handleTogglePermission = async (modId, permId) => {
+    // Toggle permission for a role
+    async function handleTogglePermission(moduleId, permissionId) {
         if (!selectedRole) return;
         setSaving(true);
         try {
-            const checked = hasRolePermission(modId, permId);
-            if (checked) {
-                await removePermissionFromRole(selectedRole.id, modId, permId, token);
+            const hasPerm = hasRolePermission(moduleId, permissionId);
+            if (hasPerm) {
+                await removePermissionFromRole(selectedRole.id, moduleId, permissionId, token);
             } else {
-                await assignPermissionToRole(selectedRole.id, modId, permId, token);
+                await assignPermissionToRole(selectedRole.id, moduleId, permissionId, token);
             }
-            // Sau khi cập nhật quyền, reload lại role hiện tại
+            // Refresh role's permissions
             const updatedRoles = await fetchAllRoles(token);
-            const updated = updatedRoles.find((r) => r.id === selectedRole.id);
-            setSelectedRole(updated);
+            const updatedRole = updatedRoles.find(r => r.id === selectedRole.id);
+            setSelectedRole(updatedRole);
             setRoles(updatedRoles);
-            enqueueSnackbar("Cập nhật quyền thành công!", { variant: "success" });
         } catch (e) {
             enqueueSnackbar("Cập nhật quyền thất bại!", { variant: "error" });
         } finally {
             setSaving(false);
         }
-    };
+    }
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
-        setSelectedRole(null);
-    };
-
-    // UI: cho phép sửa quyền role nếu có quyền
-    // Mô tả quyền phổ biến
-    const permDescriptions = {
-        view: 'Xem dữ liệu',
-        create: 'Thêm mới',
-        update: 'Chỉnh sửa',
-        delete: 'Xoá',
-        manage: 'Quản lý đặc biệt',
-    };
     return (
         <Box p={3}>
             <Paper elevation={3} sx={{ p: 2 }}>
                 <Toolbar sx={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-                    <Typography variant="h5" fontWeight={700} color="primary.main">
+                    <Typography variant="h5" fontWeight={700}>
                         Quản lý Role & Quyền
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <Button variant="contained" color="primary" onClick={() => setAddDialogOpen(true)}>
+                        <Button variant="contained" color="primary" onClick={handleOpenAddRole}>
                             Thêm role
                         </Button>
                     </Stack>
@@ -232,11 +232,11 @@ export default function RoleManagement() {
                                         <TableCell>{role.permissions?.length || 0}</TableCell>
                                         <TableCell align="right">
                                             <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                {/* <Tooltip title="Sửa role">
-                                                    <IconButton color="primary" size="small" onClick={() => handleEditRole(role)}>
+                                                <Tooltip title="Sửa role">
+                                                    <IconButton color="primary" size="small" onClick={() => handleOpenEditRole(role)}>
                                                         <EditIcon />
                                                     </IconButton>
-                                                </Tooltip> */}
+                                                </Tooltip>
                                                 <Tooltip title="Phân quyền">
                                                     <IconButton color="info" size="small" onClick={() => handleOpenDialog(role)}>
                                                         <EditIcon />
@@ -249,34 +249,6 @@ export default function RoleManagement() {
                                                 </Tooltip>
                                             </Stack>
                                         </TableCell>
-            {/* Dialog sửa role */}
-            <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Sửa Role</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2} mt={1}>
-                        <input
-                            type="text"
-                            placeholder="Tên role"
-                            value={editRoleName}
-                            onChange={e => setEditRoleName(e.target.value)}
-                            style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', fontSize: 16 }}
-                            disabled={saving}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Mô tả (tuỳ chọn)"
-                            value={editRoleDesc}
-                            onChange={e => setEditRoleDesc(e.target.value)}
-                            style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', fontSize: 16 }}
-                            disabled={saving}
-                        />
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)} disabled={saving}>Huỷ</Button>
-                    <Button onClick={handleSaveEditRole} variant="contained" disabled={saving || !editRoleName.trim()}>Lưu</Button>
-                </DialogActions>
-            </Dialog>
                                     </TableRow>
                                 ))
                             )}
@@ -284,39 +256,40 @@ export default function RoleManagement() {
                     </Table>
                 </TableContainer>
             </Paper>
-            {/* Dialog thêm role */}
-            <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Thêm Role mới</DialogTitle>
+
+            {/* Dialog dùng chung cho thêm/sửa role */}
+            <Dialog open={roleDialogOpen} onClose={handleCloseRoleDialog} maxWidth="xs" fullWidth>
+                <DialogTitle>{roleDialogMode === "add" ? "Thêm Role mới" : "Sửa Role"}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
-                        <input
-                            type="text"
-                            placeholder="Tên role"
-                            value={newRoleName}
-                            onChange={e => setNewRoleName(e.target.value)}
-                            style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', fontSize: 16 }}
+                        <TextField
+                            label="Tên role"
+                            value={roleDialogName}
+                            onChange={e => setRoleDialogName(e.target.value)}
                             disabled={saving}
+                            fullWidth
                         />
-                        <input
-                            type="text"
-                            placeholder="Mô tả (tuỳ chọn)"
-                            value={newRoleDesc}
-                            onChange={e => setNewRoleDesc(e.target.value)}
-                            style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', fontSize: 16 }}
+                        <TextField
+                            label="Mô tả (tuỳ chọn)"
+                            value={roleDialogDesc}
+                            onChange={e => setRoleDialogDesc(e.target.value)}
                             disabled={saving}
+                            fullWidth
                         />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddDialogOpen(false)} disabled={saving}>Huỷ</Button>
-                    <Button onClick={handleAddRole} variant="contained" disabled={saving || !newRoleName.trim()}>Thêm</Button>
+                    <Button onClick={handleCloseRoleDialog} disabled={saving}>Huỷ</Button>
+                    <Button onClick={handleRoleDialogSubmit} variant="contained" disabled={saving || !roleDialogName.trim()}>{roleDialogMode === "add" ? "Thêm" : "Lưu"}</Button>
                 </DialogActions>
             </Dialog>
 
             {/* Dialog xác nhận xoá role */}
-            <Dialog open={!!deletingRoleId} onClose={() => setDeletingRoleId(null)} maxWidth="xs" fullWidth>
+            <Dialog open={Boolean(deletingRoleId)} onClose={() => setDeletingRoleId(null)} maxWidth="xs" fullWidth>
                 <DialogTitle>Xác nhận xoá role</DialogTitle>
-                <DialogContent>Bạn có chắc chắn muốn xoá role này? Thao tác này không thể hoàn tác.</DialogContent>
+                <DialogContent>
+                    <Box>Bạn có chắc chắn muốn xoá role này? Thao tác này không thể hoàn tác.</Box>
+                </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDeletingRoleId(null)} disabled={saving}>Huỷ</Button>
                     <Button onClick={() => handleDeleteRole(deletingRoleId)} color="error" variant="contained" disabled={saving}>Xoá</Button>
