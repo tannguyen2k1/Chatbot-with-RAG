@@ -14,12 +14,12 @@ def create_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    from services.rbac import RBACService
-    
     role_service = RBACService(db)
-    if not role_service.is_admin_or_above(current_user):
+    # Check permission strictly by RBAC
+    perms = role_service.get_user_permissions(current_user.id)
+    actions = perms.get("user") or perms.get("users") or []
+    if "create" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to create users")
-    
     service = UserService(db)
     user = service.create_user(user_data)
     # Ensure user has at least one role assigned if role is provided in user_data
@@ -68,9 +68,10 @@ def list_users(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # removed import of RoleService, now using RBACService
     role_service = RBACService(db)
-    if not role_service.is_admin_or_above(current_user):
+    perms = role_service.get_user_permissions(current_user.id)
+    actions = perms.get("user") or perms.get("users") or []
+    if "view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view users")
     service = UserService(db)
     skip = (page - 1) * page_size
@@ -108,15 +109,15 @@ def get_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # removed import of RoleService, now using RBACService
     service = UserService(db)
     role_service = RBACService(db)
+    perms = role_service.get_user_permissions(current_user.id)
+    actions = perms.get("user") or perms.get("users") or []
+    if "view" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to view user details")
     user = service.get_user(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    # Kiểm tra quyền xem user
-    if not role_service.can_manage_user(current_user, user):
-        raise HTTPException(status_code=403, detail="Not authorized to view this user")
     status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
     role_service = RBACService(db)
     if hasattr(user, "id") and isinstance(user.id, int):
@@ -142,15 +143,15 @@ def update_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # removed import of RoleService, now using RBACService
     service = UserService(db)
     role_service = RBACService(db)
+    perms = role_service.get_user_permissions(current_user.id)
+    actions = perms.get("user") or perms.get("users") or []
+    if "update" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to update users")
     user = service.get_user(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    # Kiểm tra quyền quản lý user
-    if not role_service.can_manage_user(current_user, user):
-        raise HTTPException(status_code=403, detail="Not authorized to manage this user")
     # Chỉ root mới được sửa role, và không cho sửa thành 'root'
     if not role_service.is_root(current_user):
         update_data.role = None
@@ -171,27 +172,22 @@ def update_user(
 # Endpoint: Delete a user by ID (Root có thể xóa tất cả, Admin chỉ xóa user)
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(
-        user_id: int,
-        db: Session = Depends(get_db),
-        current_user=Depends(get_current_user)
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
 ):
-    # removed import of RoleService, now using RBACService
-    
     service = UserService(db)
     role_service = RBACService(db)
-    
+    perms = role_service.get_user_permissions(current_user.id)
+    actions = perms.get("user") or perms.get("users") or []
+    if "delete" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to delete users")
     user = service.get_user(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Kiểm tra quyền xóa user
-    if not role_service.can_manage_user(current_user, user):
-        raise HTTPException(status_code=403, detail="Not authorized to delete this user")
-    
     success = service.delete_user(user_id)
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
-
     return {"message": f"User with ID: {user_id} has been deleted"}
 
 

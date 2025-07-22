@@ -20,7 +20,8 @@ def get_roles(db: Session = Depends(get_db)):
 @router.post("/roles")
 def create_role(data: RoleCreate, db: Session = Depends(get_db)):
     service = RBACService(db)
-    return service.create_role(data.name, data.description)
+    desc = data.description if data.description is not None else ""
+    return service.create_role(data.name, desc)
 
 @router.get("/modules")
 def get_modules(db: Session = Depends(get_db)):
@@ -30,7 +31,8 @@ def get_modules(db: Session = Depends(get_db)):
 @router.post("/modules")
 def create_module(data: ModuleCreate, db: Session = Depends(get_db)):
     service = RBACService(db)
-    return service.create_module(data.name, data.description)
+    desc = data.description if data.description is not None else ""
+    return service.create_module(data.name, desc)
 
 @router.get("/permissions")
 def get_permissions(db: Session = Depends(get_db)):
@@ -40,7 +42,8 @@ def get_permissions(db: Session = Depends(get_db)):
 @router.post("/permissions")
 def create_permission(data: PermissionCreate, db: Session = Depends(get_db)):
     service = RBACService(db)
-    return service.create_permission(data.name, data.description)
+    desc = data.description if data.description is not None else ""
+    return service.create_permission(data.name, desc)
 
 @router.post("/remove-permission")
 def remove_permission_from_role(data: RemovePermissionFromRole, db: Session = Depends(get_db)):
