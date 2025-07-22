@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
     Box,
@@ -30,6 +31,15 @@ import { useSnackbar } from "notistack";
 
 // Add RemoveIcon import for permission matrix
 import RemoveIcon from "@mui/icons-material/RemoveCircleOutline";
+
+
+// Danh sách action chuẩn hóa giống backend
+const BASE_ACTIONS = [
+    ["view", "Xem"],
+    ["create", "Tạo"],
+    ["update", "Sửa"],
+    ["delete", "Xoá"],
+];
 
 export default function RoleManagement() {
     const { token, hasPermission } = useAuthCustom();
@@ -314,11 +324,12 @@ function hasRolePermission(moduleId, permissionId) {
                             <TableHead>
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 700, width: 180 }}>Module</TableCell>
-                                    {permissions.map((perm) => (
-                                        <TableCell key={perm.id} align="center" sx={{ fontWeight: 700 }}>
+                                    {/* Hiển thị các action (view, create, update, delete) */}
+                                    {BASE_ACTIONS.map((action) => (
+                                        <TableCell key={action[0]} align="center" sx={{ fontWeight: 700 }}>
                                             <Box display="flex" flexDirection="column" alignItems="center">
-                                                <span>{perm.name}</span>
-                                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>{permDescriptions[perm.name] || ''}</Typography>
+                                                <span>{action[0]}</span>
+                                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>{permDescriptions[action[0]] || ''}</Typography>
                                             </Box>
                                         </TableCell>
                                     ))}
@@ -328,11 +339,18 @@ function hasRolePermission(moduleId, permissionId) {
                                 {modules.map((mod) => (
                                     <TableRow key={mod.id}>
                                         <TableCell sx={{ fontWeight: 600 }}>{mod.name}</TableCell>
-                                        {permissions.map((perm) => {
+                                        {BASE_ACTIONS.map((action) => {
+                                            // Tìm permission tương ứng module + action
+                                            const perm = permissions.find(
+                                                (p) => p.name === `${mod.name}.${action[0]}`
+                                            );
+                                            if (!perm) {
+                                                return <TableCell key={action[0]} align="center">-</TableCell>;
+                                            }
                                             const checked = hasRolePermission(mod.id, perm.id);
                                             return (
                                                 <TableCell key={perm.id} align="center">
-                                                    <Tooltip title={checked ? `Đã có quyền: ${permDescriptions[perm.name] || perm.name}` : `Chưa có quyền: ${permDescriptions[perm.name] || perm.name}` } arrow>
+                                                    <Tooltip title={checked ? `Đã có quyền: ${permDescriptions[action[0]] || perm.name}` : `Chưa có quyền: ${permDescriptions[action[0]] || perm.name}` } arrow>
                                                         <span>
                                                             <IconButton
                                                                 color={checked ? "success" : "default"}

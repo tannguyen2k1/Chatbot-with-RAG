@@ -31,10 +31,8 @@ async def lifespan(app: FastAPI):
     # Auto seed RBAC (roles, modules, permissions)
     db = SessionLocal()
     try:
-        from database.seeds.auto_seed_data import seed_modules_and_permissions, seed_default_accounts, seed_default_demos
-        seed_modules_and_permissions()
-        seed_default_accounts()
-        seed_default_demos()
+        from database.seeds.auto_seed_data import auto_seed_all
+        auto_seed_all()
     finally:
         db.close()
     yield

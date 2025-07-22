@@ -17,8 +17,8 @@ def create_user(
     role_service = RBACService(db)
     # Check permission strictly by RBAC
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
-    if "create" not in actions:
+    actions = perms.get("user", [])
+    if "user.create" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to create users")
     service = UserService(db)
     user = service.create_user(user_data)
@@ -70,8 +70,8 @@ def list_users(
 ):
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
-    if "view" not in actions:
+    actions = perms.get("user", [])
+    if "user.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view users")
     service = UserService(db)
     skip = (page - 1) * page_size
@@ -112,8 +112,8 @@ def get_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
-    if "view" not in actions:
+    actions = perms.get("user", [])
+    if "user.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view user details")
     user = service.get_user(user_id)
     if not user:
@@ -146,8 +146,8 @@ def update_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
-    if "update" not in actions:
+    actions = perms.get("user", [])
+    if "user.update" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to update users")
     user = service.get_user(user_id)
     if not user:
@@ -179,8 +179,8 @@ def delete_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
-    if "delete" not in actions:
+    actions = perms.get("user", [])
+    if "user.delete" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to delete users")
     user = service.get_user(user_id)
     if not user:

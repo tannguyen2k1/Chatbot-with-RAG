@@ -98,7 +98,9 @@ export function AuthProviderCustom({ children }) {
   const hasPermission = useCallback(
     (module, action) => {
       if (!permissions || !permissions[module]) return false;
-      return permissions[module].includes(action);
+      // Nếu action đã là {module}.{action} thì kiểm tra trực tiếp, nếu chỉ là action thì tự ghép
+      const actionFull = action.startsWith(module + ".") ? action : `${module}.${action}`;
+      return permissions[module].includes(actionFull);
     },
     [permissions]
   );

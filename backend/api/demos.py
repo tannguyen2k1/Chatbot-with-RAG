@@ -21,8 +21,8 @@ def get_demos(
     """Lấy danh sách tất cả demos (có tìm kiếm)"""
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("demo") or perms.get("demos") or []
-    if "view" not in actions:
+    actions = perms.get("demo", [])
+    if "demo.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view demos")
     demo_service = DemoService(db)
     skip = (page - 1) * page_size
@@ -46,8 +46,8 @@ def create_demo(
     """Tạo demo mới"""
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("demo") or perms.get("demos") or []
-    if "create" not in actions:
+    actions = perms.get("demo", [])
+    if "demo.create" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to create demos")
     demo_service = DemoService(db)
     new_demo = demo_service.create_demo(demo_data)
@@ -64,8 +64,8 @@ def update_demo(
     """Cập nhật demo"""
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("demo") or perms.get("demos") or []
-    if "update" not in actions:
+    actions = perms.get("demo", [])
+    if "demo.update" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to update demos")
     demo_service = DemoService(db)
     demo = demo_service.get_demo_by_id(demo_id)
@@ -87,8 +87,8 @@ def delete_demo(
     """Xóa demo"""
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("demo") or perms.get("demos") or []
-    if "delete" not in actions:
+    actions = perms.get("demo", [])
+    if "demo.delete" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to delete demos")
     demo_service = DemoService(db)
     demo = demo_service.get_demo_by_id(demo_id)
@@ -114,8 +114,8 @@ def get_demo(
     """Lấy chi tiết demo"""
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("demo") or perms.get("demos") or []
-    if "view" not in actions:
+    actions = perms.get("demo", [])
+    if "demo.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view demo details")
     demo_service = DemoService(db)
     demo = demo_service.get_demo_by_id(demo_id)
