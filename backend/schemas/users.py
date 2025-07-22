@@ -16,7 +16,7 @@ class UserUpdate(BaseModel):
     full_name: str | None = None
     phone: str | None = None
     is_active: int | None = None
-
+    role: str | None = None
 
 class UserResponse(BaseModel):
     id: int
@@ -29,7 +29,6 @@ class UserResponse(BaseModel):
     permissions: dict[str, list[str]] = {}
     class Config:
         from_attributes = True
-
 
 # Paginated response for users
 from typing import List

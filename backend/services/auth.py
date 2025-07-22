@@ -12,7 +12,6 @@ class AuthService:
     def __init__(self, db: Session):
         self.db = db
 
-
     def authenticate_user(self, username: str, password: str) -> User:
         user = self.db.query(User).filter(User.username == username).first()
         if not user:
@@ -21,14 +20,12 @@ class AuthService:
             raise ValueError("Incorrect password")
         return user
 
-
     def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
         to_encode = {"sub": str(user.id), "role": user.role}
         expire = datetime.now(timezone.utc) + expires_delta
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
-
 
     def create_refresh_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
         to_encode = {"sub": str(user.id), "role": user.role}
@@ -37,13 +34,12 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
 
-
     def change_password(self, user: User, current_password: str, new_password: str) -> bool:
         """Đổi mật khẩu cho user hiện tại"""
         # Verify current password
         if not pwd_context.verify(current_password, str(user.hashed_password)):
             raise ValueError("Current password is incorrect")
-        
+
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
@@ -51,7 +47,6 @@ class AuthService:
         self.db.query(User).filter(User.id == user.id).update({"hashed_password": hashed_new_password})
         self.db.commit()
         self.db.refresh(user)
-        
         return True
     
     
@@ -65,7 +60,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
     
-    
+
     def verify_reset_token(self, token: str) -> User:
         """Verify reset password token và trả về user"""
         try:

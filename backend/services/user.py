@@ -1,32 +1,10 @@
 from sqlalchemy.orm import Session
 from database.models.auth_models import User
-from pydantic import BaseModel
-
-
-# Pydantic schemas for user operations
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-    full_name: str | None = None
-    phone: str | None = None
-    is_active: int = 1
-    role: str = "user"
-
-
-class UserUpdate(BaseModel):
-    username: str | None = None
-    email: str | None = None
-    full_name: str | None = None
-    phone: str | None = None
-    is_active: int | None = None
-    role: str | None = None
-
+from schemas.users import UserCreate, UserUpdate
 
 class UserService:
     def __init__(self, db: Session):
         self.db = db
-
 
     def create_user(self, user_data: UserCreate) -> User:
         # Check if username already exists
