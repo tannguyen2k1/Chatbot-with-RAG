@@ -1,7 +1,18 @@
+    
 from sqlalchemy.orm import Session
 from database.models.auth_models import Role, Module, Permission, RolePermission, UserRole
 
 class RBACService:
+    def delete_role(self, role_id: int):
+        role = self.db.query(Role).filter_by(id=role_id).first()
+        if not role:
+            return False
+        # Remove all RolePermission and UserRole linked to this role
+        self.db.query(RolePermission).filter_by(role_id=role_id).delete()
+        self.db.query(UserRole).filter_by(role_id=role_id).delete()
+        self.db.delete(role)
+        self.db.commit()
+        return True
     def __init__(self, db: Session):
         self.db = db
 
@@ -60,7 +71,14 @@ class RBACService:
             if module_name and perm_name:
                 permissions_dict.setdefault(module_name, []).append(perm_name)
         return permissions_dict
-
+    
+    def remove_permission_from_role(self, role_id: int, module_id: int, permission_id: int):
+        rp = self.db.query(RolePermission).filter_by(role_id=role_id, module_id=module_id, permission_id=permission_id).first()
+        if rp:
+            self.db.delete(rp)
+            self.db.commit()
+            return True
+        return False
 
     def is_admin_or_above(self, user):
         user_roles = self.db.query(UserRole).filter_by(user_id=user.id).all()
@@ -77,13 +95,40 @@ class RBACService:
         self.db.commit()
         self.db.refresh(role)
         return role
-
+    
+    def get_all_roles(self):
+        roles = self.db.query(Role).all()
+        # Get all role permissions
+        role_permissions = self.db.query(RolePermission).all()
+        # Build mapping: role_id -> list of {module_id, permission_id}
+        from collections import defaultdict
+        role_perm_map = defaultdict(list)
+        for rp in role_permissions:
+            role_perm_map[rp.role_id].append({
+                "module_id": rp.module_id,
+                "permission_id": rp.permission_id
+            })
+        # Attach permissions to each role
+        result = []
+        for role in roles:
+            role_dict = {
+                "id": role.id,
+                "name": role.name,
+                "description": role.description,
+                "permissions": role_perm_map.get(role.id, [])
+            }
+            result.append(role_dict)
+        return result
+    
     def create_module(self, name: str, description: str = None):
         module = Module(name=name, description=description)
         self.db.add(module)
         self.db.commit()
         self.db.refresh(module)
         return module
+    
+    def get_all_modules(self):
+        return self.db.query(Module).all()
 
     def create_permission(self, name: str, description: str = None):
         permission = Permission(name=name, description=description)
@@ -91,6 +136,9 @@ class RBACService:
         self.db.commit()
         self.db.refresh(permission)
         return permission
+    
+    def get_all_permissions(self):
+        return self.db.query(Permission).all()
 
     def assign_role_to_user(self, user_id: int, role_id: int):
         user_role = UserRole(user_id=user_id, role_id=role_id)
