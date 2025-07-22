@@ -64,7 +64,11 @@ def reset_password_confirm(
 # Endpoint: Get current user info (me)
 @router.get("/me", response_model=Login)
 def get_me(current_user: User = Depends(get_current_user)):
-    return Login(username=current_user.username, password="protected")
+    # Fix: ensure username is value, not Column object
+    username = getattr(current_user, "username", None)
+    if not isinstance(username, str):
+        username = str(username) if username is not None else ""
+    return Login(username=username, password="protected")
 
 # Endpoint: Logout (chuẩn fullstackhero, chỉ là dummy)
 @router.post("/logout", response_model=MessageResponse)

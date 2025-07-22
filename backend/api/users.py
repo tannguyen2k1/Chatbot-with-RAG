@@ -70,7 +70,7 @@ def list_users(
 ):
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
+    actions = perms.get("users") or []
     if "view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view users")
     service = UserService(db)
@@ -112,7 +112,7 @@ def get_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
+    actions = perms.get("users") or []
     if "view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view user details")
     user = service.get_user(user_id)
@@ -146,7 +146,7 @@ def update_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
+    actions = perms.get("users") or []
     if "update" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to update users")
     user = service.get_user(user_id)
@@ -179,7 +179,7 @@ def delete_user(
     service = UserService(db)
     role_service = RBACService(db)
     perms = role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user") or perms.get("users") or []
+    actions = perms.get("users") or []
     if "delete" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to delete users")
     user = service.get_user(user_id)
