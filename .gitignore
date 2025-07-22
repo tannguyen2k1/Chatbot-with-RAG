@@ -1,0 +1,43 @@
+# Root .gitignore for monorepo
+
+# Backend ignores
+/backend/__pycache__/
+/backend/*.py[cod]
+/backend/*$py.class
+/backend/.venv/
+/backend/env/
+/backend/venv/
+/backend/.vscode/
+/backend/.idea/
+/backend/.DS_Store
+/backend/Thumbs.db
+/backend/.env
+/backend/.env.*
+/backend/.coverage
+/backend/coverage.xml
+/backend/htmlcov/
+/backend/pytest_cache/
+/backend/.mypy_cache/
+/backend/.pytest_cache/
+/backend/.pyright/
+/backend/*.log
+/backend/*.tmp
+/backend/*.sqlite3
+/backend/*.db
+
+# Frontend ignores
+/frontend/node_modules/
+/frontend/docs/node_modules/
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/coverage
+/frontend/dist
+/frontend/.eslintcache
+/frontend/.DS_Store
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*

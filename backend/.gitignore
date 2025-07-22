@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# VS Code & IDE configs
+.vscode/
+.idea/
+
+# Mac / Linux / Windows system files
+.DS_Store
+Thumbs.db
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Test/coverage files
+.coverage
+coverage.xml
+htmlcov/
+pytest_cache/
+
+# MyPy, Pylint, Pyright cache
+.mypy_cache/
+.pytest_cache/
+.pyright/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Local databases or SQLite (if any)
+*.sqlite3
+*.db
+
+# Docker-related
+*.pid
+*.tar
+*.gz
+
+# Alembic __pycache__ folders only (keep migrations)
+database/migrations/**/__pycache__/
+
+# Ignore compiled Alembic migration files
+database/migrations/versions/*.pyc
+
+# Jupyter Notebooks checkpoints (if you ever add notebooks)
+.ipynb_checkpoints/
