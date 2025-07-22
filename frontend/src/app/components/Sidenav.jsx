@@ -43,11 +43,22 @@ export default function Sidenav({ children }) {
     });
   };
 
-  // Lọc menu: nếu user role là 'user' thì ẩn item Quản lý người dùng
-  const filteredNavigations =
-    user?.role === "user"
-      ? navigations.filter((item) => item.path !== "/users" && item.name !== "Quản lý người dùng")
-      : navigations;
+  // Lọc menu theo quyền (permission)
+  const { hasPermission } = useAuthCustom();
+  function filterNavs(items) {
+    return items
+      .filter(
+        (item) =>
+          !item.permission ||
+          (hasPermission && hasPermission(item.permission.module, item.permission.action))
+      )
+      .map((item) =>
+        item.children
+          ? { ...item, children: filterNavs(item.children) }
+          : item
+      );
+  }
+  const filteredNavigations = filterNavs(navigations);
 
   return (
     <Fragment>

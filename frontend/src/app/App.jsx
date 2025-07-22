@@ -4,11 +4,9 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { MatxTheme } from "./components";
 // ALL CONTEXTS
 import SettingsProvider from "./contexts/SettingsContext";
-import { UserProvider } from "./contexts/UserContext";
 import { AuthProviderCustom } from "./contexts/AuthContext";
 import { SnackbarProvider } from "notistack";
 import BaseProvider from "app/contexts/BaseProvider";
-// ROUTES
 import routes from "./routes";
 // FAKE SERVER
 import "../__api__";

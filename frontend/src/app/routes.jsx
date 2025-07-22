@@ -5,10 +5,10 @@ import AuthGuard from "./auth/AuthGuard";
 import { authRoles } from "./auth/authRoles";
 
 import Loadable from "./components/Loadable";
+import RoleManagement from "app/views/roles/RoleManagement";
 import MatxLayout from "./components/MatxLayout/MatxLayout";
 import sessionRoutes from "./views/sessions/session-routes";
 import materialRoutes from "app/views/material-kit/MaterialRoutes";
-import PermissionManagement from "./views/users/PermissionManagement";
 import NavigationGuard from "./components/NavigationGuard";
 
 // E-CHART PAGE
@@ -48,11 +48,8 @@ const routes = [
           // user management
           { path: "/users", element: <UserList />, auth: authRoles.admin },
           // permission management
-          {
-            path: "/users/:userId/permissions",
-            element: <PermissionManagement />,
-            auth: authRoles.admin
-          },
+          // role management
+          { path: "/roles", element: <RoleManagement />, auth: authRoles.admin },
           // demo management
           { path: "/demos", element: <LoadableComponentDemoList />, auth: authRoles.admin },
           // user profile

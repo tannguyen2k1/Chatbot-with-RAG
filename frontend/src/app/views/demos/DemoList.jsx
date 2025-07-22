@@ -42,11 +42,18 @@ const DemoList = () => {
     total,
     search,
     setSearch,
+    fetchDemos, // <-- lấy từ context
   } = useDemo();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(emptyDemo);
   const [editId, setEditId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Luôn reload lại data khi vào trang
+  useEffect(() => {
+    fetchDemos();
+    // eslint-disable-next-line
+  }, []);
 
   // Debounce search to avoid too many backend calls
   useEffect(() => {

@@ -84,15 +84,15 @@ export function DemoProvider({ children }) {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     const data = await res.json();
-    const arr = Array.isArray(data) ? data : data.data;
-    setDemos(Array.isArray(arr) ? arr : []);
-    setTotal(data.total || arr.length || 0);
+    const arr = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+    setDemos(arr);
+    setTotal((data && typeof data.total === "number") ? data.total : arr.length);
     setLoading(false);
   };
 
   return (
     <DemoContext.Provider
-      value={{ demos, loading, error, createDemo, updateDemo, deleteDemo, page, setPage, pageSize, setPageSize, total, search, setSearch }}
+      value={{ demos, loading, error, createDemo, updateDemo, deleteDemo, page, setPage, pageSize, setPageSize, total, search, setSearch, fetchDemos }}
     >
       {children}
     </DemoContext.Provider>

@@ -30,6 +30,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import { useUsers } from "app/contexts/UserContext";
+import { useRBACRoles } from "app/hooks/useRBACRoles";
 import { useAuthCustom } from "app/contexts/AuthContext";
 import { MatxLoading } from "app/components";
 import { Link } from "react-router-dom";
@@ -39,6 +40,7 @@ import { useSnackbar } from "notistack";
 import { UserProvider } from "app/contexts/UserContext";
 
 function UserListContent() {
+  const { roles: allRoles } = useRBACRoles();
   const { user, hasPermission, hasRole } = useAuthCustom();
   const {
     users,
@@ -325,17 +327,6 @@ function UserListContent() {
                         >
                           <DeleteIcon />
                         </IconButton>
-                        {/* Nút chuyển sang màn hình quản lý quyền */}
-                        {(hasPermission && hasPermission("user", "update")) && (
-                          <IconButton
-                            component={Link}
-                            to={`/users/${rowUser.id}/permissions`}
-                            title="Quản lý quyền"
-                            disabled={disableActions}
-                          >
-                            <SecurityIcon />
-                          </IconButton>
-                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -408,18 +399,12 @@ function UserListContent() {
                 }
                 label="Hoạt động"
               />
-              <FormControl>
-                <InputLabel>Vai trò</InputLabel>
-                <Select
-                  value={form.role}
-                  label="Vai trò"
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                >
-                  <MenuItem value="user">User</MenuItem>
-                  {/* Chỉ root mới được tạo admin */}
-                  {hasRole("root") && <MenuItem value="admin">Admin</MenuItem>}
-                </Select>
-              </FormControl>
+              <TextField
+                label="Vai trò"
+                value={form.role}
+                InputProps={{ readOnly: true }}
+                disabled
+              />
               {errorMsg && <Typography color="error">{errorMsg}</Typography>}
             </Stack>
           </DialogContent>

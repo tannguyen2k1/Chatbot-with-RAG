@@ -1,20 +1,18 @@
+// Không dùng hook trong file module, chỉ dùng trong component
+// Thay vào đó, export mảng đầy đủ và filter trong component Sidenav
 const navigations = [
   { name: "Dashboard", path: "/dashboard/default", icon: "dashboard" },
   { label: "PAGES", type: "label" },
-  { name: "Quản lý Demo", icon: "list", path: "/demos", iconText: "D" },
-  { name: "Quản lý người dùng", icon: "person", path: "/users", iconText: "U" },
-  // {
-  //   name: "Session/Auth",
-  //   icon: "security",
-  //   children: [
-  //     // { name: "Sign in", iconText: "SI", path: "/session/signin" },
-  //     // { name: "Sign up", iconText: "SU", path: "/session/signup" },
-  //     // { name: "Forgot Password", iconText: "FP", path: "/session/forgot-password" },
-  //     // { name: "Error", iconText: "404", path: "/session/404" }
-      
-  //   ]
-  // },
-  { label: "Components", type: "label" },
+  { name: "Quản lý Demo", icon: "list", path: "/demos", iconText: "D", permission: { module: "demo", action: "view" } },
+  {
+    name: "Quản lý hệ thống",
+    icon: "settings",
+    iconText: "S",
+    children: [
+      { name: "Quản lý người dùng", icon: "person", path: "/users", iconText: "U", permission: { module: "user", action: "view" } },
+      { name: "Quản lý Roles", icon: "security", path: "/roles", iconText: "R", permission: { module: "role", action: "view" } }
+    ]
+  },
   {
     name: "Components",
     icon: "favorite",
