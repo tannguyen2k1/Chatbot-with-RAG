@@ -7,7 +7,7 @@ import {
   IconBriefcase,
   IconDeviceDesktop,
   IconMail,
-  IconMapPin,
+// UNUSED: This component is no longer used and can be deleted.
 } from "@tabler/icons-react";
 
 const IntroCard = () => (

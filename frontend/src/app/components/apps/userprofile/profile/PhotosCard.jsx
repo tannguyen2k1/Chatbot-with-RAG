@@ -59,37 +59,7 @@ const PhotosCard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  return (
-    <ChildCard>
-      <Typography variant="h4">Photos</Typography>
-      <ImageList cols={3} gap={20}>
-        {photos.map((photo) => (
-          <Box key={photo.id}>
-            {
-              isLoading ? (
-                <>
-                  <Skeleton
-                    variant="rectangular"
-                    animation="wave"
-                    width="100%"
-                    height={93}
-                    key={photo.id}
-                  ></Skeleton>
-                </>
-              ) : (
-                <ImageListItem key={photo.id}>
-                  <Image
-                    src={photo.img}
-                    alt={photo.img} width={92} height={92}
-                    loading="lazy" style={{ borderRadius: 8 }}
-                  />
-                </ImageListItem>
-              )}
-          </Box>
-        ))}
-      </ImageList>
-    </ChildCard >
-  )
+// UNUSED: This component is no longer used and can be deleted.
 };
 
 export default PhotosCard;
