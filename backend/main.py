@@ -70,7 +70,7 @@ app = FastAPI(
 # --- CORS config (must be before routers) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # no trailing slash
+    allow_origins=["http://localhost:3000"],  # no trailing slash
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,8 +1,25 @@
 // SWR fetcher function
 
-const getFetcher = (url) => fetch(url, {
+
+const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        return process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    }
+    return process.env.NEXT_PUBLIC_API_BASE_URL || '';
+};
+
+const buildUrl = (url) => {
+    // Nếu url bắt đầu bằng /api/ thì prepend baseUrl, ngược lại giữ nguyên (cho static, nội bộ)
+    if (url.startsWith('/api/')) {
+        return getBaseUrl() + url;
+    }
+    return url;
+};
+
+const getFetcher = (url, options = {}) => fetch(buildUrl(url), {
     method: "GET",
-    headers: { 'browserrefreshed': 'false' },
+    headers: { 'browserrefreshed': 'false', ...(options.headers || {}) },
+    ...options
 }).then((res) => {
     if (!res.ok) {
         throw new Error("Failed to fetch the data")
@@ -11,10 +28,11 @@ const getFetcher = (url) => fetch(url, {
 });
 
 
-const postFetcher = (url, arg) => fetch(url, {
+const postFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(arg)
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    body: JSON.stringify(arg),
+    ...options
 }).then((res) => {
     if (!res.ok) {
         throw new Error("Failed to post data")
@@ -22,10 +40,11 @@ const postFetcher = (url, arg) => fetch(url, {
     return res.json()
 });
 
-const putFetcher = (url, arg) => fetch(url, {
+const putFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "PUT",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(arg)
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    body: JSON.stringify(arg),
+    ...options
 }).then((res) => {
     if (!res.ok) {
         throw new Error("Failed to updated data")
@@ -33,10 +52,11 @@ const putFetcher = (url, arg) => fetch(url, {
     return res.json()
 });
 
-const patchFetcher = (url, arg) => fetch(url, {
+const patchFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "PATCH",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(arg)
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    body: JSON.stringify(arg),
+    ...options
 }).then((res) => {
     if (!res.ok) {
         throw new Error("Failed to updated data")
@@ -44,10 +64,11 @@ const patchFetcher = (url, arg) => fetch(url, {
     return res.json()
 });
 
-const deleteFetcher = (url, arg) => fetch(url, {
+const deleteFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "DELETE",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(arg)
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    body: JSON.stringify(arg),
+    ...options
 }).then((res) => {
     if (!res.ok) {
         throw new Error("Failed to delete data")

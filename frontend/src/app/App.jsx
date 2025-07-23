@@ -7,6 +7,7 @@ import { ThemeSettings } from "@/utils/theme/Theme";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import "@/utils/i18n";
 import { CustomizerContext } from '@/app/context/customizerContext';
+import { UserDataProvider } from "./context/UserDataContext";
 
 
 const MyApp = ({ children }) => {
@@ -20,7 +21,9 @@ const MyApp = ({ children }) => {
                 <ThemeProvider theme={theme}>
                     <RTL direction={activeDir}>
                         <CssBaseline />
-                        {children}
+                        <UserDataProvider>
+                            {children}
+                        </UserDataProvider>
                     </RTL>
                 </ThemeProvider>
             </AppRouterCacheProvider>
