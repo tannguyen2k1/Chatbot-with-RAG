@@ -43,12 +43,12 @@ app = FastAPI(
     description="""
     🚀 **FastAPI Base Project với JWT Authentication & RBAC**
     ## 🔐 Cách sử dụng:
-    1. **Login:** POST `/auth/login` với `{"username": "root", "password": "admin123456"}`
+    1. **Login:** POST `/auth/login`
     2. **Copy token** từ response 
     3. **Authorize:** Click nút "Authorize" và nhập: `Bearer YOUR_TOKEN`
     ## 👤 Tài khoản mặc định:
     - Username: `root`  
-    - Password: `admin123456`
+    - Password: `root123456`
     ## 🎯 Hệ thống phân quyền Module:
     **Gán quyền user abcd quản lý module demo:**
     ```json
