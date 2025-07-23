@@ -24,8 +24,7 @@ class UserService:
             hashed_password=hashed_password,
             full_name=user_data.full_name,
             phone=user_data.phone,
-            is_active=user_data.is_active,
-            role=user_data.role
+            is_active=user_data.is_active
         )
         self.db.add(new_user)
         self.db.commit()
