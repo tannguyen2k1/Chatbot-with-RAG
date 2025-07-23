@@ -11,10 +11,7 @@ export const UserDataContext = createContext(undefined);
 
 // Default config values
 const config = {
-    posts: [],
     users: [],
-    gallery: [],
-    followers: [],
     search: '',
     loading: true,
 };
@@ -22,10 +19,7 @@ const config = {
 
 export const UserDataProvider = ({ children }) => {
     const router = useRouter();
-    const [posts, setPosts] = useState(config.posts);
     const [users, setUsers] = useState(config.users);
-    const [gallery, setGallery] = useState(config.gallery);
-    const [followers, setFollowers] = useState(config.followers);
     const [search, setSearch] = useState(config.search);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(config.loading);
@@ -33,21 +27,11 @@ export const UserDataProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [profileData, setProfileData] = useState({
-        name: 'Mathew Anderson',
-        role: 'Designer',
-        avatar: '/images/profile/user-1.jpg',
-        coverImage: '/images/backgrounds/profilebg.jpg',
-        postsCount: 938,
-        followersCount: 3586,
-        followingCount: 2659,
-    });
 
     // Chỉ fetch khi đã đăng nhập
     const shouldFetch = isAuthenticated;
-    const { data: postsData, isLoading: isPostsLoading, error: postsError, mutate } = useSWR(shouldFetch ? "/api/userprofile" : null, getFetcher);
-    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/api/userprofile/get-users" : null, getFetcher);
-    const { data: galleryData, isLoading: isGalleryLoading, error: galleryError } = useSWR(shouldFetch ? "/api/userprofile/get-gallery" : null, getFetcher);
+    // Lấy danh sách users
+    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/users" : null, getFetcher);
 
     // Load token & user from localStorage on mount
     useEffect(() => {
@@ -63,40 +47,28 @@ export const UserDataProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        if (postsData && usersData && galleryData) {
-            setPosts(postsData.data);
-            setLoading(isPostsLoading)
+        if (usersData) {
             setUsers(usersData.data);
             setLoading(isUsersLoading);
-            setFollowers(usersData.data);
-            setGallery(galleryData.data);
-            setLoading(isGalleryLoading);
-        }
-        else if (postsError) {
-            setError(postsError);
-            setLoading(isPostsLoading)
         } else if (usersError) {
             setError(usersError);
-            setLoading(isUsersLoading)
-        } else if (galleryError) {
-            setError(galleryError);
-            setLoading(isGalleryLoading)
+            setLoading(isUsersLoading);
         } else {
-            setLoading(isGalleryLoading);
+            setLoading(isUsersLoading);
         }
-    }, [postsData, usersData, galleryData, isPostsLoading, isUsersLoading, isGalleryLoading, galleryError, postsError, usersError]);
+    }, [usersData, isUsersLoading, usersError]);
 
     // Login function
     const login = async (username, password) => {
         try {
-            const res = await postFetcher('/api/auth/login', { username, password });
+            const res = await postFetcher('/auth/login', { username, password });
             if (res && res.access_token) {
                 setToken(res.access_token);
                 setIsAuthenticated(true);
                 localStorage.setItem('access_token', res.access_token);
                 localStorage.setItem('refresh_token', res.refresh_token);
                 // Fetch user info
-                const userRes = await getFetcher('/api/auth/me', {
+                const userRes = await getFetcher('/auth/me', {
                     headers: { 'Authorization': `Bearer ${res.access_token}` }
                 });
                 setUser(userRes);
@@ -129,88 +101,13 @@ export const UserDataProvider = ({ children }) => {
     };
 
 
-    // Function to add a new item to the gallery
-    const addGalleryItem = (item) => {
-        setGallery((prevGallery) => [...prevGallery, item]);
-    };
 
-    // Function to toggle follow/unfollow status of a user
-    const toggleFollow = (id) => {
-        setFollowers((prevFollowers) =>
-            prevFollowers.map((follower) =>
-                follower.id === id ? { ...follower, isFollowed: !follower.isFollowed } : follower
-            )
-        );
-    };
-
-    // Function to filter followers based on search input
-    const filterFollowers = () => {
-        if (followers) {
-            return followers.filter((t) =>
-                t.name.toLowerCase().includes(search.toLowerCase())
-            );
-        }
-        return followers;
-    };
-
-    // Add comment to a post
-    const addComment = async (postId, comment) => {
-        try {
-            await mutate(postFetcher('/api/userprofile/add-comments', {
-                postId,
-                comment,
-            }))
-        } catch (error) {
-            console.error('Error adding comment:', error);
-        }
-    };
-
-    // Add reply to a comment
-    const addReply = async (postId, commentId, reply) => {
-        try {
-            await mutate(postFetcher('/api/userprofile/add-replies', {
-                postId,
-                commentId,
-                reply,
-            }))
-        } catch (error) {
-            console.error('Error adding reply:', error);
-        }
-    };
-
-    // Function to toggle like/unlike a post
-    const likePost = async (postId) => {
-        try {
-            await mutate(postFetcher('/api/userprofile', { postId }))
-        } catch (error) {
-            console.error('Error liking post:', error);
-        }
-    };
-
-    // Function to toggle like/unlike a reply to a comment
-    const likeReply = async (postId, commentId) => {
-        try {
-            await mutate(postFetcher('/api/userprofile/replies-like', { postId, commentId }))
-        } catch (error) {
-            console.error('Error liking reply:', error);
-        }
-    };
 
     return (
         <UserDataContext.Provider value={{
-            posts,
             users,
             error,
-            gallery,
             loading,
-            profileData,
-            addGalleryItem,
-            addReply,
-            likePost,
-            addComment,
-            likeReply,
-            followers: filterFollowers(),
-            toggleFollow,
             setSearch,
             search,
             // Auth
