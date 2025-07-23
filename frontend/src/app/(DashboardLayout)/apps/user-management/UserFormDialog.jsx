@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Snackbar, Alert } from '@mui/material';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, MenuItem, FormControlLabel, Switch, CircularProgress
 } from "@mui/material";
@@ -25,16 +24,21 @@ export default function UserFormDialog({ open, onClose, user }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   useEffect(() => {
     if (open) {
-      setForm({
-        username: user?.username || '',
-        email: user?.email || '',
-        password: '',
-        full_name: user?.full_name || '',
-        phone: user?.phone || '',
-        role: user?.role || user?.roles?.[0] || '',
-        is_active: user?.is_active !== undefined ? user.is_active : true
+      fetchRoles().then(r => {
+        setRoles(r);
+        // Lấy role hợp lệ đầu tiên nếu user.role không nằm trong danh sách
+        let roleInit = user?.role || user?.roles?.[0] || '';
+        if (roleInit && !r.includes(roleInit)) roleInit = '';
+        setForm({
+          username: user?.username || '',
+          email: user?.email || '',
+          password: '',
+          full_name: user?.full_name || '',
+          phone: user?.phone || '',
+          role: roleInit,
+          is_active: user?.is_active !== undefined ? user.is_active : true
+        });
       });
-      fetchRoles().then(r => setRoles(r));
     }
   }, [open, user]);
 
