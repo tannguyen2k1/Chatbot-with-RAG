@@ -1,7 +1,7 @@
 'use client'
 import React, { createContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFetcher, postFetcher } from '@/app/api/globalFetcher';
+import { getFetcher, rawPostFetcher } from '@/app/api/globalFetcher';
 import useSWR from 'swr';
 
 
@@ -60,7 +60,7 @@ export const UserDataProvider = ({ children }) => {
     // Login function
     const login = async (username, password) => {
         try {
-            const res = await postFetcher('/api/auth/login', { username, password });
+            const res = await rawPostFetcher('/api/auth/login', { username, password });
             if (res && res.access_token) {
                 setToken(res.access_token);
                 setIsAuthenticated(true);

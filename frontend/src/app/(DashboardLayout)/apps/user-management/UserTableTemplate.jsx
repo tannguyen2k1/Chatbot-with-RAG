@@ -75,9 +75,6 @@ export default function UserTableTemplate({ reload, onActionDone }) {
   };
 
   const loadData = async () => {
-    setLoading(true);
-    // Đảm bảo loading bật trước khi clear rows để tránh nháy "không có dữ liệu"
-    setTimeout(() => setRows([]), 0);
     try {
       const data = await fetchUsers(page, pageSize, search);
       setRows(data.data || []);
