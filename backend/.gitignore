@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+.coverage
+coverage.xml
+htmlcov/
+pytest_cache/
+.mypy_cache/
+.pytest_cache/
+.pyright/
+logs/*.log
+*.tmp
+*.sqlite3
+*.db
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic
+alembic/versions/*.pyc
+
+# Ignore test output
+*.coverage
+
+# Ignore local settings
+settings_local.py

@@ -1,186 +1,44 @@
-<h1><a href="https://ui-lib.com/downloads/matx-react-dashboard/">Matx React Material Design Admin Dashboard Template</a></h1>
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-<a href="https://matx-react-free.netlify.app/">
-  <img alt="Matx React Admin" src="https://ui-lib.com/blog/wp-content/uploads/2021/09/matx-github.png" />
-</a>
+## Getting Started
 
-<p>MatX is a full-featured React Material UI Admin Dashboard template. MatX is built with React, Redux & Material UI We implemented all the features you might need to start a new Web application. The free version includes all Material UI components, Form elements, and validation, JWT authentication, Sign in, sign up pages,  Vertical navigation, Lazy loading, Code splitting.</p>
+First, run the development server:
 
-<h2>Features</h2>
-<table>
-<tr>
-<th>MatX Free</th>
-<th>MatX Pro</th>
-</tr>
-<tr>
-<td>
-<a href="https://matx-react-free.netlify.app/">Live Preview</a> <br>
-<a href="https://ui-lib.com/downloads/matx-react-dashboard/">Download MatX</a>
-</td>
-<td>
-<a href="https://matx-react-pro.vercel.app">Live Preview</a> <br>
-<a href="https://ui-lib.com/downloads/matx-pro-react-admin/">Get MatX Pro</a>
-</td>
-</tr>
-<tr>
-<td valign="top">
-<ul>
-  <li>JWT authentication</li>
-  <li>Role based authentication</li>
-  <li>Lazy loading components</li>
-  <li>Code splitting</li>
-  <li>Dashboard Analytics</li>
-  <li>UI kits
-    <ul>
-      <li>Autocomplete</li>
-      <li>Buttons</li>
-      <li>Checkbox</li>
-      <li>Dialog</li>
-      <li>Expansion panel</li>
-      <li>Menu</li>
-      <li>Progress</li>
-      <li>Datetime picker</li>
-      <li>Radio</li>
-      <li>Switch</li>
-      <li>Slider</li>
-      <li>Snackbar</li>
-      <li>Data table</li>
-    </ul>
-  </li>
-  <li>Forms
-    <ul>
-      <li>Basic</li>
-      <li>Rich text editor</li>
-    </ul>
-  </li>
-  <li>eChart</li>
-  <li>Session pages
-    <ul>
-      <li>Sign in</li>
-      <li>Sign up</li>
-      <li>Forgot password</li>
-      <li>Error page</li>
-    </ul>
-  </li>
-  <li>Drag and drop</li>
-  <li>Google map</li>
-  <li>Utilities
-    <ul>
-      <li>Color</li>
-      <li>Spacing</li>
-      <li>Typography</li>
-      <li>Display</li>
-    </ul>
-  </li>
-  <li>Multi level menu</li>
-</ul>
-</td>
-<td valign="top">
-<ul>
-  <li>All features of Matx free +</li>
-  <li>Firebase authentication</li>
-  <li>Auth0 authentication</li>
-  <li>Horizontal navigation</li>
-  <li>Pages
-    <ul>
-        <li>Customer List</li>
-        <li>Customer View/Add/Edit</li>
-        <li>Product List</li>
-        <li>Customer View/Add/Edit</li>
-        <li>Order List</li>
-        <li>Order View/Add/Edit</li>
-        <li>Help center</li>
-        <li>FAQ</li>
-        <li>Pricings</li>
-        <li>User List/Grid/Row</li>
-    </ul>
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-  </li>
-  <li>Forms
-    <ul>
-      <li>Order form</li>
-      <li>Invoice form</li>
-      <li>Property listing form</li>
-      <li>Single upload</li>
-      <li>Multiple upload</li>
-      <li>Wizard</li>
-    </ul>
-  </li>
-  <li>Working Apps
-    <ul>
-      <li>CRUD table</li>
-      <li>Shop/eCommerce</li>
-      <li>Scrum board</li>
-      <li>Invoice builder</li>
-      <li>Event calendar</li>
-      <li>Chat</li>
-      <li>Inbox</li>
-      <li>Todo</li>
-    </ul>
-  </li>
-  <li>Lists
-    <ul>
-      <li>Row/Grid List</li>
-      <li>Infinite scroll list</li>
-    </ul>
-  </li>
-  <li>Charts
-    <ul>
-      <li>eChart</li>
-      <li>Rechart</li>
-      <li>Victory chart</li>
-      <li>React vis</li>
-    </ul>
-  </li>
-  <li>Account setting</li>
-  <li>User profile</li>
-  <li>6 month support</li>
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-</ul>
-</td>
-</tr>
-</table>
+You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
 
-<h2>Version 5 changes</h2>
+[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
 
-- Used Vite instead of CRA
+The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-<h2>Version 4 changes</h2>
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-- Updated all packages
-- Added Auth0 and Firebase authentication system
+## Learn More
 
-<h2>Version 3 changes</h2>
+To learn more about Next.js, take a look at the following resources:
 
-- Added Material UI – Styled api (v5)
-- Added Material UI updated components from MUI@version 5
-- Added React Apex Chart
-- Updated JWT authentication
-- Updated Charts
-- Removed CSS Utilities (replaced by MUI)
-- Removed SASS Integrigration (replaced by Styled API)
-- Removed Victory chart (Replaced by React Apex Chart)
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-<h2 id="availablescripts">Getting started</h2>
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-<p>In the project directory, you can run:</p>
+## Deploy on Vercel
 
-<h3 id="npmstart"><code>npm run dev</code></h3>
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-<p>Runs the app in the development mode.<br>
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
-<p>The page will reload if you make edits.<br>
-You will also see any lint errors in the console.</p>
 
-<h3 id="npmrunbuild"><code>npm run build</code></h3>
 
-<p>Builds the app for production to the <code>build</code> folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.</p>
-
-<p>The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!</p>
-
-<h3>Download</h3>
-Download From <a href="https://ui-lib.com/downloads/matx-react-dashboard/">official website</a>
-
-<h3>For questions and support mail us at <a href="mailto:support@ui-lib.com">support@ui-lib.com</a></h3>
+testing
