@@ -1,7 +1,7 @@
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from middleware.dependencies import get_current_user, get_db
+from backend.middleware.dependency import get_current_user, get_db
 from services.rbac import RBACService
 
 

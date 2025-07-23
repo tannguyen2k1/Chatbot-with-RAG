@@ -1,8 +1,8 @@
-from schemas.users import UserResponse, PaginatedUserResponse  # Pydantic response model for users
+from schemas.user import UserResponse, PaginatedUserResponse  # Pydantic response model for users
 from services.rbac import RBACService
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from middleware.dependencies import get_db, get_current_user
+from middleware.dependency import get_db, get_current_user
 from services.user import UserService, UserCreate, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])

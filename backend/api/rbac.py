@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from schemas.rbac import RoleCreate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
 from services.rbac import RBACService
-from middleware.dependencies import get_db
+from middleware.dependency import get_db
 
 router = APIRouter(prefix="/rbac", tags=["RBAC"])
 

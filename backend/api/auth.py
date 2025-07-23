@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from database.models.auth_models import User
-from middleware.dependencies import get_db, get_current_user
-from security import verify_token
+from middleware.dependency import get_db, get_current_user
+from middleware.security import verify_token
 from services.auth import AuthService
 from config.settings import settings
 from schemas.auth import (
@@ -78,8 +78,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from database.models.auth_models import User
-from middleware.dependencies import get_db, get_current_user
-from security import verify_token
+from middleware.dependency import get_db, get_current_user
+from middleware.security import verify_token
 from services.auth import AuthService
 from config.settings import settings
 from schemas.auth import (
