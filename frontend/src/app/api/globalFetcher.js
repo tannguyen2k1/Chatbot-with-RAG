@@ -9,16 +9,23 @@ const getBaseUrl = () => {
 };
 
 const buildUrl = (url) => {
-    // Nếu url bắt đầu bằng /api/ thì prepend baseUrl, ngược lại giữ nguyên (cho static, nội bộ)
-    if (url.startsWith('/api/')) {
-        return getBaseUrl() + url;
-    }
-    return url;
+    return getBaseUrl() + url;
 };
+
+
+function getAuthHeaders(options = {}) {
+    let token = null;
+    if (typeof window !== 'undefined') {
+        token = localStorage.getItem('access_token');
+    }
+    return token
+        ? { ...options.headers, Authorization: `Bearer ${token}` }
+        : { ...options.headers };
+}
 
 const getFetcher = (url, options = {}) => fetch(buildUrl(url), {
     method: "GET",
-    headers: { 'browserrefreshed': 'false', ...(options.headers || {}) },
+    headers: { 'browserrefreshed': 'false', ...getAuthHeaders(options) },
     ...options
 }).then((res) => {
     if (!res.ok) {
@@ -30,7 +37,7 @@ const getFetcher = (url, options = {}) => fetch(buildUrl(url), {
 
 const postFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "POST",
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(options) },
     body: JSON.stringify(arg),
     ...options
 }).then((res) => {
@@ -42,7 +49,7 @@ const postFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
 
 const putFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "PUT",
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(options) },
     body: JSON.stringify(arg),
     ...options
 }).then((res) => {
@@ -54,7 +61,7 @@ const putFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
 
 const patchFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "PATCH",
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(options) },
     body: JSON.stringify(arg),
     ...options
 }).then((res) => {
@@ -66,7 +73,7 @@ const patchFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
 
 const deleteFetcher = (url, arg, options = {}) => fetch(buildUrl(url), {
     method: "DELETE",
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(options) },
     body: JSON.stringify(arg),
     ...options
 }).then((res) => {
