@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from database.models.auth_models import User
-from schemas.users import UserCreate, UserUpdate
+from schemas.user import UserCreate, UserUpdate
 
 class UserService:
     def __init__(self, db: Session):

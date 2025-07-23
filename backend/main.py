@@ -5,12 +5,9 @@ import os
 from datetime import datetime
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 from database.database import engine, SessionLocal
 from database.models.base import Base
-from database.models.auth_models import User
-from services.user import UserService, UserCreate
-from api import auth, users, demos, rbac
+from api import auth, rbac, demo, user
 
 log_dir = "logs"
 os.makedirs(log_dir, exist_ok=True)
@@ -78,8 +75,8 @@ app.add_middleware(
 
 # --- Routers ---
 app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(demos.router)
+app.include_router(user.router)
+app.include_router(demo.router)
 # ...removed user_module_permissions router registration...
 app.include_router(rbac.router)
 
