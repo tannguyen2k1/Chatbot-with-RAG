@@ -1,32 +1,24 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import UserFormDialog from './UserFormDialog';
-import { Snackbar, Alert } from '@mui/material';
 import { getFetcher, deleteFetcher } from '@/app/api/globalFetcher';
 import {
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Avatar,
   Typography,
-  Chip,
-  IconButton,
   Menu,
   MenuItem,
   Box,
   Stack,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  Snackbar, 
+  Alert, 
+  TextField
 } from "@mui/material";
+import UserThemeTable from '@/app/components/tables/UserThemeTable';
 import {
-  IconDotsVertical,
   IconEdit,
   IconTrash
 } from "@tabler/icons-react";
@@ -46,9 +38,9 @@ const deleteUser = async (id) => {
   return data;
 };
 
-export default function UserTableTemplate({ reload, onEdit, onActionDone }) {
+export default function UserTableTemplate({ reload, onActionDone }) {
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [rowCount, setRowCount] = useState(0);
@@ -84,11 +76,15 @@ export default function UserTableTemplate({ reload, onEdit, onActionDone }) {
 
   const loadData = async () => {
     setLoading(true);
+    // Đảm bảo loading bật trước khi clear rows để tránh nháy "không có dữ liệu"
+    setTimeout(() => setRows([]), 0);
     try {
       const data = await fetchUsers(page, pageSize, search);
       setRows(data.data || []);
       setRowCount(data.total || 0);
     } catch (e) {
+      setRows([]);
+      setRowCount(0);
       setSnackbar({ open: true, message: e.message, severity: 'error' });
       if (onActionDone) onActionDone(false, e.message, "error");
     } finally {
@@ -111,56 +107,19 @@ export default function UserTableTemplate({ reload, onEdit, onActionDone }) {
   };
 
   return (
-    <Box sx={{ background: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
-      <Stack direction="row" spacing={1} mb={2} alignItems="center">
+    <Box sx={{ borderRadius: 2, boxShadow: 1, p: 2, bgcolor: 'background.paper' }}>
+      <Stack direction="row" spacing={1} mb={2} alignItems="center" justifyContent={'space-between'}>
         <Typography variant="h6" fontWeight={600}>Danh sách người dùng</Typography>
-        <Box flex={1} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm username/email..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ padding: 6, borderRadius: 6, border: '1px solid #ccc', minWidth: 180 }}
-        />
+        <Box width={500}>
+            <TextField
+                fullWidth
+                placeholder="Tìm kiếm username/email..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+            />
+        </Box>
       </Stack>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Họ tên</TableCell>
-              <TableCell>SĐT</TableCell>
-              <TableCell>Vai trò</TableCell>
-              <TableCell>Trạng thái</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={8} align="center"><CircularProgress /></TableCell></TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={8} align="center">Không có dữ liệu</TableCell></TableRow>
-            ) : rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.username}</TableCell>
-                <TableCell>{row.email}</TableCell>
-                <TableCell>{row.full_name}</TableCell>
-                <TableCell>{row.phone}</TableCell>
-                <TableCell>{row.roles?.length ? row.roles.map(r => <Chip key={r} label={r} size="small" color={r==='root'?'warning':'secondary'} sx={{mr:0.5}} />) : '-'}</TableCell>
-                <TableCell>{row.is_active ? <Chip label="Hoạt động" color="success" size="small" /> : <Chip label="Ngừng" size="small" />}</TableCell>
-                <TableCell>
-                  <IconButton onClick={e => handleMenuClick(e, row)}>
-                    <IconDotsVertical width={18} />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <UserThemeTable rows={rows} loading={loading} onMenuClick={handleMenuClick} />
       {/* Pagination */}
       <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} mt={2}>
         <Typography>Trang:</Typography>
