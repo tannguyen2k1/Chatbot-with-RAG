@@ -2,7 +2,7 @@
 import React from "react";
 
 import NextTopLoader from 'nextjs-toploader';
-import MyApp from './app';
+import MyApp from './App';
 import "./global.css";
 import { CustomizerContextProvider } from "./context/customizerContext";
 
