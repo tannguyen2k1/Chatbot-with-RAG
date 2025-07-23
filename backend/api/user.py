@@ -41,24 +41,6 @@ def create_user(
     user_dict["roles"] = [r.name for r in roles] if roles else []
     return UserResponse(**user_dict)
 
-# Endpoint: Retrieve profile for the currently logged-in user
-@router.get("/me", response_model=UserResponse)
-def get_my_profile(
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    # RBAC: build permissions từ role/privileges
-    role_service = RBACService(db)
-    user_dict = current_user.__dict__.copy()
-    user_dict["permissions"] = role_service.get_user_permissions(current_user.id)
-    # Chuẩn RBAC: trả về roles là mảng tên role
-    from database.models.auth_models import UserRole, Role
-    user_roles = db.query(UserRole).filter_by(user_id=current_user.id).all()
-    role_ids = [ur.role_id for ur in user_roles]
-    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
-    user_dict["roles"] = [r.name for r in roles]
-    return UserResponse(**user_dict)
-
 # Endpoint: Retrieve a list of users (Admin/Root only)
 @router.get("/", response_model=PaginatedUserResponse)
 def list_users(

@@ -1,4 +1,3 @@
-# --- IMPORTS & ROUTER KHAI BÁO ĐẦU FILE ---
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -8,91 +7,18 @@ from middleware.security import verify_token
 from services.auth import AuthService
 from config.settings import settings
 from schemas.auth import (
-    RefreshTokenRequest, TokenResponse, Login, 
-    ChangePasswordRequest, SimpleResetPasswordRequest, MessageResponse,
-    LoginRequest, ResetPasswordRequest, ResetPasswordConfirm
-)
-from services.user import UserService, UserCreate
-
-router = APIRouter(prefix="/auth", tags=["auth"])
-# Endpoint: Register (chuẩn fullstackhero)
-@router.post("/register", response_model=TokenResponse)
-def register(
-    user_data: LoginRequest,
-    db: Session = Depends(get_db)
-):
-    service = UserService(db)
-    # Check if user exists
-    if db.query(User).filter((User.email == user_data.email) | (User.username == user_data.email)).first():
-        raise HTTPException(status_code=400, detail="User already exists")
-    # Tạo user mới
-    user_create = UserCreate(username=user_data.email, email=user_data.email, password=user_data.password)
-    user = service.create_user(user_create)
-    auth_service = AuthService(db)
-    access_token = auth_service.create_access_token(user)
-    refresh_token = auth_service.create_refresh_token(user)
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
-
-# Endpoint: Forgot password (gửi email, mô phỏng)
-@router.post("/forgot-password", response_model=MessageResponse)
-def forgot_password(
-    data: ResetPasswordRequest,
-    db: Session = Depends(get_db)
-):
-    auth_service = AuthService(db)
-    try:
-        user = auth_service.get_user_by_email(data.email)
-        reset_token = auth_service.create_reset_token(user)
-        # TODO: Gửi email thực tế, ở đây chỉ trả về token để test
-        return MessageResponse(message=f"Reset token (test): {reset_token}")
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-# Endpoint: Reset password confirm (qua token)
-@router.post("/reset-password-confirm", response_model=MessageResponse)
-def reset_password_confirm(
-    data: ResetPasswordConfirm,
-    db: Session = Depends(get_db)
-):
-    auth_service = AuthService(db)
-    try:
-        auth_service.reset_password(data.token, data.new_password)
-        return MessageResponse(message="Password reset successfully")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-# Endpoint: Get current user info (me)
-@router.get("/me", response_model=Login)
-def get_me(current_user: User = Depends(get_current_user)):
-    # Fix: ensure username is value, not Column object
-    username = getattr(current_user, "username", None)
-    if not isinstance(username, str):
-        username = str(username) if username is not None else ""
-    return Login(username=username, password="protected")
-
-# Endpoint: Logout (chuẩn fullstackhero, chỉ là dummy)
-@router.post("/logout", response_model=MessageResponse)
-def logout():
-    return MessageResponse(message="Logged out (client hãy xóa token)")
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from datetime import timedelta
-from database.models.auth_models import User
-from middleware.dependency import get_db, get_current_user
-from middleware.security import verify_token
-from services.auth import AuthService
-from config.settings import settings
-from schemas.auth import (
-    RefreshTokenRequest, TokenResponse, Login, 
+    RefreshTokenRequest, TokenResponse, LoginRequest, 
     ChangePasswordRequest, SimpleResetPasswordRequest, MessageResponse
 )
+from schemas.user import UserResponse
+from services.rbac import RBACService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Endpoint: Simple login with JSON body
 @router.post("/login", response_model=TokenResponse)
 def login(
-    login_data: Login,
+    login_data: LoginRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -184,3 +110,20 @@ def reset_password(
         return MessageResponse(message=f"Password has been reset successfully for user: {reset_data.username}")
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
+@router.get("/me", response_model=UserResponse)
+def get_my_profile(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # RBAC: build permissions từ role/privileges
+    role_service = RBACService(db)
+    user_dict = current_user.__dict__.copy()
+    user_dict["permissions"] = role_service.get_user_permissions(current_user.id)
+    # Chuẩn RBAC: trả về roles là mảng tên role
+    from database.models.auth_models import UserRole, Role
+    user_roles = db.query(UserRole).filter_by(user_id=current_user.id).all()
+    role_ids = [ur.role_id for ur in user_roles]
+    roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
+    user_dict["roles"] = [r.name for r in roles]
+    return UserResponse(**user_dict)
