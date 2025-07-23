@@ -1,5 +1,6 @@
 'use client'
 import React, { createContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getFetcher, postFetcher } from '@/app/api/globalFetcher';
 import useSWR from 'swr';
 
@@ -18,7 +19,9 @@ const config = {
     loading: true,
 };
 
+
 export const UserDataProvider = ({ children }) => {
+    const router = useRouter();
     const [posts, setPosts] = useState(config.posts);
     const [users, setUsers] = useState(config.users);
     const [gallery, setGallery] = useState(config.gallery);
@@ -26,6 +29,10 @@ export const UserDataProvider = ({ children }) => {
     const [search, setSearch] = useState(config.search);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(config.loading);
+    // User auth state
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [profileData, setProfileData] = useState({
         name: 'Mathew Anderson',
         role: 'Designer',
@@ -36,9 +43,24 @@ export const UserDataProvider = ({ children }) => {
         followingCount: 2659,
     });
 
-    const { data: postsData, isLoading: isPostsLoading, error: postsError, mutate } = useSWR("/api/userprofile", getFetcher);
-    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR("/api/userprofile/get-users", getFetcher);
-    const { data: galleryData, isLoading: isGalleryLoading, error: galleryError } = useSWR("/api/userprofile/get-gallery", getFetcher);
+    // Chỉ fetch khi đã đăng nhập
+    const shouldFetch = isAuthenticated;
+    const { data: postsData, isLoading: isPostsLoading, error: postsError, mutate } = useSWR(shouldFetch ? "/api/userprofile" : null, getFetcher);
+    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/api/userprofile/get-users" : null, getFetcher);
+    const { data: galleryData, isLoading: isGalleryLoading, error: galleryError } = useSWR(shouldFetch ? "/api/userprofile/get-gallery" : null, getFetcher);
+
+    // Load token & user from localStorage on mount
+    useEffect(() => {
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        if (storedToken) {
+            setToken(storedToken);
+            setIsAuthenticated(true);
+        }
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
     useEffect(() => {
         if (postsData && usersData && galleryData) {
@@ -62,8 +84,49 @@ export const UserDataProvider = ({ children }) => {
         } else {
             setLoading(isGalleryLoading);
         }
-
     }, [postsData, usersData, galleryData, isPostsLoading, isUsersLoading, isGalleryLoading, galleryError, postsError, usersError]);
+
+    // Login function
+    const login = async (username, password) => {
+        try {
+            const res = await postFetcher('/api/auth/login', { username, password });
+            if (res && res.access_token) {
+                setToken(res.access_token);
+                setIsAuthenticated(true);
+                localStorage.setItem('access_token', res.access_token);
+                localStorage.setItem('refresh_token', res.refresh_token);
+                // Fetch user info
+                const userRes = await getFetcher('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${res.access_token}` }
+                });
+                setUser(userRes);
+                localStorage.setItem('user', JSON.stringify(userRes));
+                return { success: true };
+            } else {
+                throw new Error('Login failed');
+            }
+        } catch (err) {
+            setError(err.message || 'Login error');
+            setIsAuthenticated(false);
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            return { success: false, message: err.message };
+        }
+    };
+
+    // Logout function
+    const logout = () => {
+        setToken(null);
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        router.push('/auth/auth1/login');
+    };
 
 
     // Function to add a new item to the gallery
@@ -149,7 +212,13 @@ export const UserDataProvider = ({ children }) => {
             followers: filterFollowers(),
             toggleFollow,
             setSearch,
-            search
+            search,
+            // Auth
+            user,
+            token,
+            isAuthenticated,
+            login,
+            logout
         }}>
             {children}
         </UserDataContext.Provider>
