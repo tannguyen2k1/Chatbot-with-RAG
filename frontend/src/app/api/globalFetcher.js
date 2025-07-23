@@ -9,7 +9,10 @@ const getBaseUrl = () => {
 };
 
 const buildUrl = (url) => {
-    return getBaseUrl() + url;
+    if (url.startsWith('/api/')) {
+        return getBaseUrl() + url;
+    }
+    return url;
 };
 
 

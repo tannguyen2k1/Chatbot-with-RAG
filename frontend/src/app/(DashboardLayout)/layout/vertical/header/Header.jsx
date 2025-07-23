@@ -8,7 +8,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { styled } from "@mui/material/styles";
 import config from '@/app/context/config'
 import { useContext } from "react";
-import { ProductProvider } from '@/app/context/Ecommercecontext/index'
+// ...existing code...
 import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";
 import Notifications from "./Notification";
 import Profile from "./Profile";
@@ -44,7 +44,7 @@ const Header = () => {
 
   return (
     (
-      <ProductProvider>
+// ...existing code...
         <AppBarStyled position="sticky" color="default">
           <ToolbarStyled>
             {/* ------------------------------------------- */}
@@ -109,7 +109,7 @@ const Header = () => {
             </Stack>
           </ToolbarStyled>
         </AppBarStyled>
-      </ProductProvider>
+// ...existing code...
     )
   );
 };

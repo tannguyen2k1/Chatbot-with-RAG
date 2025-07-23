@@ -31,7 +31,7 @@ export const UserDataProvider = ({ children }) => {
     // Chỉ fetch khi đã đăng nhập
     const shouldFetch = isAuthenticated;
     // Lấy danh sách users
-    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/users" : null, getFetcher);
+    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/api/users" : null, getFetcher);
 
     // Load token & user from localStorage on mount
     useEffect(() => {
@@ -61,14 +61,14 @@ export const UserDataProvider = ({ children }) => {
     // Login function
     const login = async (username, password) => {
         try {
-            const res = await postFetcher('/auth/login', { username, password });
+            const res = await postFetcher('/api/auth/login', { username, password });
             if (res && res.access_token) {
                 setToken(res.access_token);
                 setIsAuthenticated(true);
                 localStorage.setItem('access_token', res.access_token);
                 localStorage.setItem('refresh_token', res.refresh_token);
                 // Fetch user info
-                const userRes = await getFetcher('/auth/me', {
+                const userRes = await getFetcher('/api/auth/me', {
                     headers: { 'Authorization': `Bearer ${res.access_token}` }
                 });
                 setUser(userRes);

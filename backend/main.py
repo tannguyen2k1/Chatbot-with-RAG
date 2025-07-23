@@ -35,12 +35,14 @@ async def lifespan(app: FastAPI):
     yield
 
 # --- App creation ---
+from fastapi import APIRouter
+
 app = FastAPI(
     title="FastAPI User Management Base Project",
     description="""
     🚀 **FastAPI Base Project với JWT Authentication & RBAC**
     ## 🔐 Cách sử dụng:
-    1. **Login:** POST `/auth/login`
+    1. **Login:** POST `/api/auth/login`
     2. **Copy token** từ response 
     3. **Authorize:** Click nút "Authorize" và nhập: `Bearer YOUR_TOKEN`
     ## 👤 Tài khoản mặc định:
@@ -63,6 +65,21 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# --- Root endpoint ---
+@app.get("/")
+def root():
+    return {"message": "Welcome to the API"}
+
+# --- API Router with prefix /api ---
+api_router = APIRouter(prefix="/api")
+ 
+# --- Routers ---
+api_router.include_router(auth.router)
+api_router.include_router(user.router)
+api_router.include_router(demo.router)
+api_router.include_router(rbac.router)
+app.include_router(api_router)
+
 
 # --- CORS config (must be before routers) ---
 app.add_middleware(
@@ -72,14 +89,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# --- Routers ---
-app.include_router(auth.router)
-app.include_router(user.router)
-app.include_router(demo.router)
-# ...removed user_module_permissions router registration...
-app.include_router(rbac.router)
-
 
 # --- FastAPI logging middleware ---
 from fastapi import Request
@@ -107,7 +116,3 @@ async def log_requests(request: Request, call_next):
     logging.info(f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}")
     return response
 
-# --- Root endpoint ---
-@app.get("/")
-def root():
-    return {"message": "Welcome to the API"}

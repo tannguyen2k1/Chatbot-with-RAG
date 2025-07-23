@@ -4,20 +4,15 @@ import { IconShoppingCart, IconX } from '@tabler/icons-react';
 import { Box, Typography, Badge, Drawer, IconButton, Button, Stack } from '@mui/material';
 import Link from 'next/link';
 import CartItems from './CartItem';
-import { ProductContext } from '@/app/context/Ecommercecontext';
+// import { ProductContext } from '@/app/context/Ecommercecontext';
 
 
 const Cart = () => {
     // Get Products
-    const {
-        cartItems,
-    } = useContext(ProductContext);
-
-
-    const bcount = cartItems.length > 0 ? cartItems.length : '0';
-
-
-    const total = sum(cartItems.map((product) => product.price * product.qty));
+    // Đã xoá context eCommerce, tránh lỗi khi không có context
+    const cartItems = [];
+    const bcount = 0;
+    const total = 0;
 
     const [showDrawer, setShowDrawer] = useState(false);
     const handleDrawerClose = () => {
