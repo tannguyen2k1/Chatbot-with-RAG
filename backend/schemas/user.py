@@ -25,7 +25,7 @@ class UserResponse(BaseModel):
     full_name: str | None = None
     phone: str | None = None
     is_active: int
-    role: str
+    roles: list[str] = []
     permissions: dict[str, list[str]] = {}
     class Config:
         from_attributes = True

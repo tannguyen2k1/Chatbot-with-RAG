@@ -28,10 +28,8 @@ export const UserDataProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Chỉ fetch khi đã đăng nhập
-    const shouldFetch = isAuthenticated;
-    // Lấy danh sách users
-    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR(shouldFetch ? "/api/users" : null, getFetcher);
+    // Luôn fetch, fetcher sẽ tự động không gọi nếu chưa có token
+    const { data: usersData, isLoading: isUsersLoading, error: usersError } = useSWR("/api/users", getFetcher);
 
     // Load token & user from localStorage on mount
     useEffect(() => {
@@ -56,6 +54,7 @@ export const UserDataProvider = ({ children }) => {
         } else {
             setLoading(isUsersLoading);
         }
+        // Không reset token, user, isAuthenticated khi fetcher trả về null hoặc lỗi
     }, [usersData, isUsersLoading, usersError]);
 
     // Login function
