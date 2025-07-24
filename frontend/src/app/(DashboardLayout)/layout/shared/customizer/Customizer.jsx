@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import Fab from "@mui/material/Fab";
@@ -15,40 +15,39 @@ import { IconX, IconSettings, IconCheck } from "@tabler/icons-react";
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import WbSunnyTwoToneIcon from "@mui/icons-material/WbSunnyTwoTone";
 import DarkModeTwoToneIcon from "@mui/icons-material/DarkModeTwoTone";
-import SwipeLeftAltTwoToneIcon from "@mui/icons-material/SwipeLeftAltTwoTone";
-import SwipeRightAltTwoToneIcon from "@mui/icons-material/SwipeRightAltTwoTone";
-import AspectRatioTwoToneIcon from "@mui/icons-material/AspectRatioTwoTone";
 import CallToActionTwoToneIcon from "@mui/icons-material/CallToActionTwoTone";
 import ViewSidebarTwoToneIcon from "@mui/icons-material/ViewSidebarTwoTone";
 import WebAssetTwoToneIcon from "@mui/icons-material/WebAssetTwoTone";
-import {
-  ViewComfyTwoTone,
-  PaddingTwoTone,
-  BorderOuter,
-} from "@mui/icons-material";
+import { BorderOuter } from "@mui/icons-material";
 
 const SidebarWidth = "320px";
 
 const Customizer = () => {
   const [showDrawer, setShowDrawer] = useState(false);
   const {
-    activeDir,
-    setActiveDir,
     activeMode,
     setActiveMode,
     isCollapse,
     setIsCollapse,
     activeTheme,
     activeLayout,
-    setActiveLayout,
-    isLayout,
     isCardShadow,
     setIsCardShadow,
-    setIsLayout,
     isBorderRadius,
     setIsBorderRadius,
     setActiveTheme,
   } = useContext(CustomizerContext);
+
+  // Save settings to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("customizer_mode", activeMode);
+      localStorage.setItem("customizer_theme", activeTheme);
+      localStorage.setItem("customizer_collapse", isCollapse);
+      localStorage.setItem("customizer_cardShadow", isCardShadow);
+      localStorage.setItem("customizer_borderRadius", isBorderRadius);
+    }
+  }, [activeMode, activeTheme, isCollapse, isCardShadow, isBorderRadius]);
 
   const StyledBox = styled(Box)(({ theme }) => ({
     boxShadow: theme.shadows[8],
@@ -174,10 +173,7 @@ const Customizer = () => {
               </StyledBox>
             </Stack>
 
-            <Box pt={3} />
-            {/* ------------------------------------------- */}
-            {/* ------------ RTL theme setting -------------*/}
-            {/* ------------------------------------------- */}
+            {/* <Box pt={3} />
             <Typography variant="h6" gutterBottom>
               Theme Direction
             </Typography>
@@ -202,7 +198,7 @@ const Customizer = () => {
                 />{" "}
                 RTL
               </StyledBox>
-            </Stack>
+            </Stack> */}
 
             <Box pt={3} />
             {/* ------------------------------------------- */}
@@ -281,7 +277,7 @@ const Customizer = () => {
             {/* <Typography variant="h6" gutterBottom>
               Container Option
             </Typography> */}
-            <Stack direction={"row"} gap={2} my={2}>
+            {/* <Stack direction={"row"} gap={2} my={2}>
               <StyledBox
                 onClick={() => setIsLayout("boxed")}
                 display="flex"
@@ -302,7 +298,7 @@ const Customizer = () => {
                 />
                 Full
               </StyledBox>
-            </Stack>
+            </Stack> */}
             <Box pt={4} />
             {/* ------------------------------------------- */}
             {/* ------------ Sidebar Color setting ------------- */}

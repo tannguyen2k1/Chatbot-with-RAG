@@ -23,5 +23,8 @@
     "Invoice": "Invoice",
     "Details": "Details",
     "Create": "Create",
-    "Edit": "Edit"
+    "Edit": "Edit",
+    "UserManagement": "User Management",
+    "RoleManagement": "Role Management",
+    "Demo": "Demo"
 }
