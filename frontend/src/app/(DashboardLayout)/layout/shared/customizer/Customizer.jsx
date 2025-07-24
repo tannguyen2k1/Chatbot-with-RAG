@@ -1,14 +1,14 @@
 import { useState, useContext } from "react";
-import Divider from '@mui/material/Divider'
-import Drawer from '@mui/material/Drawer'
-import Fab from '@mui/material/Fab'
-import { Grid } from '@mui/material'
-import IconButton from '@mui/material/IconButton'
-import Slider from '@mui/material/Slider'
-import Stack from '@mui/material/Stack'
-import Tooltip from '@mui/material/Tooltip'
-import Typography from '@mui/material/Typography'
-import { styled } from '@mui/material/styles'
+import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
+import Fab from "@mui/material/Fab";
+import { Grid } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Slider from "@mui/material/Slider";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { styled } from "@mui/material/styles";
 import { CustomizerContext } from "@/app/context/customizerContext";
 import Box from "@mui/material/Box";
 import { IconX, IconSettings, IconCheck } from "@tabler/icons-react";
@@ -47,9 +47,8 @@ const Customizer = () => {
     setIsLayout,
     isBorderRadius,
     setIsBorderRadius,
-    setActiveTheme
+    setActiveTheme,
   } = useContext(CustomizerContext);
-
 
   const StyledBox = styled(Box)(({ theme }) => ({
     boxShadow: theme.shadows[8],
@@ -101,9 +100,6 @@ const Customizer = () => {
     },
   ];
 
-
-
-
   return (
     <div>
       {/* ------------------------------------------- */}
@@ -128,7 +124,7 @@ const Customizer = () => {
             sx: {
               width: SidebarWidth,
             },
-          }
+          },
         }}
       >
         {/* ------------------------------------------- */}
@@ -162,9 +158,7 @@ const Customizer = () => {
                 gap={1}
               >
                 <WbSunnyTwoToneIcon
-                  color={
-                    activeMode === "light" ? "primary" : "inherit"
-                  }
+                  color={activeMode === "light" ? "primary" : "inherit"}
                 />
                 Light
               </StyledBox>
@@ -174,9 +168,7 @@ const Customizer = () => {
                 gap={1}
               >
                 <DarkModeTwoToneIcon
-                  color={
-                    activeMode === "dark" ? "primary" : "inherit"
-                  }
+                  color={activeMode === "dark" ? "primary" : "inherit"}
                 />
                 Dark
               </StyledBox>
@@ -246,19 +238,17 @@ const Customizer = () => {
                       </Box>
                     </Tooltip>
                   </StyledBox>
-
-
                 </Grid>
               ))}
             </Grid>
-            <Box pt={4} />
+            {/* <Box pt={4} /> */}
             {/* ------------------------------------------- */}
             {/* ------------ Layout Horizontal / Vertical ------------- */}
             {/* ------------------------------------------- */}
-            <Typography variant="h6" gutterBottom>
+            {/* <Typography variant="h6" gutterBottom>
               Layout Type
-            </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
+            </Typography> */}
+            {/* <Stack direction={"row"} gap={2} my={2}>
               <StyledBox
                 onClick={() => setActiveLayout("vertical")}
                 display="flex"
@@ -284,13 +274,13 @@ const Customizer = () => {
                 Horizontal
               </StyledBox>
             </Stack>
-            <Box pt={4} />
+            <Box pt={4} /> */}
             {/* ------------------------------------------- */}
             {/* ------------ Layout Boxed / Full ------------- */}
             {/* ------------------------------------------- */}
-            <Typography variant="h6" gutterBottom>
+            {/* <Typography variant="h6" gutterBottom>
               Container Option
-            </Typography>
+            </Typography> */}
             <Stack direction={"row"} gap={2} my={2}>
               <StyledBox
                 onClick={() => setIsLayout("boxed")}
@@ -298,9 +288,7 @@ const Customizer = () => {
                 gap={1}
               >
                 <CallToActionTwoToneIcon
-                  color={
-                    isLayout === "boxed" ? "primary" : "inherit"
-                  }
+                  color={isLayout === "boxed" ? "primary" : "inherit"}
                 />
                 Boxed
               </StyledBox>
@@ -333,13 +321,15 @@ const Customizer = () => {
                 <Stack direction={"row"} gap={2} my={2}>
                   <StyledBox
                     onClick={() => {
-                      setIsCollapse('full-sidebar')
+                      setIsCollapse("full-sidebar");
                     }}
                     display="flex"
                     gap={1}
                   >
                     <WebAssetTwoToneIcon
-                      color={isCollapse === "full-sidebar" ? "primary" : "inherit"}
+                      color={
+                        isCollapse === "full-sidebar" ? "primary" : "inherit"
+                      }
                     />
                     Full
                   </StyledBox>
@@ -349,7 +339,9 @@ const Customizer = () => {
                     gap={1}
                   >
                     <ViewSidebarTwoToneIcon
-                      color={isCollapse === "mini-sidebar" ? "primary" : "inherit"}
+                      color={
+                        isCollapse === "mini-sidebar" ? "primary" : "inherit"
+                      }
                     />
                     mini
                   </StyledBox>
@@ -366,9 +358,7 @@ const Customizer = () => {
                 display="flex"
                 gap={1}
               >
-                <BorderOuter
-                  color={!isCardShadow ? "primary" : "inherit"}
-                />
+                <BorderOuter color={!isCardShadow ? "primary" : "inherit"} />
                 Border
               </StyledBox>
               <StyledBox
