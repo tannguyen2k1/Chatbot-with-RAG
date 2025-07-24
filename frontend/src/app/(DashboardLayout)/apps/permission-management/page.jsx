@@ -1,27 +1,49 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
-  Stack,
   Snackbar,
   Alert,
   CircularProgress,
-  Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
-import { getFetcher, putFetcher } from "@/app/api/globalFetcher";
+import CheckIcon from "@mui/icons-material/CheckCircle";
+import RemoveIcon from "@mui/icons-material/RemoveCircleOutline";
+import { getFetcher, putFetcher, postFetcher } from "@/app/api/globalFetcher";
 
 export default function PermissionManagementPage() {
-  const [roles, setRoles] = useState([]);
+  // Danh sách action chuẩn hóa giống backend
+  const BASE_ACTIONS = [
+    ["view", "Xem"],
+    ["create", "Tạo"],
+    ["update", "Sửa"],
+    ["delete", "Xoá"],
+  ];
+  const permDescriptions = {
+    create: "Tạo mới",
+    view: "Xem",
+    update: "Sửa",
+    delete: "Xoá",
+  };
+
+  const searchParams = useSearchParams();
+  const roleId = searchParams.get("roleId");
+  const [role, setRole] = useState(null);
   const [modules, setModules] = useState([]);
   const [permissions, setPermissions] = useState([]);
-  const [selectedRole, setSelectedRole] = useState("");
   const [rolePerms, setRolePerms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [editPerms, setEditPerms] = useState([]); // local state for batch edit
+  const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -29,6 +51,7 @@ export default function PermissionManagementPage() {
   });
 
   useEffect(() => {
+    if (!roleId) return;
     setLoading(true);
     Promise.all([
       getFetcher("/api/rbac/roles"),
@@ -36,56 +59,71 @@ export default function PermissionManagementPage() {
       getFetcher("/api/rbac/permissions"),
     ])
       .then(([roles, modules, permissions]) => {
-        setRoles(roles);
+        const roleIdNum = Number(roleId);
+        const foundRole = roles.find((r) => r.id === roleIdNum);
+        setRole(foundRole);
         setModules(modules);
         setPermissions(permissions);
-        if (roles.length > 0) setSelectedRole(roles[0].id);
+        setRolePerms(foundRole?.permissions || []);
+        setEditPerms(foundRole?.permissions ? [...foundRole.permissions] : []);
       })
       .catch((e) => {
         setSnackbar({ open: true, message: e.message, severity: "error" });
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [roleId]);
 
-  useEffect(() => {
-    if (selectedRole) {
-      setLoading(true);
-      getFetcher(`/api/rbac/roles`)
-        .then((data) => {
-          const role = data.find((r) => r.id === selectedRole);
-          setRolePerms(role?.permissions || []);
-        })
-        .catch(() => setRolePerms([]))
-        .finally(() => setLoading(false));
-    }
-  }, [selectedRole]);
+  // Không cho chọn role nữa, chỉ chỉnh quyền cho roleId truyền vào
 
+  // Toggle permission and auto-save (theo API backend)
   const handleToggle = async (moduleId, permissionId) => {
+    if (loading) return;
     setLoading(true);
-    const hasPerm = rolePerms.some(
+    const hasPerm = editPerms.some(
       (p) => p.module_id === moduleId && p.permission_id === permissionId
     );
+    let newPerms;
     try {
-      await putFetcher(`/api/rbac/roles/${selectedRole}/permission`, {
-        module_id: moduleId,
-        permission_id: permissionId,
-        action: hasPerm ? "remove" : "add",
-      });
+      if (hasPerm) {
+        // Remove permission
+        await postFetcher("/api/rbac/remove-permission", {
+          role_id: Number(roleId),
+          module_id: moduleId,
+          permission_id: permissionId,
+        });
+        newPerms = editPerms.filter(
+          (p) => !(p.module_id === moduleId && p.permission_id === permissionId)
+        );
+        setSnackbar({
+          open: true,
+          message: "Đã gỡ quyền thành công!",
+          severity: "success",
+        });
+      } else {
+        // Assign permission
+        await postFetcher("/api/rbac/assign-permission", {
+          role_id: Number(roleId),
+          module_id: moduleId,
+          permission_id: permissionId,
+        });
+        newPerms = [
+          ...editPerms,
+          { module_id: moduleId, permission_id: permissionId },
+        ];
+        setSnackbar({
+          open: true,
+          message: "Đã cấp quyền thành công!",
+          severity: "success",
+        });
+      }
+      setEditPerms(newPerms);
+      setRolePerms([...newPerms]);
+    } catch (e) {
       setSnackbar({
         open: true,
-        message: hasPerm ? "Đã tắt quyền" : "Đã bật quyền",
-        severity: "success",
+        message: e?.response?.data?.detail || e.message,
+        severity: "error",
       });
-      setRolePerms((rp) =>
-        hasPerm
-          ? rp.filter(
-              (p) =>
-                !(p.module_id === moduleId && p.permission_id === permissionId)
-            )
-          : [...rp, { module_id: moduleId, permission_id: permissionId }]
-      );
-    } catch (e) {
-      setSnackbar({ open: true, message: e.message, severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -96,53 +134,116 @@ export default function PermissionManagementPage() {
       <Typography variant="h4" fontWeight={700} color="primary.main" mb={3}>
         Quản lý quyền cho vai trò
       </Typography>
-      <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-        <FormControl size="small">
-          <InputLabel>Vai trò</InputLabel>
-          <Select
-            value={selectedRole}
-            label="Vai trò"
-            onChange={(e) => setSelectedRole(e.target.value)}
-          >
-            {roles.map((r) => (
-              <MenuItem key={r.id} value={r.id}>
-                {r.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Stack>
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <Box>
-          {modules.map((m) => (
-            <Box key={m.id} mb={2}>
-              <Typography fontWeight={600}>{m.name}</Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {permissions
-                  .filter((p) => p.module_id === m.id)
-                  .map((p) => {
-                    const checked = rolePerms.some(
-                      (rp) => rp.module_id === m.id && rp.permission_id === p.id
-                    );
-                    return (
-                      <Button
-                        key={p.id}
-                        variant={checked ? "contained" : "outlined"}
-                        color={checked ? "success" : "primary"}
-                        size="small"
-                        sx={{ mb: 1 }}
-                        onClick={() => handleToggle(m.id, p.id)}
+      {roleId && role ? (
+        <>
+          <Typography mb={2}>
+            Vai trò: <b>{role.name}</b>
+          </Typography>
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, width: 180 }}>
+                      Module
+                    </TableCell>
+                    {BASE_ACTIONS.map((action) => (
+                      <TableCell
+                        key={action[0]}
+                        align="center"
+                        sx={{ fontWeight: 700 }}
                       >
-                        {p.name}
-                      </Button>
-                    );
-                  })}
-              </Stack>
-            </Box>
-          ))}
-        </Box>
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
+                        >
+                          <span>{action[0]}</span>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontSize: 11 }}
+                          >
+                            {permDescriptions[action[0]] || ""}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {modules.map((mod) => (
+                    <TableRow key={mod.id}>
+                      <TableCell sx={{ fontWeight: 600 }}>{mod.name}</TableCell>
+                      {BASE_ACTIONS.map((action) => {
+                        // Tìm permission tương ứng module + action
+                        const perm = permissions.find(
+                          (p) => p.name === `${mod.name}.${action[0]}`
+                        );
+                        if (!perm) {
+                          return (
+                            <TableCell key={action[0]} align="center">
+                              -
+                            </TableCell>
+                          );
+                        }
+                        const checked = editPerms.some(
+                          (rp) =>
+                            rp.module_id === mod.id &&
+                            rp.permission_id === perm.id
+                        );
+                        return (
+                          <TableCell key={perm.id} align="center">
+                            <Tooltip
+                              title={
+                                checked
+                                  ? `Đã có quyền: ${
+                                      permDescriptions[action[0]] || perm.name
+                                    }`
+                                  : `Chưa có quyền: ${
+                                      permDescriptions[action[0]] || perm.name
+                                    }`
+                              }
+                              arrow
+                            >
+                              <span>
+                                <IconButton
+                                  color={checked ? "success" : "default"}
+                                  size="medium"
+                                  sx={{
+                                    bgcolor: checked
+                                      ? "#e6f4ea"
+                                      : "transparent",
+                                    borderRadius: 2,
+                                    transition: "0.2s",
+                                  }}
+                                  disabled={loading}
+                                  onClick={() => handleToggle(mod.id, perm.id)}
+                                >
+                                  {checked ? (
+                                    <CheckIcon color="success" />
+                                  ) : (
+                                    <RemoveIcon color="disabled" />
+                                  )}
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </>
+      ) : (
+        <Alert severity="error">
+          Không tìm thấy vai trò hoặc thiếu roleId trên URL.
+        </Alert>
       )}
       <Snackbar
         open={snackbar.open}

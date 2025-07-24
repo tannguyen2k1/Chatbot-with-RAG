@@ -34,7 +34,7 @@ export default function RoleThemeTable({ rows, loading, onMenuClick }) {
           ) : rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} align="center">
-                {!loading && 'Không có dữ liệu'}
+                {!loading && "Không có dữ liệu"}
               </TableCell>
             </TableRow>
           ) : (
@@ -44,7 +44,9 @@ export default function RoleThemeTable({ rows, loading, onMenuClick }) {
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 <TableCell>
-                  <IconButton onClick={(e) => onMenuClick && onMenuClick(e, row)}>
+                  <IconButton
+                    onClick={(e) => onMenuClick && onMenuClick(e, row)}
+                  >
                     <IconDotsVertical width={18} />
                   </IconButton>
                 </TableCell>
