@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from middleware.dependency import get_db, get_current_user
-from services.rbac import RBACService
-from services.demo import DemoService
-from schemas.demo import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
+from services import RBACService, DemoService
+from schemas import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
 
 router = APIRouter(prefix="/demos", tags=["Demos"])
 

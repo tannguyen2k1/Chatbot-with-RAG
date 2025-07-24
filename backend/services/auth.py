@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime, timezone
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
-from database.models.auth_models import User
+from database.models import User
 from config.settings import settings
 from passlib.context import CryptContext
 

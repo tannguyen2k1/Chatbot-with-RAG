@@ -2,12 +2,11 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from schemas.rbac import RoleCreate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
-from services.rbac import RBACService
-from middleware.dependency import get_db
+from schemas import RoleCreate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
+from services import RBACService
+from middleware import get_db
 
 router = APIRouter(prefix="/rbac", tags=["RBAC"])
-
 
 @router.get("/roles", response_model=list[RoleOut])
 def get_roles(db: Session = Depends(get_db)):

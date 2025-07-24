@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from database.models.demos import Demo
-from schemas.demo import DemoCreate, DemoUpdate
+from database.models import Demo
+from schemas import DemoCreate, DemoUpdate
 from typing import List, Optional
 
 

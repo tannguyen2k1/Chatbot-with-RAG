@@ -21,14 +21,11 @@ class AssignPermissionToRole(BaseModel):
     role_id: int
     module_id: int
     permission_id: int
-
-
     
 class RemovePermissionFromRole(BaseModel):
     role_id: int
     module_id: int
     permission_id: int
-    
     
 class RolePermissionOut(BaseModel):
     module_id: int

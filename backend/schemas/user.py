@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+# Paginated response for users
+from typing import List
 
 # Pydantic schemas for user operations
 class UserCreate(BaseModel):
@@ -30,8 +32,6 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Paginated response for users
-from typing import List
 class PaginatedUserResponse(BaseModel):
     data: List[UserResponse]
     total: int
