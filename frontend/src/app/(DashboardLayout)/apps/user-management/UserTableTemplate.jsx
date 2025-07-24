@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import UserFormDialog from './UserFormDialog';
-import { getFetcher, deleteFetcher } from '@/app/api/globalFetcher';
+import UserFormDialog from "./UserFormDialog";
+import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
 import {
   Typography,
   Menu,
@@ -13,32 +13,37 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Snackbar, 
-  Alert, 
-  TextField
+  Snackbar,
+  Alert,
+  TextField,
 } from "@mui/material";
-import UserThemeTable from '@/app/components/tables/UserThemeTable';
-import {
-  IconEdit,
-  IconTrash
-} from "@tabler/icons-react";
+import UserThemeTable from "@/app/components/tables/UserThemeTable";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 
 const fetchUsers = async (page, pageSize, search) => {
   // getFetcher sẽ tự động lấy token từ localStorage
-  const url = `/api/users?page=${page + 1}&page_size=${pageSize}&search=${search || ''}`;
+  const url = `/api/users?page=${page + 1}&page_size=${pageSize}&search=${
+    search || ""
+  }`;
   const data = await getFetcher(url);
-  if (!data) throw new Error('Lỗi khi tải danh sách người dùng hoặc chưa đăng nhập');
+  if (!data)
+    throw new Error("Lỗi khi tải danh sách người dùng hoặc chưa đăng nhập");
   return data;
 };
 const deleteUser = async (id) => {
   // deleteFetcher sẽ tự động lấy token từ localStorage
   const url = `/api/users/${id}`;
   const data = await deleteFetcher(url);
-  if (!data) throw new Error('Xoá người dùng thất bại hoặc chưa đăng nhập');
+  if (!data) throw new Error("Xoá người dùng thất bại hoặc chưa đăng nhập");
   return data;
 };
 
-export default function UserTableTemplate({ reload, onActionDone }) {
+export default function UserTableTemplate({
+  reload,
+  onActionDone,
+  canUpdate = false,
+  canDelete = false,
+}) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -50,7 +55,11 @@ export default function UserTableTemplate({ reload, onActionDone }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   // Snackbar state
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   // Dialog state
   const [formDialog, setFormDialog] = useState({ open: false, user: null });
 
@@ -64,9 +73,14 @@ export default function UserTableTemplate({ reload, onActionDone }) {
     setFormDialog({ open: true, user });
   };
   // Đóng dialog và nhận notify từ form
-  const handleFormClose = (success, message, severity = 'success') => {
+  const handleFormClose = (success, message, severity = "success") => {
     setFormDialog({ open: false, user: null });
-    if (message) setSnackbar({ open: true, message, severity: severity || (success ? 'success' : 'error') });
+    if (message)
+      setSnackbar({
+        open: true,
+        message,
+        severity: severity || (success ? "success" : "error"),
+      });
     if (success) loadData();
   };
   const handleMenuClose = () => {
@@ -82,60 +96,104 @@ export default function UserTableTemplate({ reload, onActionDone }) {
     } catch (e) {
       setRows([]);
       setRowCount(0);
-      setSnackbar({ open: true, message: e.message, severity: 'error' });
+      setSnackbar({ open: true, message: e.message, severity: "error" });
       if (onActionDone) onActionDone(false, e.message, "error");
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => { loadData(); }, [page, pageSize, search, reload]);
+  useEffect(() => {
+    loadData();
+  }, [page, pageSize, search, reload]);
 
   const handleDelete = async () => {
     try {
       await deleteUser(deleteId);
-      setSnackbar({ open: true, message: "Xoá người dùng thành công", severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: "Xoá người dùng thành công",
+        severity: "success",
+      });
       setDeleteId(null);
       setConfirmOpen(false);
       loadData();
     } catch (e) {
-      setSnackbar({ open: true, message: e.message, severity: 'error' });
+      setSnackbar({ open: true, message: e.message, severity: "error" });
       if (onActionDone) onActionDone(false, e.message, "error");
     }
   };
 
   return (
-    <Box sx={{ borderRadius: 2, boxShadow: 1, p: 2, bgcolor: 'background.paper' }}>
-      <Stack direction="row" spacing={1} mb={2} alignItems="center" justifyContent={'space-between'}>
-        <Typography variant="h6" fontWeight={600}>Danh sách người dùng</Typography>
+    <Box
+      sx={{ borderRadius: 2, boxShadow: 1, p: 2, bgcolor: "background.paper" }}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        mb={2}
+        alignItems="center"
+        justifyContent={"space-between"}
+      >
+        <Typography variant="h6" fontWeight={600}>
+          Danh sách người dùng
+        </Typography>
         <Box width={500}>
-            <TextField
-                fullWidth
-                placeholder="Tìm kiếm username/email..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-            />
+          <TextField
+            fullWidth
+            placeholder="Tìm kiếm username/email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </Box>
       </Stack>
-      <UserThemeTable rows={rows} loading={loading} onMenuClick={handleMenuClick} />
+      <UserThemeTable
+        rows={rows}
+        loading={loading}
+        onMenuClick={handleMenuClick}
+      />
       {/* Pagination */}
-      <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} mt={2}>
+      <Stack
+        direction="row"
+        justifyContent="flex-end"
+        alignItems="center"
+        spacing={2}
+        mt={2}
+      >
         <Typography>Trang:</Typography>
-        <Button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Trước</Button>
+        <Button disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          Trước
+        </Button>
         <Typography>{page + 1}</Typography>
-        <Button disabled={(page + 1) * pageSize >= rowCount} onClick={() => setPage(p => p + 1)}>Sau</Button>
+        <Button
+          disabled={(page + 1) * pageSize >= rowCount}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Sau
+        </Button>
         <Typography>Tổng: {rowCount}</Typography>
       </Stack>
       {/* Menu for actions */}
-      <Menu
-        anchorEl={anchorEl}
-        open={openMenu}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => { handleMenuClose(); handleEdit(menuRow); }}>
-          <IconEdit width={18} style={{ marginRight: 8 }} />Sửa
+      <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            handleEdit(menuRow);
+          }}
+          disabled={!canUpdate}
+        >
+          <IconEdit width={18} style={{ marginRight: 8 }} />
+          Sửa
         </MenuItem>
-        <MenuItem onClick={() => { handleMenuClose(); setDeleteId(menuRow.id); setConfirmOpen(true); }}>
-          <IconTrash width={18} style={{ marginRight: 8 }} color="red" />Xoá
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setDeleteId(menuRow.id);
+            setConfirmOpen(true);
+          }}
+          disabled={!canDelete}
+        >
+          <IconTrash width={18} style={{ marginRight: 8 }} color="red" />
+          Xoá
         </MenuItem>
       </Menu>
       {/* Confirm delete dialog */}
@@ -144,7 +202,9 @@ export default function UserTableTemplate({ reload, onActionDone }) {
         <DialogContent>Bạn có chắc chắn muốn xoá người dùng này?</DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Huỷ</Button>
-          <Button color="error" onClick={handleDelete}>Xoá</Button>
+          <Button color="error" onClick={handleDelete}>
+            Xoá
+          </Button>
         </DialogActions>
       </Dialog>
       {/* Form dialog (edit/create) */}
@@ -159,10 +219,14 @@ export default function UserTableTemplate({ reload, onActionDone }) {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
-        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

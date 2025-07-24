@@ -15,6 +15,8 @@ const fetchRoles = async () => {
   }
 };
 
+import { useHasPermission } from "@/app/utils/auth/useHasPermission";
+
 export default function UserFormDialog({ open, onClose, user }) {
   const isEdit = Boolean(user);
   const [form, setForm] = useState({ username: '', email: '', password: '', full_name: '', phone: '', role: '', is_active: true });
@@ -66,6 +68,11 @@ export default function UserFormDialog({ open, onClose, user }) {
       setLoading(false);
     }
   };
+  const canCreate = useHasPermission('user', 'create');
+  const canUpdate = useHasPermission('user', 'update');
+  const isEditMode = isEdit;
+  // Chỉ cho submit nếu có quyền tương ứng
+  const canSubmit = isEditMode ? canUpdate : canCreate;
   return (
     <Dialog open={open} onClose={() => onClose(false)} maxWidth="xs" fullWidth>
       <form onSubmit={handleSubmit}>
@@ -87,7 +94,7 @@ export default function UserFormDialog({ open, onClose, user }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => onClose(false)}>Huỷ</Button>
-          <Button type="submit" variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Lưu'}</Button>
+          <Button type="submit" variant="contained" disabled={loading || !canSubmit}>{loading ? <CircularProgress size={20} /> : 'Lưu'}</Button>
         </DialogActions>
       </form>
     </Dialog>
