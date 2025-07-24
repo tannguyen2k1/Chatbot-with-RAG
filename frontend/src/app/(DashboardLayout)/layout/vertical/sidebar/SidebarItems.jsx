@@ -1,35 +1,40 @@
-import Menuitems from './MenuItems';
+import Menuitems from "./MenuItems";
+import { useHasPermission } from "@/app/utils/auth/useHasPermission";
 import { usePathname } from "next/navigation";
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import NavItem from './NavItem';
-import NavCollapse from './NavCollapse';
-import NavGroup from './NavGroup/NavGroup';
-import { useContext } from 'react';
-import { CustomizerContext } from '@/app/context/customizerContext';
-
-
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import NavItem from "./NavItem";
+import NavCollapse from "./NavCollapse";
+import NavGroup from "./NavGroup/NavGroup";
+import { useContext } from "react";
+import { CustomizerContext } from "@/app/context/customizerContext";
 
 const SidebarItems = () => {
   const pathname = usePathname();
   const pathDirect = pathname;
-  const pathWithoutLastPart = pathname.slice(0, pathname.lastIndexOf('/'));
-  const { isSidebarHover, isCollapse, isMobileSidebar, setIsMobileSidebar } = useContext(CustomizerContext);
+  const pathWithoutLastPart = pathname.slice(0, pathname.lastIndexOf("/"));
+  const { isSidebarHover, isCollapse, isMobileSidebar, setIsMobileSidebar } =
+    useContext(CustomizerContext);
 
-  const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
-  const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
+  const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
+  const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : "";
 
   return (
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
         {Menuitems.map((item) => {
+          // Nếu có trường permission thì kiểm tra quyền, không có thì luôn hiển thị
+          if (item.permission) {
+            const [module, action] = item.permission.split(".");
+            const hasPerm = useHasPermission(module, action);
+            if (!hasPerm) return null;
+          }
           // {/********SubHeader**********/}
           if (item.subheader) {
-            return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
-
-            // {/********If Sub Menu**********/}
-            /* eslint no-else-return: "off" */
+            return (
+              <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />
+            );
           } else if (item.children) {
             return (
               <NavCollapse
@@ -42,11 +47,15 @@ const SidebarItems = () => {
                 onClick={() => setIsMobileSidebar(!isMobileSidebar)}
               />
             );
-
-            // {/********If Sub No Menu**********/}
           } else {
             return (
-              <NavItem item={item} key={item.id} pathDirect={pathDirect} hideMenu={hideMenu} onClick={() => setIsMobileSidebar(!isMobileSidebar)} />
+              <NavItem
+                item={item}
+                key={item.id}
+                pathDirect={pathDirect}
+                hideMenu={hideMenu}
+                onClick={() => setIsMobileSidebar(!isMobileSidebar)}
+              />
             );
           }
         })}
