@@ -140,7 +140,7 @@ export default function UserTableTemplate({
         <Box width={500}>
           <TextField
             fullWidth
-            placeholder="Tìm kiếm username/email..."
+            placeholder="Tìm kiếm..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
