@@ -71,11 +71,11 @@ const Header = () => {
             {/* Search Dropdown */}
             {/* ------------------------------------------- */}
             <Search />
-            {lgUp ? (
+            {/* {lgUp ? (
               <>
                 <Navigation />
               </>
-            ) : null}
+            ) : null} */}
 
             <Box sx={{
               flexGrow: 1
@@ -84,13 +84,7 @@ const Header = () => {
               alignItems: "center"
             }}>
               <Language />
-              {/* ------------------------------------------- */}
-              {/* Ecommerce Dropdown */}
-              {/* ------------------------------------------- */}
-              <Cart />
-              {/* ------------------------------------------- */}
-              {/* End Ecommerce Dropdown */}
-              {/* ------------------------------------------- */}
+              {/* <Cart /> */}
 
               <IconButton size="large" color="inherit">
                 {activeMode === 'light' ? (
@@ -100,11 +94,8 @@ const Header = () => {
                 )}
               </IconButton>
 
-              <Notifications />
-              {/* ------------------------------------------- */}
-              {/* Toggle Right Sidebar for mobile */}
-              {/* ------------------------------------------- */}
-              {lgDown ? <MobileRightSidebar /> : null}
+              {/* <Notifications /> */}
+              {/* {lgDown ? <MobileRightSidebar /> : null} */}
               <Profile />
             </Stack>
           </ToolbarStyled>
