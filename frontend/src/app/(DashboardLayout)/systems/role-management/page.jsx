@@ -140,7 +140,7 @@ export default function RoleManagementPage() {
             handleMenuClose();
             router.push(`/apps/permission-management?roleId=${menuRow.id}`);
           }}
-          disabled={!canUpdate}
+          disabled={!canUpdate || menuRow?.name === "root"}
         >
           <IconSettings width={18} style={{ marginRight: 8 }} />
           Quản lý quyền
@@ -150,14 +150,14 @@ export default function RoleManagementPage() {
             handleMenuClose();
             handleEdit(menuRow);
           }}
-          disabled={!canUpdate}
+          disabled={!canUpdate || menuRow?.name === "root"}
         >
           <IconEdit width={18} style={{ marginRight: 8 }} />
           Sửa
         </MenuItem>
         <MenuItem
           onClick={() => handleDeleteClick(menuRow)}
-          disabled={!canDelete}
+          disabled={!canDelete || menuRow?.name === "root"}
         >
           <IconTrash width={18} style={{ marginRight: 8 }} color="red" />
           Xoá
