@@ -26,7 +26,7 @@ const fetchRoles = async () => {
   return await getFetcher("/api/rbac/roles");
 };
 const deleteRole = async (id) => {
-  return await deleteFetcher("/api/rbac/roles", { id });
+  return await deleteFetcher(`/api/rbac/roles/${id}`);
 };
 
 export default function RoleManagementPage() {
