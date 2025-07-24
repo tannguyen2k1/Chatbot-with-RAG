@@ -19,6 +19,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RoleThemeTable from "@/app/components/tables/RoleThemeTable";
 import RoleFormDialog from "./RoleFormDialog";
 import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
+import { useHasPermission } from "@/app/utils/auth/useHasPermission";
 import { useRouter } from "next/navigation";
 
 const fetchRoles = async () => {
@@ -102,6 +103,11 @@ export default function RoleManagementPage() {
       .finally(() => setLoading(false));
   }, [reload]);
 
+  // Quyền
+  const canCreate = useHasPermission("role", "create");
+  const canUpdate = useHasPermission("role", "update");
+  const canDelete = useHasPermission("role", "delete");
+
   return (
     <Box sx={{ p: { xs: 1, sm: 3 } }}>
       <Stack
@@ -113,7 +119,12 @@ export default function RoleManagementPage() {
         <Typography variant="h4" fontWeight={700} color="primary.main">
           Quản lý vai trò
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAdd}
+          disabled={!canCreate}
+        >
           Thêm vai trò
         </Button>
       </Stack>
@@ -127,24 +138,29 @@ export default function RoleManagementPage() {
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            handleEdit(menuRow);
+            router.push(`/apps/permission-management?roleId=${menuRow.id}`);
           }}
+          disabled={!canUpdate}
         >
-          <IconEdit width={18} style={{ marginRight: 8 }} />
-          Sửa
-        </MenuItem>
-        <MenuItem onClick={() => handleDeleteClick(menuRow)}>
-          <IconTrash width={18} style={{ marginRight: 8 }} color="red" />
-          Xoá
+          <IconSettings width={18} style={{ marginRight: 8 }} />
+          Quản lý quyền
         </MenuItem>
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            router.push(`/apps/permission-management?roleId=${menuRow.id}`);
+            handleEdit(menuRow);
           }}
+          disabled={!canUpdate}
         >
-          <IconSettings width={18} style={{ marginRight: 8 }} />
-          Quản lý quyền
+          <IconEdit width={18} style={{ marginRight: 8 }} />
+          Sửa
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleDeleteClick(menuRow)}
+          disabled={!canDelete}
+        >
+          <IconTrash width={18} style={{ marginRight: 8 }} color="red" />
+          Xoá
         </MenuItem>
       </Menu>
       {/* Confirm delete dialog */}
@@ -153,7 +169,7 @@ export default function RoleManagementPage() {
         <DialogContent>Bạn có chắc chắn muốn xoá vai trò này?</DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Huỷ</Button>
-          <Button color="error" onClick={handleDelete}>
+          <Button color="error" onClick={handleDelete} disabled={!canDelete}>
             Xoá
           </Button>
         </DialogActions>

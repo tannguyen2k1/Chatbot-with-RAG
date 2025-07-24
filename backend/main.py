@@ -58,7 +58,7 @@ app = FastAPI(
         "permissions": "manage"
     }
     ```
-    **Các loại quyền:** `manage`, `view`, `create`, `update`, `delete`
+    **Các loại quyền:**  `view`, `create`, `update`, `delete`
     **Modules:** `demo`, `user`, `role`, v.v.
     """,
     version="1.0.0",
