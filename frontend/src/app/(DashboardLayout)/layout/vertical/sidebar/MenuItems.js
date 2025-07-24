@@ -41,6 +41,7 @@ const Menuitems = [
     icon: IconUserCircle,
     chipColor: "secondary",
     href: "/apps/user-management",
+    permission: "user.view",
   },
   {
     id: uniqueId(),
@@ -48,6 +49,7 @@ const Menuitems = [
     icon: IconFileCheck,
     chipColor: "secondary",
     href: "/apps/role-management",
+    permission: "role.view",
   },
 ];
 
