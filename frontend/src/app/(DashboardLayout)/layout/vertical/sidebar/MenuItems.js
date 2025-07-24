@@ -26,10 +26,10 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Contacts",
+    title: "Demos",
     icon: IconPackage,
     chipColor: "secondary",
-    href: "/apps/contacts",
+    href: "/apps/demos",
   },
   {
     navlabel: true,
@@ -37,18 +37,18 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "User Management",
+    title: "Quản lý người dùng",
     icon: IconUserCircle,
     chipColor: "secondary",
-    href: "/apps/user-management",
+    href: "/systems/user-management",
     permission: "user.view",
   },
   {
     id: uniqueId(),
-    title: "Role Management",
+    title: "Quản lý vai trò",
     icon: IconFileCheck,
     chipColor: "secondary",
-    href: "/apps/role-management",
+    href: "/systems/role-management",
     permission: "role.view",
   },
 ];
