@@ -12,7 +12,6 @@ import * as dropdownData from "./data";
 
 import { IconMail } from "@tabler/icons-react";
 import { Stack } from "@mui/system";
-import Image from "next/image";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -23,7 +22,7 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const { user } = useContext(UserDataContext);
+  const { user, logout } = useContext(UserDataContext);
   // State cho đồng hồ
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -208,10 +207,9 @@ const Profile = () => {
             </Typography>
           </Box>
           <Button
-            href="/auth/auth1/login"
+            onClick={logout}
             variant="outlined"
             color="primary"
-            component={Link}
             fullWidth
           >
             Logout

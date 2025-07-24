@@ -1,3 +1,3 @@
-const nextConfig = { reactStrictMode: false, images: { unoptimized: true } };
+const nextConfig = { reactStrictMode: false, devIndicators: false, images: { unoptimized: true } };
 
 export default nextConfig;

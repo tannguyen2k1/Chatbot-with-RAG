@@ -15,7 +15,7 @@ export const Profile = () => {
   const { isSidebarHover, isCollapse } = useContext(CustomizerContext);
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : "";
 
-  const { user } = useContext(UserDataContext);
+  const { user, logout } = useContext(UserDataContext);
   return (
     <Box
       sx={{
@@ -44,10 +44,9 @@ export const Profile = () => {
             <Tooltip title="Logout" placement="top">
               <IconButton
                 color="primary"
-                component={Link}
-                href="/auth/auth1/login"
                 aria-label="logout"
                 size="small"
+                onClick={logout}
               >
                 <IconPower size="20" />
               </IconButton>
