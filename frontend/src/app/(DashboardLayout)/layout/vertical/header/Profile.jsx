@@ -171,18 +171,28 @@ const Profile = () => {
         ))}
         <Box sx={{ mt: 2 }}>
           <Box
-            sx={{
-              bgcolor: "#f5f8ff",
+            sx={(theme) => ({
+              bgcolor: theme.palette.mode === "dark" ? "#222a36" : "#f5f8ff",
+              color:
+                theme.palette.mode === "dark"
+                  ? theme.palette.primary.contrastText
+                  : "inherit",
               borderRadius: 3,
-              border: "1px solid #e3e8ee",
+              border:
+                theme.palette.mode === "dark"
+                  ? "1px solid #334155"
+                  : "1px solid #e3e8ee",
               p: 2.5,
               mb: 3,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              boxShadow: "0 2px 8px 0 rgba(60,72,120,0.06)",
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 2px 8px 0 rgba(60,72,120,0.18)"
+                  : "0 2px 8px 0 rgba(60,72,120,0.06)",
               minWidth: 220,
-            }}
+            })}
           >
             <Typography
               variant="subtitle2"
@@ -206,12 +216,7 @@ const Profile = () => {
               {now.toLocaleTimeString("vi-VN", { hour12: false })}
             </Typography>
           </Box>
-          <Button
-            onClick={logout}
-            variant="outlined"
-            color="primary"
-            fullWidth
-          >
+          <Button onClick={logout} variant="outlined" color="primary" fullWidth>
             Logout
           </Button>
         </Box>
