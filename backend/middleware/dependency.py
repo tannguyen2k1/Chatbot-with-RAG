@@ -5,7 +5,7 @@ from typing import Generator
 from jose import JWTError, jwt
 from config.settings import settings
 from database.database import SessionLocal
-from database.models.auth_models import User
+from database.models import User
 
 # Sử dụng HTTPBearer thay vì OAuth2PasswordBearer để đơn giản hơa
 security = HTTPBearer()

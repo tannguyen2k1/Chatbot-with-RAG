@@ -1,7 +1,7 @@
 
 # Auto seed base modules and permissions for RBAC
 from database.database import SessionLocal
-from services.rbac import RBACService
+from services import RBACService
 
 # Danh sách module cần seed
 MODULES = [
@@ -27,7 +27,7 @@ BASE_ROLES = [
 
 # Seed 3 role mặc định (root, admin, user)
 def seed_default_roles():
-    from database.models.auth_models import Role
+    from database.models import Role
     db = SessionLocal()
     for name, desc in BASE_ROLES:
         role = db.query(Role).filter_by(name=name).first()
@@ -38,7 +38,7 @@ def seed_default_roles():
 
 
 def seed_modules_and_permissions():
-    from database.models.auth_models import Permission
+    from database.models import Permission
     db = SessionLocal()
     rbac = RBACService(db)
     for module_name, module_desc in MODULES:
@@ -57,7 +57,7 @@ def seed_modules_and_permissions():
 
 # Seed tài khoản mặc định (root, admin, user)
 def seed_default_accounts():
-    from database.models.auth_models import User
+    from database.models import User
     from services.user import UserService, UserCreate
     db = SessionLocal()
     user_service = UserService(db)
@@ -66,7 +66,7 @@ def seed_default_accounts():
         ("admin", "Admin", "admin@local.com", "admin123456", "admin"),
         ("user", "User", "user@local.com", "user123456", "user"),
     ]
-    from database.models.auth_models import UserRole, Role
+    from database.models import UserRole, Role
     for username, full_name, email, password, role in default_accounts:
         user = db.query(User).filter_by(username=username).first()
         if not user:
@@ -83,8 +83,8 @@ def seed_default_accounts():
 
 # Seed demo mẫu (nếu chưa có)
 def seed_default_demos():
-    from services.demo import DemoService
-    from schemas.demo import DemoCreate
+    from services import DemoService
+    from schemas import DemoCreate
     db = SessionLocal()
     demo_service = DemoService(db)
     if not demo_service.get_all_demos():
@@ -96,7 +96,7 @@ def seed_default_demos():
 
 # Gán tất cả quyền cho role 'root' và 'admin' nếu chưa có
 def seed_root_admin_permissions():
-    from database.models.auth_models import Role, Permission, RolePermission, Module
+    from database.models import Role, Permission, RolePermission, Module
     db = SessionLocal()
     # Lấy role root và admin
     root_role = db.query(Role).filter_by(name="root").first()

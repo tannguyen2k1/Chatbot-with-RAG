@@ -1,17 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from database.models.auth_models import User
+from database.models import User
 from middleware.dependency import get_db, get_current_user
 from middleware.security import verify_token
-from services.auth import AuthService
+from services import AuthService , RBACService
 from config.settings import settings
-from schemas.auth import (
-    RefreshTokenRequest, TokenResponse, LoginRequest, 
-    ChangePasswordRequest, SimpleResetPasswordRequest, MessageResponse
-)
-from schemas.user import UserResponse
-from services.rbac import RBACService
+from schemas import (RefreshTokenRequest, 
+                     TokenResponse, 
+                     LoginRequest,
+                     ChangePasswordRequest, 
+                     SimpleResetPasswordRequest, 
+                     MessageResponse,
+                     UserResponse)
+
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

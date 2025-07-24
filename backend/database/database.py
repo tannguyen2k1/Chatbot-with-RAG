@@ -9,6 +9,3 @@ engine = create_engine(DATABASE_URL, echo=True, future=True)
 
 # Create a session factory (create local sessions for CRUD operations)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Export Base for easy import elsewhere
-from database.models.base import Base

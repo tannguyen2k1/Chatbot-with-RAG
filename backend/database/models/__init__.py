@@ -1,2 +1,4 @@
-from .auth_models import User, Role, Module, Permission, RolePermission, UserRole
-from .demos import Demo
+from .base import *
+from .auth_models import *
+from .demo import *
+from .user import *

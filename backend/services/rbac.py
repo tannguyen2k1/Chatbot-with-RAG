@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from database.models.auth_models import Role, Module, Permission, RolePermission, UserRole
+from database.models import Role, Module, Permission, RolePermission, UserRole
 
 class RBACService:
     def __init__(self, db: Session):
