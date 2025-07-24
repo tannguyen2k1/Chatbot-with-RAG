@@ -26,7 +26,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Demos",
+    title: "Demo",
     icon: IconPackage,
     chipColor: "secondary",
     href: "/apps/demos",
@@ -37,7 +37,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Quản lý người dùng",
+    title: "UserManagement",
     icon: IconUserCircle,
     chipColor: "secondary",
     href: "/systems/user-management",
@@ -45,7 +45,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Quản lý vai trò",
+    title: "RoleManagement",
     icon: IconFileCheck,
     chipColor: "secondary",
     href: "/systems/role-management",
