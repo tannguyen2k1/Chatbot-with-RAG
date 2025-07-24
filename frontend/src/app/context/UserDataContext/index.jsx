@@ -42,6 +42,11 @@ export const UserDataProvider = ({ children }) => {
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
+        // Nếu không có token thì clear toàn bộ localStorage và chuyển hướng về login (SPA)
+        if (!storedToken) {
+            localStorage.clear();
+            router.push('/auth/auth1/login');
+        }
     }, []);
 
     useEffect(() => {
@@ -93,9 +98,7 @@ export const UserDataProvider = ({ children }) => {
         setToken(null);
         setIsAuthenticated(false);
         setUser(null);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        localStorage.clear();
         router.push('/auth/auth1/login');
     };
 
