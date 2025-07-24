@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import Typography from '@mui/material/Typography';
-import * as dropdownData from './data';
+import React, { useState, useContext, useEffect } from "react";
+import { UserDataContext } from "@/app/context/UserDataContext";
+import Link from "next/link";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import Typography from "@mui/material/Typography";
+import * as dropdownData from "./data";
 
-import { IconMail } from '@tabler/icons-react';
-import { Stack } from '@mui/system';
-import Image from 'next/image';
-
+import { IconMail } from "@tabler/icons-react";
+import { Stack } from "@mui/system";
+import Image from "next/image";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -23,43 +23,48 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
+  const { user } = useContext(UserDataContext);
+  // State cho đồng hồ
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    (<Box>
+    <Box>
       <IconButton
         aria-label="show 11 new notifications"
         color="inherit"
         aria-controls="msgs-menu"
         aria-haspopup="true"
         sx={{
-          ...(typeof anchorEl2 === 'object' && {
-            color: 'primary.main',
+          ...(typeof anchorEl2 === "object" && {
+            color: "primary.main",
           }),
         }}
         onClick={handleClick2}
       >
         <Avatar
           src={"/images/profile/user-1.jpg"}
-          alt={'ProfileImg'}
+          alt={user?.full_name || user?.username || "ProfileImg"}
           sx={{
             width: 35,
             height: 35,
           }}
         />
       </IconButton>
-      {/* ------------------------------------------- */}
-      {/* Message Dropdown */}
-      {/* ------------------------------------------- */}
       <Menu
         id="msgs-menu"
         anchorEl={anchorEl2}
         keepMounted
         open={Boolean(anchorEl2)}
         onClose={handleClose2}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
-          '& .MuiMenu-paper': {
-            width: '360px',
+          "& .MuiMenu-paper": {
+            width: "360px",
             p: 4,
           },
         }}
@@ -70,28 +75,42 @@ const Profile = () => {
           spacing={2}
           sx={{
             py: 3,
-            alignItems: "center"
-          }}>
-          <Avatar src={"/images/profile/user-1.jpg"} alt={"ProfileImg"} sx={{ width: 95, height: 95 }} />
+            alignItems: "center",
+          }}
+        >
+          <Avatar
+            src={"/images/profile/user-1.jpg"}
+            alt={user?.full_name || user?.username || "ProfileImg"}
+            sx={{ width: 95, height: 95 }}
+          />
           <Box>
-            <Typography variant="subtitle2" color="textPrimary" sx={{
-              fontWeight: 600
-            }}>
-              Mathew Anderson
+            <Typography
+              variant="subtitle2"
+              color="textPrimary"
+              sx={{ fontWeight: 600 }}
+            >
+              {user?.full_name || user?.username || "User"}
             </Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              Designer
+            <Typography
+              variant="subtitle2"
+              color={
+                user?.roles?.includes("root")
+                  ? "error"
+                  : user?.roles?.includes("admin")
+                  ? "warning"
+                  : "secondary"
+              }
+              sx={{ fontWeight: 500 }}
+            >
+              {user?.roles ? user.roles.join(", ") : ""}
             </Typography>
             <Typography
               variant="subtitle2"
               color="textSecondary"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}>
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
               <IconMail width={15} height={15} />
-              info@modernize.com
+              {user?.email || ""}
             </Typography>
           </Box>
         </Stack>
@@ -109,8 +128,9 @@ const Profile = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      flexShrink: "0"
-                    }}>
+                      flexShrink: "0",
+                    }}
+                  >
                     <Avatar
                       src={profile.icon}
                       alt={profile.icon}
@@ -129,15 +149,16 @@ const Profile = () => {
                       noWrap
                       sx={{
                         fontWeight: 600,
-                        width: '240px'
-                      }}>
+                        width: "240px",
+                      }}
+                    >
                       {profile.title}
                     </Typography>
                     <Typography
                       color="textSecondary"
                       variant="subtitle2"
                       sx={{
-                        width: '240px',
+                        width: "240px",
                       }}
                       noWrap
                     >
@@ -149,44 +170,55 @@ const Profile = () => {
             </Box>
           </Box>
         ))}
-        <Box sx={{
-          mt: 2
-        }}>
+        <Box sx={{ mt: 2 }}>
           <Box
             sx={{
-              bgcolor: "primary.light",
-              p: 3,
+              bgcolor: "#f5f8ff",
+              borderRadius: 3,
+              border: "1px solid #e3e8ee",
+              p: 2.5,
               mb: 3,
-              overflow: "hidden",
-              position: "relative"
-            }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between"
-              }}>
-              <Box sx={{
-                zIndex: 1
-              }}>
-                <Typography variant="h5" sx={{
-                  mb: 2
-                }}>
-                  Unlimited <br />
-                  Access
-                </Typography>
-                <Button variant="contained" color="primary">
-                  Upgrade
-                </Button>
-              </Box>
-              <Image src={"/images/backgrounds/unlimited-bg.png"} width={150} height={183} style={{ height: 'auto', width: 'auto' }} alt="unlimited" className="signup-bg" />
-            </Box>
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              boxShadow: "0 2px 8px 0 rgba(60,72,120,0.06)",
+              minWidth: 220,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              color="primary"
+              fontWeight={600}
+              mb={0.5}
+            >
+              {now.toLocaleDateString("vi-VN", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ mt: 0.5, letterSpacing: 2 }}
+            >
+              {now.toLocaleTimeString("vi-VN", { hour12: false })}
+            </Typography>
           </Box>
-          <Button href="/auth/auth1/login" variant="outlined" color="primary" component={Link} fullWidth>
+          <Button
+            href="/auth/auth1/login"
+            variant="outlined"
+            color="primary"
+            component={Link}
+            fullWidth
+          >
             Logout
           </Button>
         </Box>
       </Menu>
-    </Box>)
+    </Box>
   );
 };
 
