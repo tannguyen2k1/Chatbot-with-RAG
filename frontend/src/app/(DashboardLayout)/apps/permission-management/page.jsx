@@ -134,111 +134,107 @@ export default function PermissionManagementPage() {
       <Typography variant="h4" fontWeight={700} color="primary.main" mb={3}>
         Quản lý quyền cho vai trò
       </Typography>
-      {roleId && role ? (
+      {loading ? (
+        <CircularProgress />
+      ) : roleId && role ? (
         <>
           <Typography mb={2}>
             Vai trò: <b>{role.name}</b>
           </Typography>
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, width: 180 }}>
-                      Module
-                    </TableCell>
-                    {BASE_ACTIONS.map((action) => (
-                      <TableCell
-                        key={action[0]}
-                        align="center"
-                        sx={{ fontWeight: 700 }}
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, width: 180 }}>
+                    Module
+                  </TableCell>
+                  {BASE_ACTIONS.map((action) => (
+                    <TableCell
+                      key={action[0]}
+                      align="center"
+                      sx={{ fontWeight: 700 }}
+                    >
+                      <Box
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
                       >
-                        <Box
-                          display="flex"
-                          flexDirection="column"
-                          alignItems="center"
+                        <span>{action[0]}</span>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: 11 }}
                         >
-                          <span>{action[0]}</span>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ fontSize: 11 }}
-                          >
-                            {permDescriptions[action[0]] || ""}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {modules.map((mod) => (
-                    <TableRow key={mod.id}>
-                      <TableCell sx={{ fontWeight: 600 }}>{mod.name}</TableCell>
-                      {BASE_ACTIONS.map((action) => {
-                        // Tìm permission tương ứng module + action
-                        const perm = permissions.find(
-                          (p) => p.name === `${mod.name}.${action[0]}`
-                        );
-                        if (!perm) {
-                          return (
-                            <TableCell key={action[0]} align="center">
-                              -
-                            </TableCell>
-                          );
-                        }
-                        const checked = editPerms.some(
-                          (rp) =>
-                            rp.module_id === mod.id &&
-                            rp.permission_id === perm.id
-                        );
+                          {permDescriptions[action[0]] || ""}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {modules.map((mod) => (
+                  <TableRow key={mod.id}>
+                    <TableCell sx={{ fontWeight: 600 }}>{mod.name}</TableCell>
+                    {BASE_ACTIONS.map((action) => {
+                      // Tìm permission tương ứng module + action
+                      const perm = permissions.find(
+                        (p) => p.name === `${mod.name}.${action[0]}`
+                      );
+                      if (!perm) {
                         return (
-                          <TableCell key={perm.id} align="center">
-                            <Tooltip
-                              title={
-                                checked
-                                  ? `Đã có quyền: ${
-                                      permDescriptions[action[0]] || perm.name
-                                    }`
-                                  : `Chưa có quyền: ${
-                                      permDescriptions[action[0]] || perm.name
-                                    }`
-                              }
-                              arrow
-                            >
-                              <span>
-                                <IconButton
-                                  color={checked ? "success" : "default"}
-                                  size="medium"
-                                  sx={{
-                                    bgcolor: checked
-                                      ? "#e6f4ea"
-                                      : "transparent",
-                                    borderRadius: 2,
-                                    transition: "0.2s",
-                                  }}
-                                  disabled={loading}
-                                  onClick={() => handleToggle(mod.id, perm.id)}
-                                >
-                                  {checked ? (
-                                    <CheckIcon color="success" />
-                                  ) : (
-                                    <RemoveIcon color="disabled" />
-                                  )}
-                                </IconButton>
-                              </span>
-                            </Tooltip>
+                          <TableCell key={action[0]} align="center">
+                            -
                           </TableCell>
                         );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                      }
+                      const checked = editPerms.some(
+                        (rp) =>
+                          rp.module_id === mod.id &&
+                          rp.permission_id === perm.id
+                      );
+                      return (
+                        <TableCell key={perm.id} align="center">
+                          <Tooltip
+                            title={
+                              checked
+                                ? `Đã có quyền: ${
+                                    permDescriptions[action[0]] || perm.name
+                                  }`
+                                : `Chưa có quyền: ${
+                                    permDescriptions[action[0]] || perm.name
+                                  }`
+                            }
+                            arrow
+                          >
+                            <span>
+                              <IconButton
+                                color={checked ? "success" : "default"}
+                                size="medium"
+                                sx={{
+                                  bgcolor: checked ? "#e6f4ea" : "transparent",
+                                  borderRadius: 2,
+                                  transition: "0.2s",
+                                }}
+                                disabled={loading}
+                                onClick={() => handleToggle(mod.id, perm.id)}
+                              >
+                                {checked ? (
+                                  <CheckIcon color="success" />
+                                ) : (
+                                  <RemoveIcon color="disabled" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </>
       ) : (
         <Alert severity="error">

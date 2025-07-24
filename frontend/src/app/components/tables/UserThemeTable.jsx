@@ -38,7 +38,7 @@ export default function UserThemeTable({ rows, loading, onMenuClick }) {
           ) : rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={8} align="center">
-                {!loading && 'Không có dữ liệu'}
+                {!loading && "Không có dữ liệu"}
               </TableCell>
             </TableRow>
           ) : (
@@ -56,7 +56,13 @@ export default function UserThemeTable({ rows, loading, onMenuClick }) {
                           key={r}
                           label={r}
                           size="small"
-                          color={r === "root" ? "warning" : "secondary"}
+                          color={
+                            r === "root"
+                              ? "error"
+                              : r === "admin"
+                              ? "warning"
+                              : "secondary"
+                          }
                           sx={{ mr: 0.5 }}
                         />
                       ))
