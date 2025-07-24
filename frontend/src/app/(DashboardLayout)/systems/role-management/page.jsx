@@ -138,7 +138,7 @@ export default function RoleManagementPage() {
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            router.push(`/apps/permission-management?roleId=${menuRow.id}`);
+            router.push(`/systems/permission-management?roleId=${menuRow.id}`);
           }}
           disabled={!canUpdate || menuRow?.name === "root"}
         >
