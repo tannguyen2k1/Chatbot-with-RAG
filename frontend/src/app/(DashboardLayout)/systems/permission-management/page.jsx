@@ -211,18 +211,45 @@ export default function PermissionManagementPage() {
                               <IconButton
                                 color={checked ? "success" : "default"}
                                 size="medium"
-                                sx={{
-                                  bgcolor: checked ? "#e6f4ea" : "transparent",
+                                sx={(theme) => ({
+                                  bgcolor: checked
+                                    ? theme.palette.mode === "dark"
+                                      ? "#334155"
+                                      : "#e6f4ea"
+                                    : "transparent",
                                   borderRadius: 2,
                                   transition: "0.2s",
-                                }}
+                                  border: checked
+                                    ? `1px solid ${
+                                        theme.palette.mode === "dark"
+                                          ? theme.palette.success.main
+                                          : "#b2dfdb"
+                                      }`
+                                    : `1px solid ${theme.palette.divider}`,
+                                  boxShadow: checked
+                                    ? theme.palette.mode === "dark"
+                                      ? "0 2px 8px 0 rgba(60,72,120,0.18)"
+                                      : "0 2px 8px 0 rgba(60,72,120,0.06)"
+                                    : "none",
+                                })}
                                 disabled={loading}
                                 onClick={() => handleToggle(mod.id, perm.id)}
                               >
                                 {checked ? (
-                                  <CheckIcon color="success" />
+                                  <CheckIcon
+                                    sx={(theme) => ({
+                                      color: theme.palette.success.main,
+                                    })}
+                                  />
                                 ) : (
-                                  <RemoveIcon color="disabled" />
+                                  <RemoveIcon
+                                    sx={(theme) => ({
+                                      color:
+                                        theme.palette.mode === "dark"
+                                          ? theme.palette.text.disabled
+                                          : "#bdbdbd",
+                                    })}
+                                  />
                                 )}
                               </IconButton>
                             </span>
