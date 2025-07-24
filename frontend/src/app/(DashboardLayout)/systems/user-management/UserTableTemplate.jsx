@@ -179,7 +179,7 @@ export default function UserTableTemplate({
             handleMenuClose();
             handleEdit(menuRow);
           }}
-          disabled={!canUpdate}
+          disabled={!canUpdate || menuRow?.roles?.includes("root")}
         >
           <IconEdit width={18} style={{ marginRight: 8 }} />
           Sửa
@@ -190,7 +190,7 @@ export default function UserTableTemplate({
             setDeleteId(menuRow.id);
             setConfirmOpen(true);
           }}
-          disabled={!canDelete}
+          disabled={!canDelete || menuRow?.roles?.includes("root")}
         >
           <IconTrash width={18} style={{ marginRight: 8 }} color="red" />
           Xoá
