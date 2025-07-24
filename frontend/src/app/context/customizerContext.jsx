@@ -8,42 +8,40 @@ export const CustomizerContext = createContext(undefined);
 
 // Create the provider component
 export const CustomizerContextProvider = ({ children }) => {
-  // Helper to get value from localStorage or config
-  const getLS = (key, fallback, parseFn) => {
-    if (typeof window !== "undefined") {
-      const val = localStorage.getItem(key);
-      if (val !== null) return parseFn ? parseFn(val) : val;
-    }
-    return fallback;
-  };
+  // Khởi tạo state bằng config mặc định
+  const [activeDir, setActiveDir] = useState(config.activeDir);
+  const [activeMode, setActiveMode] = useState(config.activeMode);
+  const [activeTheme, setActiveTheme] = useState(config.activeTheme);
+  const [activeLayout, setActiveLayout] = useState(config.activeLayout);
+  const [isCardShadow, setIsCardShadow] = useState(config.isCardShadow);
+  const [isLayout, setIsLayout] = useState(config.isLayout);
+  const [isBorderRadius, setIsBorderRadius] = useState(config.isBorderRadius);
+  const [isCollapse, setIsCollapse] = useState(config.isCollapse);
+  const [isLanguage, setIsLanguage] = useState(config.isLanguage);
 
-  const [activeDir, setActiveDir] = useState(() =>
-    getLS("customizer_dir", config.activeDir)
-  );
-  const [activeMode, setActiveMode] = useState(() =>
-    getLS("customizer_mode", config.activeMode)
-  );
-  const [activeTheme, setActiveTheme] = useState(() =>
-    getLS("customizer_theme", config.activeTheme)
-  );
-  const [activeLayout, setActiveLayout] = useState(() =>
-    getLS("customizer_layout", config.activeLayout)
-  );
-  const [isCardShadow, setIsCardShadow] = useState(() =>
-    getLS("customizer_cardShadow", config.isCardShadow, (v) => v === "true")
-  );
-  const [isLayout, setIsLayout] = useState(() =>
-    getLS("customizer_layout", config.isLayout)
-  );
-  const [isBorderRadius, setIsBorderRadius] = useState(() =>
-    getLS("customizer_borderRadius", config.isBorderRadius, Number)
-  );
-  const [isCollapse, setIsCollapse] = useState(() =>
-    getLS("customizer_collapse", config.isCollapse)
-  );
-  const [isLanguage, setIsLanguage] = useState(() =>
-    getLS("customizer_language", config.isLanguage)
-  );
+  // Khi client mount, cập nhật lại state từ localStorage nếu có
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const dir = localStorage.getItem("customizer_dir");
+      if (dir) setActiveDir(dir);
+      const mode = localStorage.getItem("customizer_mode");
+      if (mode) setActiveMode(mode);
+      const theme = localStorage.getItem("customizer_theme");
+      if (theme) setActiveTheme(theme);
+      const layout = localStorage.getItem("customizer_layout");
+      if (layout) setActiveLayout(layout);
+      const cardShadow = localStorage.getItem("customizer_cardShadow");
+      if (cardShadow !== null) setIsCardShadow(cardShadow === "true");
+      const layoutBoxed = localStorage.getItem("customizer_layout");
+      if (layoutBoxed) setIsLayout(layoutBoxed);
+      const borderRadius = localStorage.getItem("customizer_borderRadius");
+      if (borderRadius !== null) setIsBorderRadius(Number(borderRadius));
+      const collapse = localStorage.getItem("customizer_collapse");
+      if (collapse) setIsCollapse(collapse);
+      const language = localStorage.getItem("customizer_language");
+      if (language) setIsLanguage(language);
+    }
+  }, []);
   // Save settings to localStorage when change
   const [isSidebarHover, setIsSidebarHover] = useState(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState(false);
