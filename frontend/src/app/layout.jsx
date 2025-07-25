@@ -1,16 +1,14 @@
-
 import React from "react";
 
-import NextTopLoader from 'nextjs-toploader';
-import MyApp from './App';
+import NextTopLoader from "nextjs-toploader";
+import MyApp from "./app";
 import "./global.css";
 import { CustomizerContextProvider } from "./context/customizerContext";
 
-
 export const metadata = {
-  title: 'Modernize Nextjs',
-  description: 'Modernize Nextjs',
-}
+  title: "Modernize Nextjs",
+  description: "Modernize Nextjs",
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -24,5 +22,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
-
