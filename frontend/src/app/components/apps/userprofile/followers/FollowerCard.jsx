@@ -1,23 +1,21 @@
-'use client'
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import CardContent from '@mui/material/CardContent';
-import Chip from '@mui/material/Chip';
-import { Grid } from '@mui/material';
-import InputAdornment from '@mui/material/InputAdornment';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import React, { useContext, useEffect } from 'react';
-import BlankCard from '../../../shared/BlankCard';
+"use client";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import { Grid } from "@mui/material";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import React, { useContext, useEffect } from "react";
+import BlankCard from "../../../shared/BlankCard";
 import { UserDataContext } from "@/app/context/UserDataContext/index";
-import { IconMapPin, IconSearch } from '@tabler/icons-react';
+import { IconMapPin, IconSearch } from "@tabler/icons-react";
 
 const FollowerCard = () => {
   const { followers, toggleFollow, setSearch } = useContext(UserDataContext);
-
-
 
   return (
     <>
@@ -25,13 +23,18 @@ const FollowerCard = () => {
         <Grid
           size={{
             sm: 12,
-            lg: 12
-          }}>
-          <Stack direction="row" alignItems={'center'} mt={2}>
+            lg: 12,
+          }}
+        >
+          <Stack direction="row" alignItems={"center"} mt={2}>
             <Box>
               <Typography variant="h3">
                 Followers &nbsp;
-                <Chip label={followers.length} color="secondary" size="small" />
+                <Chip
+                  label={followers?.length || 0}
+                  color="secondary"
+                  size="small"
+                />
               </Typography>
             </Box>
             <Box ml="auto">
@@ -52,28 +55,32 @@ const FollowerCard = () => {
                     ),
                   },
 
-                  htmlInput: { 'aria-label': 'Search Followers' }
-                }} />
+                  htmlInput: { "aria-label": "Search Followers" },
+                }}
+              />
             </Box>
           </Stack>
         </Grid>
-        {followers.map((profile) => {
+        {(followers || []).map((profile) => {
           return (
-            (<Grid
+            <Grid
               key={profile.id}
               size={{
                 xs: 12,
-                lg: 4
-              }}>
+                lg: 4,
+              }}
+            >
               <BlankCard>
                 <CardContent>
-                  <Stack direction={'row'} gap={2} alignItems="center">
+                  <Stack direction={"row"} gap={2} alignItems="center">
                     <Avatar alt="Remy Sharp" src={profile.avatar} />
                     <Box>
-                      <Typography variant="h6" textOverflow={'ellipsis'} noWrap>{profile.name}</Typography>
+                      <Typography variant="h6" textOverflow={"ellipsis"} noWrap>
+                        {profile.name}
+                      </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
                         <IconMapPin size="14" />
                         {profile.country}
@@ -103,7 +110,7 @@ const FollowerCard = () => {
                   </Stack>
                 </CardContent>
               </BlankCard>
-            </Grid>)
+            </Grid>
           );
         })}
       </Grid>

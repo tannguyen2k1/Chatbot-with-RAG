@@ -1,44 +1,51 @@
-'use client'
-import React, { createContext, useState, useEffect } from 'react';
+"use client";
+import React, { createContext, useState, useEffect } from "react";
 
-import useSWR from 'swr';
-import { deleteFetcher, getFetcher, postFetcher, putFetcher } from '@/app/api/globalFetcher';
+import useSWR from "swr";
+import {
+  deleteFetcher,
+  getFetcher,
+  postFetcher,
+  putFetcher,
+} from "@/app/api/globalFetcher";
 
 export const ContactContext = createContext(undefined);
 export const ContactContextProvider = ({ children }) => {
   const [contacts, setContacts] = useState([]);
   const [starredContacts, setStarredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [selectedDepartment, setSelectedDepartment] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
-
   // Fetch contacts data from the API on component mount
-  const { data: contactsData, isLoading: isContactsLoading, error: contactsError, mutate } = useSWR('/api/contacts', getFetcher);
+  const {
+    data: contactsData,
+    isLoading: isContactsLoading,
+    error: contactsError,
+    mutate,
+  } = useSWR("/api/contacts", getFetcher);
 
   useEffect(() => {
-
     if (contactsData) {
       const allContacts = contactsData.data;
       setContacts(allContacts);
-      if (contacts.length === 0) {
-        const initialStarredContacts = allContacts.filter((contact) => contact.starred).map((contact) => contact.id);
+      if ((contacts?.length || 0) === 0) {
+        const initialStarredContacts = (
+          allContacts.filter((contact) => contact.starred) || []
+        ).map((contact) => contact.id);
         setStarredContacts(initialStarredContacts);
         setSelectedContact(allContacts[0]);
       }
-
     } else if (contactsError) {
       setLoading(isContactsLoading);
       setError(contactsError);
     } else {
       setLoading(isContactsLoading);
     }
-
-  }, [contactsData, contactsError, isContactsLoading, contacts.length]);
+  }, [contactsData, contactsError, isContactsLoading, contacts?.length || 0]);
 
   const updateSearchTerm = (term) => {
     setSearchTerm(term);
@@ -49,10 +56,9 @@ export const ContactContextProvider = ({ children }) => {
     try {
       await mutate(postFetcher("/api/contacts", newContact));
     } catch (error) {
-      console.log("Failed to add contact", error)
+      console.log("Failed to add contact", error);
     }
   };
-
 
   // Function to delete a contact
   const deleteContact = async (contactId) => {
@@ -62,7 +68,7 @@ export const ContactContextProvider = ({ children }) => {
         setSelectedContact(null);
       }
     } catch (error) {
-      console.error('Failed to delete contact:', error);
+      console.error("Failed to delete contact:", error);
     }
   };
   // Function to update a contact
@@ -71,7 +77,7 @@ export const ContactContextProvider = ({ children }) => {
       await mutate(putFetcher("/api/contacts", updatedContact));
       setSelectedContact(updatedContact);
     } catch (error) {
-      console.error('Failed to update contact:', error);
+      console.error("Failed to update contact:", error);
     }
   };
   // Function to select a contact
@@ -83,14 +89,16 @@ export const ContactContextProvider = ({ children }) => {
   const toggleStarred = (contactId) => {
     // Toggle the starredContacts array
     if (starredContacts.includes(contactId)) {
-      setStarredContacts(prevStarred => prevStarred.filter(id => id !== contactId));
+      setStarredContacts((prevStarred) =>
+        prevStarred.filter((id) => id !== contactId)
+      );
     } else {
-      setStarredContacts(prevStarred => [...prevStarred, contactId]);
+      setStarredContacts((prevStarred) => [...prevStarred, contactId]);
     }
 
     // Update the contacts list to reflect the new starred status
-    setContacts(prevContacts => {
-      const updatedContacts = prevContacts.map(contact =>
+    setContacts((prevContacts) => {
+      const updatedContacts = (prevContacts || []).map((contact) =>
         contact.id === contactId
           ? { ...contact, starred: !contact.starred } // Toggle the starred status
           : contact
@@ -98,7 +106,9 @@ export const ContactContextProvider = ({ children }) => {
 
       // If the selected contact is the one that was toggled, update the selectedContact state
       if (selectedContact?.id === contactId) {
-        setSelectedContact(updatedContacts.find(contact => contact.id === contactId) || null);
+        setSelectedContact(
+          updatedContacts.find((contact) => contact.id === contactId) || null
+        );
       }
 
       return updatedContacts;
@@ -124,7 +134,8 @@ export const ContactContextProvider = ({ children }) => {
     toggleStarred,
     searchTerm,
     updateSearchTerm,
-    openModal, setOpenModal
+    openModal,
+    setOpenModal,
   };
 
   return (
