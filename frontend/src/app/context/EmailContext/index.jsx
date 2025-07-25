@@ -1,24 +1,28 @@
-"use client"
-import React, { createContext, useState, Dispatch, SetStateAction, useEffect } from 'react';
+"use client";
+import React, {
+  createContext,
+  useState,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+} from "react";
 
-import useSWR from 'swr';
-import { deleteFetcher, getFetcher } from '@/app/api/globalFetcher';
-
-
+import useSWR from "swr";
+import { deleteFetcher, getFetcher } from "@/app/api/globalFetcher";
 
 const initialEmailContext = {
   emails: [],
   selectedEmail: null,
-  filter: 'inbox',
-  searchQuery: '',
+  filter: "inbox",
+  searchQuery: "",
   loading: true,
   error: null,
-  setSelectedEmail: () => { },
-  deleteEmail: () => { },
-  toggleStar: () => { },
-  toggleImportant: () => { },
-  setFilter: () => { },
-  setSearchQuery: () => { },
+  setSelectedEmail: () => {},
+  deleteEmail: () => {},
+  toggleStar: () => {},
+  toggleImportant: () => {},
+  setFilter: () => {},
+  setSearchQuery: () => {},
 };
 
 export const EmailContext = createContext(initialEmailContext);
@@ -26,17 +30,22 @@ export const EmailContext = createContext(initialEmailContext);
 export const EmailContextProvider = ({ children }) => {
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
-  const [filter, setFilter] = useState('inbox');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState("inbox");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const { data: emailData, isLoading: isEmailLoading, error: emailError, mutate } = useSWR("/api/email", getFetcher);
+  const {
+    data: emailData,
+    isLoading: isEmailLoading,
+    error: emailError,
+    mutate,
+  } = useSWR("/api/email", getFetcher);
 
   useEffect(() => {
     if (emailData) {
       setEmails(emailData.data);
-      if (emails?.length == 0) {
+      if ((emails?.length || 0) == 0) {
         setSelectedEmail(emailData.data[0]);
       }
       setLoading(isEmailLoading);
@@ -46,54 +55,67 @@ export const EmailContextProvider = ({ children }) => {
     } else {
       setLoading(isEmailLoading);
     }
-  }, [emailData, emailError, isEmailLoading, emails?.length]);
+  }, [emailData, emailError, isEmailLoading, emails?.length || 0]);
 
   const deleteEmail = async (emailId) => {
     try {
-
-      const rakkt = await mutate(deleteFetcher('/api/email', { emailId }));
+      const rakkt = await mutate(deleteFetcher("/api/email", { emailId }));
 
       if (selectedEmail && selectedEmail.id === emailId) {
         setSelectedEmail(null);
       }
-
     } catch (error) {
-      console.error('Error deleting email:', error);
+      console.error("Error deleting email:", error);
     }
   };
 
   const toggleStar = (emailId) => {
-    setEmails(prevEmails =>
-      prevEmails.map(email =>
+    setEmails((prevEmails) =>
+      (prevEmails || []).map((email) =>
         email.id === emailId ? { ...email, starred: !email.starred } : email
       )
     );
 
     if (selectedEmail?.id === emailId) {
       setSelectedEmail((prevEmail) => ({
-        ...(prevEmail),
-        starred: !(prevEmail).starred
+        ...prevEmail,
+        starred: !prevEmail.starred,
       }));
     }
   };
 
   const toggleImportant = (emailId) => {
-    setEmails(prevEmails =>
-      prevEmails.map(email =>
+    setEmails((prevEmails) =>
+      (prevEmails || []).map((email) =>
         email.id === emailId ? { ...email, important: !email.important } : email
       )
     );
 
     if (selectedEmail?.id === emailId) {
       setSelectedEmail((prevEmail) => ({
-        ...(prevEmail),
-        important: !(prevEmail).important
+        ...prevEmail,
+        important: !prevEmail.important,
       }));
     }
   };
 
   return (
-    <EmailContext.Provider value={{ emails, selectedEmail, setSelectedEmail, deleteEmail, toggleStar, toggleImportant, setFilter, filter, error, loading, searchQuery, setSearchQuery }}>
+    <EmailContext.Provider
+      value={{
+        emails,
+        selectedEmail,
+        setSelectedEmail,
+        deleteEmail,
+        toggleStar,
+        toggleImportant,
+        setFilter,
+        filter,
+        error,
+        loading,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
       {children}
     </EmailContext.Provider>
   );
