@@ -5,7 +5,7 @@ from config.settings import settings
 DATABASE_URL = settings.DATABASE_URL
 
 # Create the database engine (establish connection with the database)
-engine = create_engine(DATABASE_URL, echo=True, future=True)
+engine = create_engine(DATABASE_URL, echo=False, future=True)
 
 # Create a session factory (create local sessions for CRUD operations)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
