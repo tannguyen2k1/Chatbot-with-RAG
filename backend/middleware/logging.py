@@ -46,5 +46,5 @@ async def log_requests(request: Request, call_next):
             user_id = payload.get("sub", "-")
         except JWTError:
             user_id = "invalid_token"
-    logging.info(f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}")
+    app_logger.info(f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}")
     return response
