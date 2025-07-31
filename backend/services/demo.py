@@ -1,14 +1,14 @@
 from sqlalchemy.orm import Session
 from database.models import Demo
-from schemas import DemoCreate, DemoUpdate
-from typing import List, Optional
+from schemas import DemoCreate, DemoUpdate, PaginatedDemoResponse, DemoResponse
+from typing import Optional
 
 
 class DemoService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all_demos(self, skip: int = 0, limit: int = 100, search: Optional[str] = None) -> List[Demo]:
+    def get_all_demos(self, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
         """Lấy tất cả demos với phân trang và tìm kiếm"""
         query = self.db.query(Demo)
         if search:
@@ -16,17 +16,14 @@ class DemoService:
             query = query.filter(
                 (Demo.title.ilike(like)) | (Demo.description.ilike(like))
             )
-        return query.order_by(Demo.id.asc()).offset(skip).limit(limit).all()
-
-    def count_demos(self, search: Optional[str] = None) -> int:
-        """Đếm tổng số lượng demos (có tìm kiếm)"""
-        query = self.db.query(Demo)
-        if search:
-            like = f"%{search}%"
-            query = query.filter(
-                (Demo.title.ilike(like)) | (Demo.description.ilike(like))
-            )
-        return query.count()
+        total = query.count()
+        demos = query.order_by(Demo.id.asc()).offset((page - 1) * page_size).limit(page_size).all()
+        return PaginatedDemoResponse(
+            data=[DemoResponse.model_validate(demo) for demo in demos],
+            total=total,
+            page=page,
+            page_size=page_size
+        )   
 
     def get_demo_by_id(self, demo_id: int) -> Optional[Demo]:
         """Lấy demo theo ID"""
@@ -61,7 +58,6 @@ class DemoService:
         demo = self.get_demo_by_id(demo_id)
         if not demo:
             return False
-        
         self.db.delete(demo)
         self.db.commit()
         return True

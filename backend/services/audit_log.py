@@ -1,12 +1,13 @@
 from sqlalchemy.orm import Session
 from database.models.audit_log import AuditLog
 from schemas.audit_log import PaginatedAuditLogResponse, AuditLogOut
+from typing import Optional
 
 class AuditLogService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all_audit_logs(self, page: int = 1, page_size: int = 10, search: str = None):
+    def get_all_audit_logs(self, page: int = 1, page_size: int = 10, search: Optional[str] = None):
         """Lấy tất cả audit_logs với phân trang và tìm kiếm"""
         query = self.db.query(AuditLog)
         if search:

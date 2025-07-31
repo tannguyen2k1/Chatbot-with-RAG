@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from database.models import Role, Module, Permission, RolePermission, UserRole
+from schemas import RoleUpdate 
 
 class RBACService:
     def __init__(self, db: Session):
@@ -11,7 +12,7 @@ class RBACService:
     def get_permission_by_name(self, name: str):
         return self.db.query(Permission).filter_by(name=name).first()
     
-    def update_role(self, role_id: int, data):
+    def update_role(self, role_id: int, data: RoleUpdate):
         role = self.db.query(Role).filter_by(id=role_id).first()
         if not role:
             return None

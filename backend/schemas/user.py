@@ -1,31 +1,30 @@
 from pydantic import BaseModel
-# Paginated response for users
-from typing import List
+from typing import List, Optional
 
 # Pydantic schemas for user operations
 class UserCreate(BaseModel):
     username: str
     email: str
     password: str
-    full_name: str | None = None
-    phone: str | None = None
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
     is_active: int = 1
     role: str = "user"
 
 class UserUpdate(BaseModel):
-    username: str | None = None
-    email: str | None = None
-    full_name: str | None = None
-    phone: str | None = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
     is_active: int | None = None
-    role: str | None = None
+    role: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    full_name: str | None = None
-    phone: str | None = None
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
     is_active: int
     roles: list[str] = []
     permissions: dict[str, list[str]] = {}
