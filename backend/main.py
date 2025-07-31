@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, SessionLocal
 from database.models.base import Base
-from api import auth, rbac, demo, user
+from api import auth, rbac, demo, user, audit_log
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
@@ -59,12 +59,13 @@ def root():
 
 # --- API Router with prefix /api ---
 api_router = APIRouter(prefix="/api")
- 
+
 # --- Routers ---
 api_router.include_router(auth.router)
 api_router.include_router(user.router)
 api_router.include_router(demo.router)
 api_router.include_router(rbac.router)
+api_router.include_router(audit_log.router)
 app.include_router(api_router)
 
 
