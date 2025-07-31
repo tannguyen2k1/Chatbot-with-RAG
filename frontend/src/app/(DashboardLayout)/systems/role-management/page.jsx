@@ -68,12 +68,14 @@ export default function RoleManagementPage() {
     setConfirmOpen(true);
     handleMenuClose();
   };
+  // Hiển thị snackbar khi thêm/sửa role (callback từ RoleFormDialog)
   const handleCloseForm = (refresh, msg, severity = "success") => {
     setOpenForm(false);
     setEditRole(null);
     if (refresh) setReload((r) => !r);
     if (msg) setSnackbar({ open: true, message: msg, severity });
   };
+  // Hiển thị snackbar khi xoá role
   const handleDelete = async () => {
     try {
       await deleteRole(deleteId);
@@ -84,7 +86,11 @@ export default function RoleManagementPage() {
       });
       setReload((r) => !r);
     } catch (e) {
-      setSnackbar({ open: true, message: e.message, severity: "error" });
+      setSnackbar({
+        open: true,
+        message: e.message || "Xoá vai trò thất bại",
+        severity: "error",
+      });
     }
     setConfirmOpen(false);
     setDeleteId(null);
@@ -183,6 +189,7 @@ export default function RoleManagementPage() {
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
           {snackbar.message}

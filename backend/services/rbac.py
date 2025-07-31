@@ -10,6 +10,18 @@ class RBACService:
 
     def get_permission_by_name(self, name: str):
         return self.db.query(Permission).filter_by(name=name).first()
+    
+    def update_role(self, role_id: int, data):
+        role = self.db.query(Role).filter_by(id=role_id).first()
+        if not role:
+            return None
+        if data.name is not None:
+            role.name = data.name
+        if data.description is not None:
+            role.description = data.description
+        self.db.commit()
+        self.db.refresh(role)
+        return role
 
     def delete_role(self, role_id: int):
         role = self.db.query(Role).filter_by(id=role_id).first()

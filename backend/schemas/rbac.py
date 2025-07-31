@@ -31,6 +31,10 @@ class RolePermissionOut(BaseModel):
     module_id: int
     permission_id: int
 
+class RoleUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
 class RoleOut(BaseModel):
     id: int
     name: str
