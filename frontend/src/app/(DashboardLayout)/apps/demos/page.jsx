@@ -48,6 +48,7 @@ export default function DemoManagementPage() {
   const [pageSize, setPageSize] = useState(10);
   const [rowCount, setRowCount] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuRow, setMenuRow] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -119,9 +120,17 @@ export default function DemoManagementPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   useEffect(() => {
     loadData();
-  }, [page, pageSize, search]);
+  }, [page, pageSize, debouncedSearch]);
 
   // Form dialog
   const [form, setForm] = useState({ title: "", description: "" });

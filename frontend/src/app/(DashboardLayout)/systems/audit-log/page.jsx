@@ -31,12 +31,20 @@ export default function AuditLogPage() {
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
     setLoading(true);
     getFetcher(
       `/api/audit-logs?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(
-        search
+        debouncedSearch
       )}`
     )
       .then((res) => {
@@ -51,7 +59,7 @@ export default function AuditLogPage() {
         });
       })
       .finally(() => setLoading(false));
-  }, [page, pageSize, search]);
+  }, [page, pageSize, debouncedSearch]);
 
   return (
     <Box
