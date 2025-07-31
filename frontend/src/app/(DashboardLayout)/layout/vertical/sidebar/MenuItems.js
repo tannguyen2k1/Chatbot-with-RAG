@@ -46,10 +46,18 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "RoleManagement",
-    icon: IconFileCheck,
+    icon: IconPackage, // Changed to IconPackage for roles
     chipColor: "secondary",
     href: "/systems/role-management",
     permission: "role.view",
+  },
+  {
+    id: uniqueId(),
+    title: "AuditLog",
+    icon: IconFileCheck,
+    chipColor: "secondary",
+    href: "/systems/audit-log",
+    permission: "audit_log.view",
   },
 ];
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from sqlalchemy.sql import func
 from .base import Base
 
 class AuditLog(Base):
@@ -12,7 +12,7 @@ class AuditLog(Base):
     record_id = Column(Integer, nullable=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
     user = relationship('User', backref='audit_logs')
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
     old_value = Column(String, nullable=True)
     new_value = Column(String, nullable=True)
     description = Column(String(255), nullable=True)
