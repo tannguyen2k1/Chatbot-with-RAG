@@ -6,6 +6,7 @@ from jose import jwt, JWTError
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 from config.settings import settings
+from database.audit_event import current_user_id
 
 # Đường dẫn thư mục log
 log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
@@ -33,8 +34,6 @@ for logger_name in ["sqlalchemy.engine"]:
 
 async def log_requests(request: Request, call_next):
     start_time = time.time()
-    response = await call_next(request)
-    process_time = (time.time() - start_time) * 1000
     user_agent = request.headers.get("user-agent", "-")
     client_ip = request.client.host if request.client else "-"
     user_id = "-"
@@ -46,5 +45,9 @@ async def log_requests(request: Request, call_next):
             user_id = payload.get("sub", "-")
         except JWTError:
             user_id = "invalid_token"
+    # Set user_id vào contextvars cho audit log
+    current_user_id.set(user_id)
+    response = await call_next(request)
+    process_time = (time.time() - start_time) * 1000
     app_logger.info(f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}")
     return response
