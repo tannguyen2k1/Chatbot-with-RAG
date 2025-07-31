@@ -10,8 +10,12 @@ router = APIRouter(prefix="/rbac", tags=["RBAC"])
 
 # roles
 @router.get("/roles", response_model=list[RoleOut])
-def get_roles(db: Session = Depends(get_db)):
+def get_roles(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.view" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to view roles")
     return service.get_all_roles()
 
 @router.post("/roles")
@@ -49,50 +53,74 @@ def delete_role(role_id: int, db: Session = Depends(get_db), current_user=Depend
     return {"success": True}
 
 @router.post("/assign-role")
-def assign_role_to_user(data: AssignRoleToUser, db: Session = Depends(get_db)):
+def assign_role_to_user(data: AssignRoleToUser, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.assign-role" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to assign roles")
     return service.assign_role_to_user(data.user_id, data.role_id)
 
 # modules
-@router.get("/modules")
-def get_modules(db: Session = Depends(get_db)):
-    service = RBACService(db)
-    return service.get_all_modules()
+# @router.get("/modules")
+# def get_modules(db: Session = Depends(get_db)):
+#     service = RBACService(db)
+#     return service.get_all_modules()
 
-@router.post("/modules")
-def create_module(data: ModuleCreate, db: Session = Depends(get_db)):
-    service = RBACService(db)
-    desc = data.description if data.description is not None else ""
-    return service.create_module(data.name, desc)
+# @router.post("/modules")
+# def create_module(data: ModuleCreate, db: Session = Depends(get_db)):
+#     service = RBACService(db)
+#     desc = data.description if data.description is not None else ""
+#     return service.create_module(data.name, desc)
 
 # permissions
 @router.get("/permissions")
-def get_permissions(db: Session = Depends(get_db)):
+def get_permissions(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("permission", [])
+    if "permission.view" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to view permissions")
     return service.get_all_permissions()
 
 @router.post("/permissions")
-def create_permission(data: PermissionCreate, db: Session = Depends(get_db)):
+def create_permission(data: PermissionCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("permission", [])
+    if "permission.create" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to create permissions")
     desc = data.description if data.description is not None else ""
     return service.create_permission(data.name, desc)
 
 @router.post("/remove-permission")
-def remove_permission_from_role(data: RemovePermissionFromRole, db: Session = Depends(get_db)):
+def remove_permission_from_role(data: RemovePermissionFromRole, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("permission", [])
+    if "permission.remove" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to remove permissions")
     success = service.remove_permission_from_role(data.role_id, data.module_id, data.permission_id)
     if not success:
         raise HTTPException(status_code=404, detail="Permission not found for this role")
     return {"success": True}
 
 @router.post("/assign-permission")
-def assign_permission_to_role(data: AssignPermissionToRole, db: Session = Depends(get_db)):
+def assign_permission_to_role(data: AssignPermissionToRole, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("permission", [])
+    if "permission.assign" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to assign permissions")
     return service.assign_permission_to_role(data.role_id, data.module_id, data.permission_id)
 
 @router.get("/check-permission")
-def check_user_permission(user_id: int, module_name: str, permission_name: str, db: Session = Depends(get_db)):
+def check_user_permission(user_id: int, module_name: str, permission_name: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("permission", [])
+    if "permission.check" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to check permissions")
     has_permission = service.check_user_permission(user_id, module_name, permission_name)
     return {"has_permission": has_permission}
 

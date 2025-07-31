@@ -8,6 +8,8 @@ MODULES = [
     ("user", "Quản lý người dùng"),
     ("demo", "Quản lý demo"),
     ("role", "Quản lý role"),
+    ("permission", "Quản lý quyền"),
+    ("audit_log", "Quản lý audit log"),
     # Thêm module khác tại đây
 ]
 
@@ -16,6 +18,16 @@ BASE_ACTIONS = [
     ("create", "Tạo"),
     ("update", "Sửa"),
     ("delete", "Xoá"),
+]
+
+CUSTOM_ACTIONS = [
+    #roles
+    ("role.assign-role", "Gán role cho user"),
+
+    #permissions
+    ("permission.assign", "Gán quyền cho role"),
+    ("permission.remove", "Xóa quyền khỏi role"),
+    ("permission.check", "Kiểm tra quyền user"),
 ]
 
 BASE_ROLES = [
@@ -53,6 +65,12 @@ def seed_modules_and_permissions():
             perm = db.query(Permission).filter_by(name=perm_name).first()
             if not perm:
                 rbac.create_permission(perm_name, f"{action_desc} {module_desc.lower()}")
+
+    # Seed các quyền custom
+    for custom_perm, custom_desc in CUSTOM_ACTIONS:
+        perm = db.query(Permission).filter_by(name=custom_perm).first()
+        if not perm:
+            rbac.create_permission(custom_perm, custom_desc)
     db.close()
 
 # Seed tài khoản mặc định (root, admin, user)
