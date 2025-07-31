@@ -41,28 +41,23 @@ class UserService:
         user = self.get_user(user_id)
         if not user:
             return None
-        update_dict = {}
         if update_data.username is not None:
-            update_dict["username"] = update_data.username
+            user.username = update_data.username
         if update_data.email is not None:
-            update_dict["email"] = update_data.email
+            user.email = update_data.email
         if update_data.full_name is not None:
-            update_dict["full_name"] = update_data.full_name
+            user.full_name = update_data.full_name
         if update_data.phone is not None:
-            update_dict["phone"] = update_data.phone
+            user.phone = update_data.phone
         if update_data.is_active is not None:
-            update_dict["is_active"] = update_data.is_active
+            user.is_active = update_data.is_active
         # Xử lý cập nhật role (RBAC)
         if update_data.role is not None:
-            # Xóa hết user_roles cũ
             self.db.query(UserRole).filter_by(user_id=user_id).delete()
-            # Tìm role id mới
             role_obj = self.db.query(Role).filter_by(name=update_data.role).first()
             if role_obj:
                 new_user_role = UserRole(user_id=user_id, role_id=role_obj.id)
                 self.db.add(new_user_role)
-        if update_dict:
-            self.db.query(User).filter(User.id == user_id).update(update_dict)
         self.db.commit()
         self.db.refresh(user)
         return user

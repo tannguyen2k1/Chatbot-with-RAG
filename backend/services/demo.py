@@ -48,15 +48,12 @@ class DemoService:
         demo = self.get_demo_by_id(demo_id)
         if not demo:
             return None
-        update_dict = {}
         if demo_data.title is not None:
-            update_dict["title"] = demo_data.title
+            demo.title = demo_data.title
         if demo_data.description is not None:
-            update_dict["description"] = demo_data.description
-        if update_dict:
-            self.db.query(Demo).filter(Demo.id == demo_id).update(update_dict)
-            self.db.commit()
-            self.db.refresh(demo)
+            demo.description = demo_data.description
+        self.db.commit()
+        self.db.refresh(demo)
         return demo
 
     def delete_demo(self, demo_id: int) -> bool:

@@ -5,12 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, SessionLocal
 from database.models.base import Base
 from api import auth, rbac, demo, user
+from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     Base.metadata.create_all(bind=engine)
+    # Đăng ký audit event listener cho tất cả các bảng
+    register_audit_events()
     # Auto seed RBAC (roles, modules, permissions)
     db = SessionLocal()
     try:
@@ -68,7 +71,7 @@ app.include_router(api_router)
 # --- CORS config (must be before routers) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # no trailing slash
+    allow_origins=["http://localhost:3000","http://127.0.0.1:3000"],  # no trailing slash
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
