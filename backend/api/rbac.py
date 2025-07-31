@@ -2,23 +2,58 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from schemas import RoleCreate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
+from schemas import RoleCreate, RoleUpdate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
 from services import RBACService
-from middleware import get_db
+from middleware import get_db, get_current_user
 
 router = APIRouter(prefix="/rbac", tags=["RBAC"])
 
+# roles
 @router.get("/roles", response_model=list[RoleOut])
 def get_roles(db: Session = Depends(get_db)):
     service = RBACService(db)
     return service.get_all_roles()
 
 @router.post("/roles")
-def create_role(data: RoleCreate, db: Session = Depends(get_db)):
+def create_role(data: RoleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.create" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to create roles")
     desc = data.description if data.description is not None else ""
     return service.create_role(data.name, desc)
 
+@router.put("/roles/{role_id}", response_model=RoleOut)
+def update_role(role_id: int, data: RoleUpdate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.update" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to update roles")
+    updated_role = service.update_role(role_id, data)
+    if not updated_role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return updated_role
+
+@router.delete("/roles/{role_id}")
+def delete_role(role_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.delete" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to delete roles")
+    success = service.delete_role(role_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return {"success": True}
+
+@router.post("/assign-role")
+def assign_role_to_user(data: AssignRoleToUser, db: Session = Depends(get_db)):
+    service = RBACService(db)
+    return service.assign_role_to_user(data.user_id, data.role_id)
+
+# modules
 @router.get("/modules")
 def get_modules(db: Session = Depends(get_db)):
     service = RBACService(db)
@@ -30,6 +65,7 @@ def create_module(data: ModuleCreate, db: Session = Depends(get_db)):
     desc = data.description if data.description is not None else ""
     return service.create_module(data.name, desc)
 
+# permissions
 @router.get("/permissions")
 def get_permissions(db: Session = Depends(get_db)):
     service = RBACService(db)
@@ -49,11 +85,6 @@ def remove_permission_from_role(data: RemovePermissionFromRole, db: Session = De
         raise HTTPException(status_code=404, detail="Permission not found for this role")
     return {"success": True}
 
-@router.post("/assign-role")
-def assign_role_to_user(data: AssignRoleToUser, db: Session = Depends(get_db)):
-    service = RBACService(db)
-    return service.assign_role_to_user(data.user_id, data.role_id)
-
 @router.post("/assign-permission")
 def assign_permission_to_role(data: AssignPermissionToRole, db: Session = Depends(get_db)):
     service = RBACService(db)
@@ -65,10 +96,6 @@ def check_user_permission(user_id: int, module_name: str, permission_name: str, 
     has_permission = service.check_user_permission(user_id, module_name, permission_name)
     return {"has_permission": has_permission}
 
-@router.delete("/roles/{role_id}")
-def delete_role(role_id: int, db: Session = Depends(get_db)):
-    service = RBACService(db)
-    success = service.delete_role(role_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Role not found")
-    return {"success": True}
+
+
+
