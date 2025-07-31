@@ -186,6 +186,8 @@ const deleteFetcher = (url, arg, options = {}) => {
       return null;
     }
     if (!res.ok) throw new Error("Failed to delete data");
+    // Nếu status là 204 thì không có body, trả về null
+    if (res.status === 204) return null;
     return res.json();
   };
   return doFetch();
