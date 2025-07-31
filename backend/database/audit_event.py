@@ -14,6 +14,8 @@ def after_delete_listener(mapper, connection, target):
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         old_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        if user_id is None:
+            return
         connection.execute(
             AuditLog.__table__.insert(),
             {
@@ -32,6 +34,8 @@ def after_insert_listener(mapper, connection, target):
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         new_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        if user_id is None:
+            return
         connection.execute(
             AuditLog.__table__.insert(),
             {
@@ -56,6 +60,8 @@ def after_update_listener(mapper, connection, target):
         old_value = str(dict(old_row._mapping)) if old_row else None
         new_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        if user_id is None:
+            return
         connection.execute(
             AuditLog.__table__.insert(),
             {
