@@ -37,9 +37,8 @@ const fetchDemos = async (page, pageSize, search) => {
 };
 const deleteDemo = async (id) => {
   const url = `/api/demos/${id}`;
-  const data = await deleteFetcher(url);
-  if (!data) throw new Error("Xoá demo thất bại hoặc chưa đăng nhập");
-  return data;
+  await deleteFetcher(url);
+  return true;
 };
 
 export default function DemoManagementPage() {
