@@ -23,17 +23,8 @@ def get_demos(
     if "demo.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view demos")
     demo_service = DemoService(db)
-    skip = (page - 1) * page_size
-    demos = demo_service.get_all_demos(skip=skip, limit=page_size, search=search or None)
-    total = demo_service.count_demos(search=search or None)
-    return {
-        "data": demos,
-        "total": total,
-        "page": page,
-        "page_size": page_size
-    }
-
-
+    response = demo_service.get_all_demos(page=page, page_size=page_size, search=search or None)
+    return response
 
 @router.post("/", response_model=DemoResponse, status_code=status.HTTP_201_CREATED)
 def create_demo(

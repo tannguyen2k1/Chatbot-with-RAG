@@ -105,7 +105,8 @@ def seed_default_demos():
     from schemas import DemoCreate
     db = SessionLocal()
     demo_service = DemoService(db)
-    if not demo_service.get_all_demos():
+    demoResponse = demo_service.get_all_demos()
+    if not demoResponse.data:
         demo_service.create_demo(DemoCreate(title="Demo 1", description="Demo mẫu 1"))
         demo_service.create_demo(DemoCreate(title="Demo 2", description="Demo mẫu 2"))
         demo_service.create_demo(DemoCreate(title="Demo 3", description="Demo mẫu 3"))

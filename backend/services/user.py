@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from database.models import User
 from schemas import UserCreate, UserUpdate
+from typing import Optional
 
 class UserService:
     def __init__(self, db: Session):
@@ -32,32 +33,37 @@ class UserService:
         return new_user
 
 
-    def get_user(self, user_id: int) -> User | None:
+    def get_user(self, user_id: int) -> Optional[User]:
         return self.db.query(User).filter(User.id == user_id).first()
 
 
-    def update_user(self, user_id: int, update_data: UserUpdate) -> User | None:
+    def update_user(self, user_id: int, update_data: UserUpdate) -> Optional[User]:
         from database.models.auth_models import UserRole, Role
         user = self.get_user(user_id)
         if not user:
             return None
+        update_dict = {}
         if update_data.username is not None:
-            user.username = update_data.username
+            update_dict["username"] = update_data.username
         if update_data.email is not None:
-            user.email = update_data.email
+            update_dict["email"] = update_data.email
         if update_data.full_name is not None:
-            user.full_name = update_data.full_name
+            update_dict["full_name"] = update_data.full_name
         if update_data.phone is not None:
-            user.phone = update_data.phone
+            update_dict["phone"] = update_data.phone
         if update_data.is_active is not None:
-            user.is_active = update_data.is_active
+            update_dict["is_active"] = update_data.is_active
         # Xử lý cập nhật role (RBAC)
         if update_data.role is not None:
+            # Xóa hết user_roles cũ
             self.db.query(UserRole).filter_by(user_id=user_id).delete()
+            # Tìm role id mới
             role_obj = self.db.query(Role).filter_by(name=update_data.role).first()
             if role_obj:
                 new_user_role = UserRole(user_id=user_id, role_id=role_obj.id)
                 self.db.add(new_user_role)
+        if update_dict:
+            self.db.query(User).filter(User.id == user_id).update(update_dict)
         self.db.commit()
         self.db.refresh(user)
         return user

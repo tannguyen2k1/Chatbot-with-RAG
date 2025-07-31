@@ -21,18 +21,22 @@ class AuthService:
         return user
 
     def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
-        to_encode = {"sub": str(user.id), "role": user.role}
         expire = datetime.now(timezone.utc) + expires_delta
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return encoded_jwt
+        payload = {
+            "sub": str(user.id),
+            "role": user.role,
+            "exp": str(int(expire.timestamp()))
+        }
+        return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
     def create_refresh_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
-        to_encode = {"sub": str(user.id), "role": user.role}
         expire = datetime.now(timezone.utc) + expires_delta
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return encoded_jwt
+        payload = {
+            "sub": str(user.id),
+            "role": user.role,
+            "exp": str(int(expire.timestamp()))
+        }
+        return jwt.encode(payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
     def change_password(self, user: User, current_password: str, new_password: str) -> bool:
         """Đổi mật khẩu cho user hiện tại"""
@@ -43,8 +47,7 @@ class AuthService:
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
-        # Update password in database
-        self.db.query(User).filter(User.id == user.id).update({"hashed_password": hashed_new_password})
+        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
         self.db.commit()
         self.db.refresh(user)
         return True
@@ -52,12 +55,13 @@ class AuthService:
     
     def create_reset_token(self, user: User) -> str:
         """Tạo token để reset password (có thời hạn ngắn)"""
-        to_encode = {
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        payload = {
             "sub": str(user.id), 
             "type": "password_reset",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=15)  # Token có hiệu lực 15 phút
+            "exp": str(int(expire.timestamp()))  # Token có hiệu lực 15 phút
         }
-        encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+        encoded_jwt = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
     
 
@@ -88,7 +92,7 @@ class AuthService:
         hashed_new_password = pwd_context.hash(new_password)
         
         # Update password in database
-        self.db.query(User).filter(User.id == user.id).update({"hashed_password": hashed_new_password})
+        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
         self.db.commit()
         self.db.refresh(user)
         
@@ -113,7 +117,7 @@ class AuthService:
         hashed_new_password = pwd_context.hash(new_password)
         
         # Update password in database
-        self.db.query(User).filter(User.id == user.id).update({"hashed_password": hashed_new_password})
+        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
         self.db.commit()
         self.db.refresh(user)
         
