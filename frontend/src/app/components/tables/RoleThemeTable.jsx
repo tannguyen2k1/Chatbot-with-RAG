@@ -21,6 +21,7 @@ export default function RoleThemeTable({ rows, loading, onMenuClick }) {
             <TableCell>ID</TableCell>
             <TableCell>Tên vai trò</TableCell>
             <TableCell>Mô tả</TableCell>
+            <TableCell>Số quyền sở hữu</TableCell>
             <TableCell></TableCell>
           </TableRow>
         </TableHead>
@@ -43,6 +44,7 @@ export default function RoleThemeTable({ rows, loading, onMenuClick }) {
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.description}</TableCell>
+                <TableCell>{row.permissions.length}</TableCell>
                 <TableCell>
                   <IconButton
                     onClick={(e) => onMenuClick && onMenuClick(e, row)}
