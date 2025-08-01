@@ -30,6 +30,7 @@ const Menuitems = [
     icon: IconPackage,
     chipColor: "secondary",
     href: "/apps/demos",
+    permission: "demo.view",
   },
   {
     navlabel: true,
