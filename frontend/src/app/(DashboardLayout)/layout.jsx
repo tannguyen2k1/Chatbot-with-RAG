@@ -8,7 +8,7 @@ import Sidebar from "./layout/vertical/sidebar/Sidebar";
 import Customizer from "./layout/shared/customizer/Customizer";
 import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
 
 const MainWrapper = styled("div")(() => ({

@@ -1,11 +1,10 @@
-
-import Divider from '@mui/material/Divider';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Typography from '@mui/material/Typography';
-import { ContactContext } from '@/app/context/Conatactcontext';
+import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Typography from "@mui/material/Typography";
+import { ContactContext } from "@/app/context/Conatactcontext";
 import Scrollbar from "../../custom-scroll/Scrollbar";
 import {
   IconMail,
@@ -14,36 +13,35 @@ import {
   IconFolder,
 } from "@tabler/icons-react";
 import ContactAdd from "./ContactAdd";
-import { useContext, useEffect } from 'react';
-import { CustomizerContext } from '@/app/context/customizerContext';
-import { usePathname } from 'next/navigation';
-import { mutate } from 'swr';
-
+import { useContext, useEffect } from "react";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
+import { usePathname } from "next/navigation";
+import { mutate } from "swr";
 
 const ContactFilter = () => {
-
   const { isBorderRadius } = useContext(CustomizerContext);
   const br = `${isBorderRadius}px`;
 
-  const { setSelectedDepartment, updateSearchTerm, selectedDepartment } = useContext(ContactContext);
+  const { setSelectedDepartment, updateSearchTerm, selectedDepartment } =
+    useContext(ContactContext);
 
   const filterData = [
     {
       id: 2,
-      name: 'All',
-      sort: 'show_all',
+      name: "All",
+      sort: "show_all",
       icon: IconMail,
     },
     {
       id: 3,
-      name: 'Frequent',
-      sort: 'frequent_contact',
+      name: "Frequent",
+      sort: "frequent_contact",
       icon: IconSend,
     },
     {
       id: 4,
-      name: 'Starred',
-      sort: 'starred_contact',
+      name: "Starred",
+      sort: "starred_contact",
       icon: IconBucket,
     },
     {
@@ -52,29 +50,29 @@ const ContactFilter = () => {
     },
     {
       id: 5,
-      filterbyTitle: 'Categories',
+      filterbyTitle: "Categories",
     },
 
     {
       id: 7,
-      name: 'Engineering',
-      sort: 'engineering_department',
+      name: "Engineering",
+      sort: "engineering_department",
       icon: IconFolder,
-      color: 'primary.main',
+      color: "primary.main",
     },
     {
       id: 8,
-      name: 'Support',
-      sort: 'support_department',
+      name: "Support",
+      sort: "support_department",
       icon: IconFolder,
-      color: 'error.main',
+      color: "error.main",
     },
     {
       id: 9,
-      name: 'Sales',
-      sort: 'sales_department',
+      name: "Sales",
+      sort: "sales_department",
       icon: IconFolder,
-      color: 'success.main',
+      color: "success.main",
     },
   ];
 
@@ -83,21 +81,19 @@ const ContactFilter = () => {
     updateSearchTerm("");
   };
 
-
-
   const location = usePathname();
 
   // Reset Contacts on browser refresh
   const handleResetTickets = async () => {
     const response = await fetch("/api/contacts", {
-      method: 'GET',
+      method: "GET",
       headers: {
-        "broserRefreshed": "true"
-      }
+        broserRefreshed: "true",
+      },
     });
     const result = await response.json();
     await mutate("/api/contacts");
-  }
+  };
 
   useEffect(() => {
     const isPageRefreshed = sessionStorage.getItem("isPageRefreshed");
@@ -122,7 +118,12 @@ const ContactFilter = () => {
     <>
       <ContactAdd />
       <List>
-        <Scrollbar sx={{ height: { lg: 'calc(100vh - 100px)', md: '100vh' }, maxHeight: '800px' }}>
+        <Scrollbar
+          sx={{
+            height: { lg: "calc(100vh - 100px)", md: "100vh" },
+            maxHeight: "800px",
+          }}
+        >
           {filterData.map((filter) => {
             if (filter.filterbyTitle) {
               return (
@@ -145,11 +146,10 @@ const ContactFilter = () => {
               <ListItemButton
                 sx={{ mb: 1, mx: 3, borderRadius: br }}
                 selected={selectedDepartment === `${filter.name}`}
-
-                onClick={() => handleDepartmentClick(filter.name || '')}
+                onClick={() => handleDepartmentClick(filter.name || "")}
                 key={filter.id}
               >
-                <ListItemIcon sx={{ minWidth: '30px', color: filter.color }}>
+                <ListItemIcon sx={{ minWidth: "30px", color: filter.color }}>
                   <filter.icon stroke="1.5" size={19} />
                 </ListItemIcon>
                 <ListItemText>{filter.name}</ListItemText>

@@ -9,7 +9,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import Box from "@mui/material/Box";
 import { IconX, IconSettings, IconCheck } from "@tabler/icons-react";
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";

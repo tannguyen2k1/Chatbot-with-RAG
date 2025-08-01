@@ -1,18 +1,16 @@
-'use client'
-import { Card } from '@mui/material';
-import { CustomizerContext } from '@/app/context/customizerContext';
-import { useContext } from 'react';
-
+"use client";
+import { Card } from "@mui/material";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
+import { useContext } from "react";
 
 const AppCard = ({ children }) => {
   const { isCardShadow } = useContext(CustomizerContext);
 
-
   return (
     <Card
-      sx={{ display: 'flex', p: 0 }}
+      sx={{ display: "flex", p: 0 }}
       elevation={isCardShadow ? 9 : 0}
-      variant={!isCardShadow ? 'outlined' : undefined}
+      variant={!isCardShadow ? "outlined" : undefined}
     >
       {children}
     </Card>

@@ -7,7 +7,7 @@ import Logo from "../../shared/logo/Logo";
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
 
 const Sidebar = () => {

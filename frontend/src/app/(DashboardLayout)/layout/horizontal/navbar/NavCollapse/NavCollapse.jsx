@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 // mui imports
 import Box from "@mui/material/Box";
@@ -10,8 +10,6 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { styled } from "@mui/material/styles";
-
-
 
 // custom imports
 import NavItem from "../NavItem/NavItem";
@@ -25,7 +23,8 @@ const NavCollapse = ({
   level,
   pathWithoutLastPart,
   pathDirect,
-  hideMenu, onClick
+  hideMenu,
+  onClick,
 }) => {
   const Icon = menu.icon;
   const theme = useTheme();
@@ -87,7 +86,7 @@ const NavCollapse = ({
   }));
 
   const listItemProps = {
-    component: 'li',
+    component: "li",
   };
 
   // If Menu has Children

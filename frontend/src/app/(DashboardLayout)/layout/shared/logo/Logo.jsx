@@ -1,6 +1,6 @@
 "use client";
 import { useContext } from "react";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
 import Link from "next/link";
 import { styled } from "@mui/material/styles";

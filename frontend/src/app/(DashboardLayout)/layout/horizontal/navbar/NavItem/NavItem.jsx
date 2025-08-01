@@ -9,9 +9,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { styled, useTheme } from "@mui/material/styles";
 
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { CustomizerContext } from "@/app/context/customizerContext";
-
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const NavItem = ({ item, level, pathDirect, onClick }) => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down("lg"));

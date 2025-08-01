@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { IconPower } from "@tabler/icons-react";
 import Link from "next/link";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import { useContext } from "react";
 import { UserDataContext } from "@/app/context/UserDataContext";
 

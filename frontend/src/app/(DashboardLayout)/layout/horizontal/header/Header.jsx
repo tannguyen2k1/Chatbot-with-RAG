@@ -7,7 +7,7 @@ import Toolbar from "@mui/material/Toolbar";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { styled } from "@mui/material/styles";
 import { ProductProvider } from "@/app/context/Ecommercecontext/index";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
 
 import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";

@@ -3,7 +3,7 @@ import React from "react";
 import NextTopLoader from "nextjs-toploader";
 import MyApp from "./app";
 import "./global.css";
-import { CustomizerContextProvider } from "./context/customizerContext";
+import ClientCustomizerProvider from "./context/ClientCustomizerContext/ClientCustomizerProvider";
 
 export const metadata = {
   title: "Modernize Nextjs",
@@ -15,9 +15,9 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <NextTopLoader color="#5D87FF" />
-        <CustomizerContextProvider>
+        <ClientCustomizerProvider>
           <MyApp>{children}</MyApp>
-        </CustomizerContextProvider>
+        </ClientCustomizerProvider>
       </body>
     </html>
   );

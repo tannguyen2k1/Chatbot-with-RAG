@@ -8,7 +8,7 @@ import NavItem from "./NavItem";
 import NavCollapse from "./NavCollapse";
 import NavGroup from "./NavGroup/NavGroup";
 import { useContext } from "react";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const SidebarItems = () => {
   const pathname = usePathname();

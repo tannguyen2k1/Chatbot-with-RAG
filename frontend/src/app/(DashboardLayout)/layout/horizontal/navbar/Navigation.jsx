@@ -4,7 +4,7 @@ import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import NavListing from "./NavListing/NavListing";
 import Logo from "../../shared/logo/Logo";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import { useContext } from "react";
 import config from "@/utils/config";
 import SidebarItems from "../../vertical/sidebar/SidebarItems";
