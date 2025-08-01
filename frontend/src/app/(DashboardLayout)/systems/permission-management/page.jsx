@@ -16,30 +16,18 @@ import {
   Paper,
   Tooltip,
   IconButton,
+  Switch,
+  Stack,
 } from "@mui/material";
-import CheckIcon from "@mui/icons-material/CheckCircle";
-import RemoveIcon from "@mui/icons-material/RemoveCircleOutline";
 import { getFetcher, putFetcher, postFetcher } from "@/app/api/globalFetcher";
 
 export default function PermissionManagementPage() {
-  // Danh sách action chuẩn hóa giống backend
-  const BASE_ACTIONS = [
-    ["view", "Xem"],
-    ["create", "Tạo"],
-    ["update", "Sửa"],
-    ["delete", "Xoá"],
-  ];
-  const permDescriptions = {
-    create: "Tạo mới",
-    view: "Xem",
-    update: "Sửa",
-    delete: "Xoá",
-  };
+  // Không cần BASE_ACTIONS/CUSTOM_ACTIONS nữa, chỉ render toàn bộ quyền
 
   const searchParams = useSearchParams();
   const roleId = searchParams.get("roleId");
   const [role, setRole] = useState(null);
-  const [modules, setModules] = useState([]);
+  // Không cần modules nữa
   const [permissions, setPermissions] = useState([]);
   const [editPerms, setEditPerms] = useState([]); // local state for batch edit
   const [loading, setLoading] = useState(true);
@@ -54,13 +42,21 @@ export default function PermissionManagementPage() {
     setLoading(true);
     Promise.all([
       getFetcher(`/api/rbac/roles/${roleId}`),
-      getFetcher("/api/rbac/modules"),
       getFetcher("/api/rbac/permissions"),
     ])
-      .then(([role, modules, permissions]) => {
+      .then(([role, permissions]) => {
         setRole(role);
-        setModules(modules);
-        setPermissions(permissions);
+        setPermissions(
+          [...permissions].sort((a, b) => {
+            const [modA, actA] = a.name.split(".");
+            const [modB, actB] = b.name.split(".");
+
+            const modCompare = modA.localeCompare(modB);
+            if (modCompare !== 0) return modCompare;
+
+            return actA.localeCompare(actB);
+          })
+        );
         setEditPerms(role?.permissions ? [...role.permissions] : []);
       })
       .catch((e) => {
@@ -72,11 +68,16 @@ export default function PermissionManagementPage() {
   // Không cho chọn role nữa, chỉ chỉnh quyền cho roleId truyền vào
 
   // Toggle permission and auto-save (theo API backend)
-  const handleToggle = async (moduleId, permissionId) => {
+  // Toggle quyền cho role (không cần module_id)
+  const handleToggle = async (permissionId) => {
     if (loading) return;
     setLoading(true);
+    // Lấy module_id từ permission object, fallback về 0 nếu không có
+    const permObj = permissions.find((p) => p.id === permissionId);
+    const module_id =
+      typeof permObj?.module_id === "number" ? permObj.module_id : 0;
     const hasPerm = editPerms.some(
-      (p) => p.module_id === moduleId && p.permission_id === permissionId
+      (p) => (p.permission_id || p.id) === permissionId
     );
     let newPerms;
     try {
@@ -84,11 +85,11 @@ export default function PermissionManagementPage() {
         // Remove permission
         await postFetcher("/api/rbac/remove-permission", {
           role_id: Number(roleId),
-          module_id: moduleId,
+          module_id: module_id,
           permission_id: permissionId,
         });
         newPerms = editPerms.filter(
-          (p) => !(p.module_id === moduleId && p.permission_id === permissionId)
+          (p) => (p.permission_id || p.id) !== permissionId
         );
         setSnackbar({
           open: true,
@@ -99,13 +100,10 @@ export default function PermissionManagementPage() {
         // Assign permission
         await postFetcher("/api/rbac/assign-permission", {
           role_id: Number(roleId),
-          module_id: moduleId,
+          module_id,
           permission_id: permissionId,
         });
-        newPerms = [
-          ...editPerms,
-          { module_id: moduleId, permission_id: permissionId },
-        ];
+        newPerms = [...editPerms, { permission_id: permissionId, module_id }];
         setSnackbar({
           open: true,
           message: "Đã cấp quyền thành công!",
@@ -140,120 +138,39 @@ export default function PermissionManagementPage() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: 180 }}>
-                    Module
+                  <TableCell sx={{ fontWeight: 700, width: 60 }} align="center">
+                    STT
                   </TableCell>
-                  {BASE_ACTIONS.map((action) => (
-                    <TableCell
-                      key={action[0]}
-                      align="center"
-                      sx={{ fontWeight: 700 }}
-                    >
-                      <Box
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <span>{action[0]}</span>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: 11 }}
-                        >
-                          {permDescriptions[action[0]] || ""}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  ))}
+                  <TableCell sx={{ fontWeight: 700, width: 220 }}>
+                    Tên quyền
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Mô tả</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="center">
+                    Đang có?
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {modules.map((mod) => (
-                  <TableRow key={mod.id}>
-                    <TableCell sx={{ fontWeight: 600 }}>{mod.name}</TableCell>
-                    {BASE_ACTIONS.map((action) => {
-                      // Tìm permission tương ứng module + action
-                      const perm = permissions.find(
-                        (p) => p.name === `${mod.name}.${action[0]}`
-                      );
-                      if (!perm) {
-                        return (
-                          <TableCell key={action[0]} align="center">
-                            -
-                          </TableCell>
-                        );
-                      }
-                      const checked = editPerms.some(
-                        (rp) =>
-                          rp.module_id === mod.id &&
-                          rp.permission_id === perm.id
-                      );
-                      return (
-                        <TableCell key={perm.id} align="center">
-                          <Tooltip
-                            title={
-                              checked
-                                ? `Đã có quyền: ${
-                                    permDescriptions[action[0]] || perm.name
-                                  }`
-                                : `Chưa có quyền: ${
-                                    permDescriptions[action[0]] || perm.name
-                                  }`
-                            }
-                            arrow
-                          >
-                            <span>
-                              <IconButton
-                                color={checked ? "success" : "default"}
-                                size="medium"
-                                sx={(theme) => ({
-                                  bgcolor: checked
-                                    ? theme.palette.mode === "dark"
-                                      ? "#334155"
-                                      : "#e6f4ea"
-                                    : "transparent",
-                                  borderRadius: 2,
-                                  transition: "0.2s",
-                                  border: checked
-                                    ? `1px solid ${
-                                        theme.palette.mode === "dark"
-                                          ? theme.palette.success.main
-                                          : "#b2dfdb"
-                                      }`
-                                    : `1px solid ${theme.palette.divider}`,
-                                  boxShadow: checked
-                                    ? theme.palette.mode === "dark"
-                                      ? "0 2px 8px 0 rgba(60,72,120,0.18)"
-                                      : "0 2px 8px 0 rgba(60,72,120,0.06)"
-                                    : "none",
-                                })}
-                                disabled={loading}
-                                onClick={() => handleToggle(mod.id, perm.id)}
-                              >
-                                {checked ? (
-                                  <CheckIcon
-                                    sx={(theme) => ({
-                                      color: theme.palette.success.main,
-                                    })}
-                                  />
-                                ) : (
-                                  <RemoveIcon
-                                    sx={(theme) => ({
-                                      color:
-                                        theme.palette.mode === "dark"
-                                          ? theme.palette.text.disabled
-                                          : "#bdbdbd",
-                                    })}
-                                  />
-                                )}
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
+                {permissions.map((perm, idx) => {
+                  const checked = editPerms.some(
+                    (rp) => (rp.permission_id || rp.id) === perm.id
+                  );
+                  return (
+                    <TableRow key={perm.id}>
+                      <TableCell align="center">{idx + 1}</TableCell>
+                      <TableCell>{perm.name}</TableCell>
+                      <TableCell>{perm.description || ""}</TableCell>
+                      <TableCell align="center">
+                        <Switch
+                          checked={checked}
+                          onChange={() => handleToggle(perm.id)}
+                          color={checked ? "success" : "default"}
+                          disabled={loading}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
