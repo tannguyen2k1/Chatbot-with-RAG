@@ -1,17 +1,20 @@
-FROM python:3.11
-
-# Set working directory
+FROM python:3.11 as builder
 WORKDIR /app
-
-# Copy requirements.txt and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code
 COPY . .
+RUN pyinstaller run_app.py --hidden-import=passlib.handlers.bcrypt
 
-# Expose the application port
+FROM python:3.11-slim
+WORKDIR /app
+# Copy file thực thi và các file tĩnh cần thiết
+COPY --from=builder /app/dist/run_app /app/run_app
+COPY --from=builder /app/alembic /app/alembic
+COPY --from=builder /app/alembic.ini /app/alembic.ini
+COPY --from=builder /app/config /app/config
+COPY --from=builder /app/database /app/database
+COPY --from=builder /app/requirements.txt /app/requirements.txt
+COPY --from=builder /app/static /app/static
+COPY --from=builder /app/templates /app/templates
 EXPOSE 8000
-
-# Start the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/run_app"]

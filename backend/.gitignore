@@ -38,3 +38,8 @@ alembic/versions/*.pyc
 
 # Ignore local settings
 settings_local.py
+
+# PyInstaller build output
+dist/
+build/
+run_app.spec
