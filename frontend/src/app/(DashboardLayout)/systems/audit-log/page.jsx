@@ -116,7 +116,7 @@ export default function AuditLogPage() {
                   <TableCell>
                     {new Date(log.timestamp).toLocaleString()}
                   </TableCell>
-                  <TableCell>{log.user_id ?? "-"}</TableCell>
+                  <TableCell>{log.user?.username ?? "-"}</TableCell>
                   <TableCell>{log.action}</TableCell>
                   <TableCell>{log.table_name}</TableCell>
                   <TableCell>{log.record_id ?? "-"}</TableCell>
