@@ -175,7 +175,23 @@ class RBACService:
         return permission
     
     def get_all_permissions(self):
-        return self.db.query(Permission).all()
+        # Lấy tất cả permissions, kèm module_id nếu có
+        permissions = self.db.query(Permission).all()
+        # Map: module_id = module.id nếu permission thuộc module, else None
+        # Giả định: tên permission dạng 'module.action', lấy module theo tên
+        result = []
+        modules = {m.name: m.id for m in self.db.query(Module).all()}
+        for perm in permissions:
+            parts = perm.name.split(".")
+            module_name = parts[0] if len(parts) > 1 else None
+            module_id = modules.get(module_name) if module_name else None
+            result.append({
+                "id": perm.id,
+                "name": perm.name,
+                "description": perm.description,
+                "module_id": module_id
+            })
+        return result
 
     def assign_role_to_user(self, user_id: int, role_id: int):
         user_role = UserRole(user_id=user_id, role_id=role_id)

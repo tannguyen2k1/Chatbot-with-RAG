@@ -65,17 +65,14 @@ export default function PermissionManagementPage() {
       .finally(() => setLoading(false));
   }, [roleId]);
 
-  // Không cho chọn role nữa, chỉ chỉnh quyền cho roleId truyền vào
-
   // Toggle permission and auto-save (theo API backend)
   // Toggle quyền cho role (không cần module_id)
   const handleToggle = async (permissionId) => {
     if (loading) return;
     setLoading(true);
-    // Lấy module_id từ permission object, fallback về 0 nếu không có
-    const permObj = permissions.find((p) => p.id === permissionId);
+    // Lấy module_id từ permissions theo permissionId
     const module_id =
-      typeof permObj?.module_id === "number" ? permObj.module_id : 0;
+      permissions.find((p) => p.id === permissionId)?.module_id || 0;
     const hasPerm = editPerms.some(
       (p) => (p.permission_id || p.id) === permissionId
     );
@@ -100,7 +97,7 @@ export default function PermissionManagementPage() {
         // Assign permission
         await postFetcher("/api/rbac/assign-permission", {
           role_id: Number(roleId),
-          module_id,
+          module_id: module_id,
           permission_id: permissionId,
         });
         newPerms = [...editPerms, { permission_id: permissionId, module_id }];
