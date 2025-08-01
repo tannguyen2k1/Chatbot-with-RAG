@@ -14,10 +14,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Tooltip,
-  IconButton,
   Switch,
-  Stack,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { getFetcher, putFetcher, postFetcher } from "@/app/api/globalFetcher";
 
@@ -27,8 +26,9 @@ export default function PermissionManagementPage() {
   const searchParams = useSearchParams();
   const roleId = searchParams.get("roleId");
   const [role, setRole] = useState(null);
-  // Không cần modules nữa
   const [permissions, setPermissions] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [tab, setTab] = useState(0);
   const [editPerms, setEditPerms] = useState([]); // local state for batch edit
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
@@ -46,14 +46,20 @@ export default function PermissionManagementPage() {
     ])
       .then(([role, permissions]) => {
         setRole(role);
+        // Lấy danh sách module từ permissions
+        const moduleSet = new Set();
+        permissions.forEach((p) => {
+          const [mod] = p.name.split(".");
+          moduleSet.add(mod);
+        });
+        const moduleList = Array.from(moduleSet).sort();
+        setModules(moduleList);
         setPermissions(
           [...permissions].sort((a, b) => {
             const [modA, actA] = a.name.split(".");
             const [modB, actB] = b.name.split(".");
-
             const modCompare = modA.localeCompare(modB);
             if (modCompare !== 0) return modCompare;
-
             return actA.localeCompare(actB);
           })
         );
@@ -131,6 +137,19 @@ export default function PermissionManagementPage() {
           <Typography mb={2}>
             Vai trò: <b>{role.name}</b>
           </Typography>
+          {/* Tabs cho từng module */}
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 2 }}
+          >
+            {modules.map((mod, idx) => (
+              <Tab label={mod} key={mod} />
+            ))}
+          </Tabs>
+          {/* Bảng quyền cho module đang chọn */}
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small">
               <TableHead>
@@ -148,26 +167,28 @@ export default function PermissionManagementPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {permissions.map((perm, idx) => {
-                  const checked = editPerms.some(
-                    (rp) => (rp.permission_id || rp.id) === perm.id
-                  );
-                  return (
-                    <TableRow key={perm.id}>
-                      <TableCell align="center">{idx + 1}</TableCell>
-                      <TableCell>{perm.name}</TableCell>
-                      <TableCell>{perm.description || ""}</TableCell>
-                      <TableCell align="center">
-                        <Switch
-                          checked={checked}
-                          onChange={() => handleToggle(perm.id)}
-                          color={checked ? "success" : "default"}
-                          disabled={loading}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {permissions
+                  .filter((perm) => perm.name.split(".")[0] === modules[tab])
+                  .map((perm, idx) => {
+                    const checked = editPerms.some(
+                      (rp) => (rp.permission_id || rp.id) === perm.id
+                    );
+                    return (
+                      <TableRow key={perm.id}>
+                        <TableCell align="center">{idx + 1}</TableCell>
+                        <TableCell>{perm.name}</TableCell>
+                        <TableCell>{perm.description || ""}</TableCell>
+                        <TableCell align="center">
+                          <Switch
+                            checked={checked}
+                            onChange={() => handleToggle(perm.id)}
+                            color={checked ? "success" : "default"}
+                            disabled={loading}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </TableContainer>
