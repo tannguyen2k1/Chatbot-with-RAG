@@ -2,19 +2,16 @@ FROM python:3.11 as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+# Copy toàn bộ source để build binary
 COPY . .
-RUN pyinstaller run_app.py --hidden-import=passlib.handlers.bcrypt
+RUN pyinstaller run_app.py --hidden-import=passlib.handlers.bcrypt -y
 
 FROM python:3.11-slim
 WORKDIR /app
-# Copy file thực thi và các file tĩnh cần thiết
+# Chỉ copy file thực thi và các file cấu hình cần thiết, KHÔNG copy source code Python
 COPY --from=builder /app/dist/run_app /app/run_app
-COPY --from=builder /app/alembic /app/alembic
-COPY --from=builder /app/alembic.ini /app/alembic.ini
 COPY --from=builder /app/config /app/config
 COPY --from=builder /app/database /app/database
-COPY --from=builder /app/requirements.txt /app/requirements.txt
-COPY --from=builder /app/static /app/static
-COPY --from=builder /app/templates /app/templates
+COPY --from=builder /app/alembic.ini /app/alembic.ini
 EXPOSE 8000
-CMD ["/app/run_app"]
+CMD ["/app/run_app/run_app"]
