@@ -1,6 +1,6 @@
 "use client";
-import { createContext, useState, ReactNode, useEffect } from "react";
-import config from "./config";
+import { createContext, useState, useEffect, useLayoutEffect } from "react";
+import config from "@/utils/config";
 import React from "react";
 
 // Create the context with an initial value
@@ -19,8 +19,8 @@ export const CustomizerContextProvider = ({ children }) => {
   const [isCollapse, setIsCollapse] = useState(config.isCollapse);
   const [isLanguage, setIsLanguage] = useState(config.isLanguage);
 
-  // Khi client mount, cập nhật lại state từ localStorage nếu có
-  useEffect(() => {
+  // trước mount, cập nhật lại state từ localStorage nếu có
+  useLayoutEffect(() => {
     if (typeof window !== "undefined") {
       const dir = localStorage.getItem("customizer_dir");
       if (dir) setActiveDir(dir);

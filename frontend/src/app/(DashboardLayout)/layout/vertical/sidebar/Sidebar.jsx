@@ -1,17 +1,17 @@
-import Box from '@mui/material/Box';
-import Drawer from '@mui/material/Drawer';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
-import SidebarItems from './SidebarItems';
-import Logo from '../../shared/logo/Logo';
-import Scrollbar from '@/app/components/custom-scroll/Scrollbar';
-import { Profile } from './SidebarProfile/Profile';
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import SidebarItems from "./SidebarItems";
+import Logo from "../../shared/logo/Logo";
+import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
+import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
 import { CustomizerContext } from "@/app/context/customizerContext";
-import config from '@/app/context/config'
+import config from "@/utils/config";
 
 const Sidebar = () => {
-  const lgUp = useMediaQuery((theme) => theme.breakpoints.down('lg'));
+  const lgUp = useMediaQuery((theme) => theme.breakpoints.down("lg"));
   const {
     isCollapse,
     isSidebarHover,
@@ -38,17 +38,16 @@ const Sidebar = () => {
     setIsSidebarHover(false);
   };
 
-
   return (
     <>
-      {!lgUp ?
+      {!lgUp ? (
         <Box
           sx={{
             zIndex: 100,
             width: toggleWidth,
             flexShrink: 0,
             ...(isCollapse == "mini-sidebar" && {
-              position: 'absolute',
+              position: "absolute",
             }),
           }}
         >
@@ -64,13 +63,13 @@ const Sidebar = () => {
             slotProps={{
               paper: {
                 sx: {
-                  transition: theme.transitions.create('width', {
+                  transition: theme.transitions.create("width", {
                     duration: theme.transitions.duration.shortest,
                   }),
                   width: toggleWidth,
-                  boxSizing: 'border-box',
+                  boxSizing: "border-box",
                 },
-              }
+              },
             }}
           >
             {/* ------------------------------------------- */}
@@ -78,18 +77,20 @@ const Sidebar = () => {
             {/* ------------------------------------------- */}
             <Box
               sx={{
-                height: '100%',
+                height: "100%",
               }}
             >
               {/* ------------------------------------------- */}
               {/* Logo */}
               {/* ------------------------------------------- */}
-              <Box sx={{
-                px: 3
-              }}>
+              <Box
+                sx={{
+                  px: 3,
+                }}
+              >
                 <Logo />
               </Box>
-              <Scrollbar sx={{ height: 'calc(100% - 190px)' }}>
+              <Scrollbar sx={{ height: "calc(100% - 190px)" }}>
                 {/* ------------------------------------------- */}
                 {/* Sidebar Items */}
                 {/* ------------------------------------------- */}
@@ -99,7 +100,7 @@ const Sidebar = () => {
             </Box>
           </Drawer>
         </Box>
-        :
+      ) : (
         <Drawer
           anchor="left"
           open={isMobileSidebar}
@@ -109,18 +110,20 @@ const Sidebar = () => {
             paper: {
               sx: {
                 width: SidebarWidth,
-                border: '0 !important',
+                border: "0 !important",
                 boxShadow: (theme) => theme.shadows[8],
               },
-            }
+            },
           }}
         >
           {/* ------------------------------------------- */}
           {/* Logo */}
           {/* ------------------------------------------- */}
-          <Box sx={{
-            px: 2
-          }}>
+          <Box
+            sx={{
+              px: 2,
+            }}
+          >
             <Logo />
           </Box>
           {/* ------------------------------------------- */}
@@ -128,7 +131,7 @@ const Sidebar = () => {
           {/* ------------------------------------------- */}
           <SidebarItems />
         </Drawer>
-      }
+      )}
     </>
   );
 };
