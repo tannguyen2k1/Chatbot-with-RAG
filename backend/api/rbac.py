@@ -1,5 +1,3 @@
-
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from schemas import RoleCreate, RoleUpdate, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole, RoleOut
@@ -17,6 +15,18 @@ def get_roles(db: Session = Depends(get_db), current_user=Depends(get_current_us
     if "role.view" not in actions:
         raise HTTPException(status_code=403, detail="You don't have permission to view roles")
     return service.get_all_roles()
+
+@router.get("/roles/{role_id}", response_model=RoleOut)
+def get_role_by_id(role_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("role", [])
+    if "role.view" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to view roles")
+    found_role = service.get_role_by_id(role_id)
+    if not found_role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return found_role
 
 @router.post("/roles")
 def create_role(data: RoleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
@@ -62,16 +72,24 @@ def assign_role_to_user(data: AssignRoleToUser, db: Session = Depends(get_db), c
     return service.assign_role_to_user(data.user_id, data.role_id)
 
 # modules
-# @router.get("/modules")
-# def get_modules(db: Session = Depends(get_db)):
-#     service = RBACService(db)
-#     return service.get_all_modules()
+@router.get("/modules")
+def get_modules(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("module", [])
+    if "module.view" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to view modules")
+    return service.get_all_modules()
 
-# @router.post("/modules")
-# def create_module(data: ModuleCreate, db: Session = Depends(get_db)):
-#     service = RBACService(db)
-#     desc = data.description if data.description is not None else ""
-#     return service.create_module(data.name, desc)
+@router.post("/modules")
+def create_module(data: ModuleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    service = RBACService(db)
+    perms = service.get_user_permissions(current_user.id)
+    actions = perms.get("module", [])
+    if "module.create" not in actions:
+        raise HTTPException(status_code=403, detail="You don't have permission to create modules")
+    desc = data.description if data.description is not None else ""
+    return service.create_module(data.name, desc)
 
 # permissions
 @router.get("/permissions")

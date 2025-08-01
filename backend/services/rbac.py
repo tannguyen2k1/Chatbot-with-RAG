@@ -1,10 +1,28 @@
 from sqlalchemy.orm import Session
 from database.models import Role, Module, Permission, RolePermission, UserRole
-from schemas import RoleUpdate 
+from schemas import RoleUpdate
+
 
 class RBACService:
     def __init__(self, db: Session):
         self.db = db
+
+    def get_role_by_id(self, role_id: int):
+        role = self.db.query(Role).filter_by(id=role_id).first()
+        if not role:
+            return None
+        # Lấy permissions cho role này
+        role_perms = self.db.query(RolePermission).filter_by(role_id=role_id).all()
+        perms = [
+            {"module_id": rp.module_id, "permission_id": rp.permission_id}
+            for rp in role_perms
+        ]
+        return {
+            "id": role.id,
+            "name": role.name,
+            "description": role.description,
+            "permissions": perms
+        }
 
     def get_module_by_name(self, name: str):
         return self.db.query(Module).filter_by(name=name).first()
