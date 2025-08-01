@@ -13,5 +13,6 @@ COPY --from=builder /app/dist/run_app /app/run_app
 COPY --from=builder /app/config /app/config
 COPY --from=builder /app/database /app/database
 COPY --from=builder /app/alembic.ini /app/alembic.ini
+COPY --from=builder /app/.env /app/.env
 EXPOSE 8000
 CMD ["/app/run_app/run_app"]
