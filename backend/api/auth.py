@@ -6,6 +6,7 @@ from middleware.dependency import get_db, get_current_user
 from middleware.security import verify_token
 from services import AuthService , RBACService
 from config.settings import settings
+from database.models.auth_models import UserRole, Role
 from schemas import (RefreshTokenRequest, 
                      TokenResponse, 
                      LoginRequest,
@@ -122,9 +123,11 @@ def get_my_profile(
     # RBAC: build permissions từ role/privileges
     role_service = RBACService(db)
     user_dict = current_user.__dict__.copy()
-    user_dict["permissions"] = role_service.get_user_permissions(current_user.id)
+    # Lấy đủ quyền: merge các quyền từ tất cả role của user
+    perms = role_service.get_user_permissions(current_user.id)
+    # Đảm bảo không bị thiếu quyền nào (nếu cần merge thêm global hoặc các quyền đặc biệt thì xử lý ở đây)
+    user_dict["permissions"] = perms
     # Chuẩn RBAC: trả về roles là mảng tên role
-    from database.models.auth_models import UserRole, Role
     user_roles = db.query(UserRole).filter_by(user_id=current_user.id).all()
     role_ids = [ur.role_id for ur in user_roles]
     roles = db.query(Role).filter(Role.id.in_(role_ids)).all() if role_ids else []
