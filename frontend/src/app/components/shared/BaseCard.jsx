@@ -1,8 +1,7 @@
-'use client'
-import React, { useContext } from 'react';
-import { Card, CardHeader, CardContent, Divider } from '@mui/material';
-import { CustomizerContext } from '@/app/context/customizerContext';
-
+"use client";
+import React, { useContext } from "react";
+import { Card, CardHeader, CardContent, Divider } from "@mui/material";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const BaseCard = ({ title, children }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -11,7 +10,7 @@ const BaseCard = ({ title, children }) => {
     <Card
       sx={{ padding: 0 }}
       elevation={isCardShadow ? 9 : 0}
-      variant={!isCardShadow ? 'outlined' : undefined}
+      variant={!isCardShadow ? "outlined" : undefined}
     >
       <CardHeader title={title} />
       <Divider />

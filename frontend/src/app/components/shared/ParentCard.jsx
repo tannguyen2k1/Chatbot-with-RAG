@@ -1,23 +1,24 @@
-'use client'
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
-import { Card, CardHeader, CardContent, Divider, Box } from '@mui/material';
-import { CustomizerContext } from '@/app/context/customizerContext';
-
+"use client";
+import React, { useContext } from "react";
+import PropTypes from "prop-types";
+import { useTheme } from "@mui/material/styles";
+import { Card, CardHeader, CardContent, Divider, Box } from "@mui/material";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const ParentCard = ({ title, children, footer, codeModel }) => {
   const { isCardShadow } = useContext(CustomizerContext);
-
 
   const theme = useTheme();
   const borderColor = theme.palette.divider;
 
   return (
-    (<Card
-      sx={{ padding: 0, border: !isCardShadow ? `1px solid ${borderColor}` : 'none' }}
+    <Card
+      sx={{
+        padding: 0,
+        border: !isCardShadow ? `1px solid ${borderColor}` : "none",
+      }}
       elevation={isCardShadow ? 9 : 0}
-      variant={!isCardShadow ? 'outlined' : undefined}
+      variant={!isCardShadow ? "outlined" : undefined}
     >
       <CardHeader title={title} action={codeModel} />
       <Divider />
@@ -25,14 +26,18 @@ const ParentCard = ({ title, children, footer, codeModel }) => {
       {footer ? (
         <>
           <Divider />
-          <Box sx={{
-            p: 3
-          }}>{footer}</Box>
+          <Box
+            sx={{
+              p: 3,
+            }}
+          >
+            {footer}
+          </Box>
         </>
       ) : (
-        ''
+        ""
       )}
-    </Card>)
+    </Card>
   );
 };
 

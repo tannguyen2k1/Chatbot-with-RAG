@@ -6,7 +6,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 import { Stack } from "@mui/system";
 import { useTranslation } from "react-i18next";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const Languages = [
   {

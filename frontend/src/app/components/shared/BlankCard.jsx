@@ -1,13 +1,12 @@
-'use client'
-import { Card } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import React, { useContext } from 'react';
-import { CustomizerContext } from '@/app/context/customizerContext';
+"use client";
+import { Card } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import React, { useContext } from "react";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 const BlankCard = ({ children, className, sx }) => {
-
   const { isCardShadow } = useContext(CustomizerContext);
 
   const theme = useTheme();
@@ -15,10 +14,15 @@ const BlankCard = ({ children, className, sx }) => {
 
   return (
     <Card
-      sx={{ p: 0, border: !isCardShadow ? `1px solid ${borderColor}` : 'none', position: 'relative', sx }}
+      sx={{
+        p: 0,
+        border: !isCardShadow ? `1px solid ${borderColor}` : "none",
+        position: "relative",
+        sx,
+      }}
       className={className}
       elevation={isCardShadow ? 9 : 0}
-      variant={!isCardShadow ? 'outlined' : undefined}
+      variant={!isCardShadow ? "outlined" : undefined}
     >
       {children}
     </Card>

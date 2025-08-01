@@ -12,7 +12,7 @@ import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";
 import Profile from "./Profile";
 import Search from "./Search";
 import Language from "./Language";
-import { CustomizerContext } from "@/app/context/customizerContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
