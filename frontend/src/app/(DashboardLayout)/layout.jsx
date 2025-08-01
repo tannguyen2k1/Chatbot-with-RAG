@@ -9,8 +9,7 @@ import Customizer from "./layout/shared/customizer/Customizer";
 import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/customizerContext";
-import config from "@/app/context/config";
-
+import config from "@/utils/config";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -29,17 +28,20 @@ const PageWrapper = styled("div")(() => ({
 }));
 
 export default function RootLayout({ children }) {
-  const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
+  const { activeLayout, isLayout, activeMode, isCollapse } =
+    useContext(CustomizerContext);
   const theme = useTheme();
   const MiniSidebarWidth = config.miniSidebarWidth;
 
   return (
-    <MainWrapper className={activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
+    <MainWrapper
+      className={activeMode === "dark" ? "darkbg mainwrapper" : "mainwrapper"}
+    >
       {/* ------------------------------------------- */}
       {/* Sidebar */}
       {/* ------------------------------------------- */}
 
-      {activeLayout === 'horizontal' ? "" : <Sidebar />}
+      {activeLayout === "horizontal" ? "" : <Sidebar />}
 
       {/* ------------------------------------------- */}
       {/* Main Wrapper */}
@@ -57,12 +59,12 @@ export default function RootLayout({ children }) {
         {/* ------------------------------------------- */}
         {/* Header */}
         {/* ------------------------------------------- */}
-        {activeLayout === 'horizontal' ? <HorizontalHeader /> : <Header />}
+        {activeLayout === "horizontal" ? <HorizontalHeader /> : <Header />}
         {/* PageContent */}
-        {activeLayout === 'horizontal' ? <Navigation /> : ""}
+        {activeLayout === "horizontal" ? <Navigation /> : ""}
         <Container
           sx={{
-            pt: '30px',
+            pt: "30px",
             maxWidth: isLayout === "boxed" ? "lg" : "100%!important",
           }}
         >
@@ -70,9 +72,7 @@ export default function RootLayout({ children }) {
           {/* PageContent */}
           {/* ------------------------------------------- */}
 
-          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
-            {children}
-          </Box>
+          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
 
           {/* ------------------------------------------- */}
           {/* End Page */}
