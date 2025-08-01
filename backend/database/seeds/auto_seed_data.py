@@ -8,6 +8,7 @@ MODULES = [
     ("user", "Quản lý người dùng"),
     ("demo", "Quản lý demo"),
     ("role", "Quản lý role"),
+    ("module", "Quản lý module"),
     ("permission", "Quản lý quyền"),
     ("audit_log", "Quản lý audit log"),
     # Thêm module khác tại đây

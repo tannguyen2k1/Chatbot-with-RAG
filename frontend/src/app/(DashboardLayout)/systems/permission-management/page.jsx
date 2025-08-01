@@ -41,7 +41,6 @@ export default function PermissionManagementPage() {
   const [role, setRole] = useState(null);
   const [modules, setModules] = useState([]);
   const [permissions, setPermissions] = useState([]);
-  const [rolePerms, setRolePerms] = useState([]);
   const [editPerms, setEditPerms] = useState([]); // local state for batch edit
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
@@ -54,18 +53,15 @@ export default function PermissionManagementPage() {
     if (!roleId) return;
     setLoading(true);
     Promise.all([
-      getFetcher("/api/rbac/roles"),
+      getFetcher(`/api/rbac/roles/${roleId}`),
       getFetcher("/api/rbac/modules"),
       getFetcher("/api/rbac/permissions"),
     ])
-      .then(([roles, modules, permissions]) => {
-        const roleIdNum = Number(roleId);
-        const foundRole = roles.find((r) => r.id === roleIdNum);
-        setRole(foundRole);
+      .then(([role, modules, permissions]) => {
+        setRole(role);
         setModules(modules);
         setPermissions(permissions);
-        setRolePerms(foundRole?.permissions || []);
-        setEditPerms(foundRole?.permissions ? [...foundRole.permissions] : []);
+        setEditPerms(role?.permissions ? [...role.permissions] : []);
       })
       .catch((e) => {
         setSnackbar({ open: true, message: e.message, severity: "error" });
@@ -117,7 +113,6 @@ export default function PermissionManagementPage() {
         });
       }
       setEditPerms(newPerms);
-      setRolePerms([...newPerms]);
     } catch (e) {
       setSnackbar({
         open: true,
