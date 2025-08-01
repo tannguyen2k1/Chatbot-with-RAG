@@ -5,12 +5,12 @@ from services import RBACService
 
 # Danh sách module cần seed
 MODULES = [
-    ("user", "Quản lý người dùng"),
-    ("demo", "Quản lý demo"),
-    ("role", "Quản lý role"),
-    ("module", "Quản lý module"),
-    ("permission", "Quản lý quyền"),
-    ("audit_log", "Quản lý audit log"),
+    ("user", "user"),
+    ("demo", "demo"),
+    ("role", "role"),
+    ("module", "module"),
+    ("permission", "permission"),
+    ("audit_log", "audit log"),
     # Thêm module khác tại đây
 ]
 
