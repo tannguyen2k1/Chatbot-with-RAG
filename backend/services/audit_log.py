@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from database.models.audit_log import AuditLog
 from schemas.audit_log import PaginatedAuditLogResponse, AuditLogOut
 from typing import Optional
@@ -18,7 +18,7 @@ class AuditLogService:
                 (AuditLog.description.ilike(like))
             )
         total = query.count()
-        logs = query.order_by(AuditLog.timestamp.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        logs = query.options(selectinload(AuditLog.user)).order_by(AuditLog.timestamp.desc()).offset((page - 1) * page_size).limit(page_size).all()
         return PaginatedAuditLogResponse(
             data=[AuditLogOut.model_validate(log) for log in logs],
             total=total,
