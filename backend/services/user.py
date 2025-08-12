@@ -1,8 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from database.models import User
-from schemas import UserCreate, UserUpdate
+from schemas import UserCreate, UserUpdate, UserResponse, PaginatedUserResponse
 from typing import Optional
+from services import RBACService
+from database.models.auth_models import UserRole, Role
 
 class UserService:
     def __init__(self, db: AsyncSession):
@@ -105,3 +107,158 @@ class UserService:
             )
         result = await self.db.execute(query)
         return len(result.scalars().all())
+
+    # "For" methods that handle permissions and business logic
+    async def create_user_for(self, current_user_id: int, user_data: UserCreate) -> UserResponse:
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "user", "create")
+        
+        user = await self.create_user(user_data)
+        
+        # Ensure user has at least one role assigned if role is provided in user_data
+        if hasattr(user_data, 'role') and user_data.role:
+            # Find role by name
+            result = await self.db.execute(select(Role).filter_by(name=user_data.role))
+            role_obj = result.scalar_one_or_none()
+            if role_obj:
+                # Check if user already has this role
+                result = await self.db.execute(select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id))
+                existing = result.scalar_one_or_none()
+                if not existing:
+                    self.db.add(UserRole(user_id=user.id, role_id=role_obj.id))
+                    await self.db.commit()
+        
+        # Get roles array
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
+        role_ids = [ur.role_id for ur in user_roles]
+        if role_ids:
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+        else:
+            roles = []
+        
+        user_dict = user.__dict__.copy()
+        user_dict["roles"] = [r.name for r in roles] if roles else []
+        return UserResponse(**user_dict)
+
+    async def list_users_for(self, current_user_id: int, page: int, page_size: int, search: str = "") -> PaginatedUserResponse:
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "user", "view")
+        
+        skip = (page - 1) * page_size
+        users = await self.list_users(skip=skip, limit=page_size, search=search)
+        total = await self.count_users(search=search)
+        
+        result = []
+        for u in users:
+            status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
+            if hasattr(u, "id") and isinstance(u.id, int):
+                permissions = await role_service.get_user_permissions(u.id)
+            else:
+                permissions = {}
+            
+            # Get roles array
+            result_roles = await self.db.execute(select(UserRole).filter_by(user_id=u.id))
+            user_roles = result_roles.scalars().all()
+            role_ids = [ur.role_id for ur in user_roles]
+            if role_ids:
+                result_roles = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+                roles = result_roles.scalars().all()
+            else:
+                roles = []
+            
+            user_dict = u.__dict__.copy()
+            user_dict["roles"] = [r.name for r in roles]
+            user_dict["permissions"] = permissions
+            user_dict["status"] = status
+            result.append(UserResponse(**user_dict))
+        
+        return PaginatedUserResponse(
+            data=result,
+            total=total,
+            page=page,
+            page_size=page_size
+        )
+
+    async def get_user_for(self, current_user_id: int, user_id: int) -> UserResponse:
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "user", "view")
+        
+        user = await self.get_user(user_id)
+        if not user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
+        if hasattr(user, "id") and isinstance(user.id, int):
+            permissions = await role_service.get_user_permissions(user.id)
+        else:
+            permissions = {}
+        
+        # Get roles array
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
+        role_ids = [ur.role_id for ur in user_roles]
+        if role_ids:
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+        else:
+            roles = []
+        
+        user_dict = user.__dict__.copy()
+        user_dict["roles"] = [r.name for r in roles]
+        user_dict["permissions"] = permissions
+        user_dict["status"] = status
+        return UserResponse(**user_dict)
+
+    async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate) -> UserResponse:
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "user", "update")
+        
+        user = await self.get_user(user_id)
+        if not user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        # Only root can edit role, and cannot set to 'root'
+        if not await role_service.is_root(current_user_id):
+            update_data.role = None
+        elif update_data.role == "root":
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Không được gán role là root")
+        
+        updated_user = await self.update_user(user_id, update_data)
+        if updated_user is None:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found after update")
+        
+        # Get roles array like other APIs
+        result = await self.db.execute(select(UserRole).filter_by(user_id=getattr(updated_user, "id", None)))
+        user_roles = result.scalars().all()
+        role_ids = [ur.role_id for ur in user_roles]
+        if role_ids:
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+        else:
+            roles = []
+        
+        user_dict = updated_user.__dict__.copy()
+        user_dict["roles"] = [r.name for r in roles]
+        return UserResponse(**user_dict)
+
+    async def delete_user_for(self, current_user_id: int, user_id: int) -> dict:
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "user", "delete")
+        
+        user = await self.get_user(user_id)
+        if not user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        success = await self.delete_user(user_id)
+        if not success:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        return {"message": f"User with ID: {user_id} has been deleted"}

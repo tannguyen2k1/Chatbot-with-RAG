@@ -34,6 +34,10 @@ class RolePermissionOut(BaseModel):
 class RoleUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    
+class PermissionError(Exception):
+    """Custom exception for permission-related errors"""
+    pass
 
 class RoleOut(BaseModel):
     id: int

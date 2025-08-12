@@ -3,8 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from database.models import User
 from middleware.dependency import get_db, get_current_user
-from middleware.security import verify_token
-from services import AuthService , RBACService
+from services import AuthService
 from config.settings import settings
 from database.models.auth_models import UserRole, Role
 from schemas import (RefreshTokenRequest, 
@@ -55,23 +54,11 @@ async def refresh_access_token(
         refresh_data: RefreshTokenRequest,
         db: AsyncSession = Depends(get_db)
 ):
-    # Verify the refresh token
-    payload = verify_token(refresh_data.refresh_token, is_refresh=True)
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-
-    # Query the user from the database using async
-    from sqlalchemy import select
-    result = await db.execute(select(User).filter(User.id == int(user_id)))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
     auth_service = AuthService(db)
-    # Create new tokens for the user
-    new_access_token = auth_service.create_access_token(user)
-    new_refresh_token = auth_service.create_refresh_token(user)
+    try:
+        new_access_token, new_refresh_token = await auth_service.refresh_tokens(refresh_data.refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     return TokenResponse(
         access_token=new_access_token,
@@ -122,22 +109,6 @@ async def get_my_profile(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # RBAC: build permissions từ role/privileges
-    role_service = RBACService(db)
-    user_dict = current_user.__dict__.copy()
-    # Lấy đủ quyền: merge các quyền từ tất cả role của user
-    perms = await role_service.get_user_permissions(current_user.id)
-    # Đảm bảo không bị thiếu quyền nào (nếu cần merge thêm global hoặc các quyền đặc biệt thì xử lý ở đây)
-    user_dict["permissions"] = perms
-    # Chuẩn RBAC: trả về roles là mảng tên role
-    from sqlalchemy import select
-    result = await db.execute(select(UserRole).filter_by(user_id=current_user.id))
-    user_roles = result.scalars().all()
-    role_ids = [ur.role_id for ur in user_roles]
-    if role_ids:
-        result = await db.execute(select(Role).filter(Role.id.in_(role_ids)))
-        roles = result.scalars().all()
-    else:
-        roles = []
-    user_dict["roles"] = [r.name for r in roles]
+    auth_service = AuthService(db)
+    user_dict = await auth_service.get_user_profile(current_user)
     return UserResponse(**user_dict)

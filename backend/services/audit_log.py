@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from database.models.audit_log import AuditLog
 from schemas.audit_log import PaginatedAuditLogResponse, AuditLogOut
 from typing import Optional
+from services import RBACService
 
 class AuditLogService:
     def __init__(self, db: AsyncSession):
@@ -34,5 +35,12 @@ class AuditLogService:
             page=page,
             page_size=page_size
         )
+
+    # "For" method that handles permissions and business logic
+    async def get_all_audit_logs_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedAuditLogResponse:
+        """Get all audit logs with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "audit_log", "view")
+        return await self.get_all_audit_logs(page, page_size, search)
     
 
