@@ -8,14 +8,14 @@ import { IconPower } from "@tabler/icons-react";
 import Link from "next/link";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import { useContext } from "react";
-import { UserDataContext } from "@/app/context/UserDataContext";
+import { AuthContext } from "@/app/context/AuthContext";
 
 export const Profile = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
   const { isSidebarHover, isCollapse } = useContext(CustomizerContext);
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : "";
 
-  const { user, logout } = useContext(UserDataContext);
+  const { user, logout } = useContext(AuthContext);
   return (
     <Box
       sx={{

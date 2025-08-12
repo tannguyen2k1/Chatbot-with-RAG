@@ -8,6 +8,7 @@ export function hasPermission(userPermissions, module, action) {
   if (typeof userPermissions === "object" && !Array.isArray(userPermissions)) {
     const actions = userPermissions[module];
     if (!actions) return false;
+    // Chỉ kiểm tra dạng "module.action" đúng với backend trả về
     return actions.includes(`${module}.${action}`);
   }
   // Nếu userPermissions là mảng string ['user.view', ...]

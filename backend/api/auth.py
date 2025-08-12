@@ -1,18 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from database.models import User
 from middleware.dependency import get_db, get_current_user
 from services import AuthService
 from config.settings import settings
-from database.models.auth_models import UserRole, Role
-from schemas import (RefreshTokenRequest, 
-                     TokenResponse, 
+from schemas import (TokenResponse, 
                      LoginRequest,
                      ChangePasswordRequest, 
                      SimpleResetPasswordRequest, 
-                     MessageResponse,
-                     UserResponse)
+                     MessageResponse)
 
 
 
@@ -22,6 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/login", response_model=TokenResponse)
 async def login(
     login_data: LoginRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -42,27 +40,56 @@ async def login(
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     )
 
+    # Set refresh token as httpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        path="/"
+    )
+
+    # Get user info with roles and permissions (dùng service)
+    user_dict = await auth_service.get_user_info_dict(user)
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer"
+        token_type="bearer",
+        user=user_dict
     )
 
 # Endpoint: Create refresh token
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token(
-        refresh_data: RefreshTokenRequest,
+        request: Request,
+        response: Response,
         db: AsyncSession = Depends(get_db)
 ):
     auth_service = AuthService(db)
     try:
-        new_access_token, new_refresh_token = await auth_service.refresh_tokens(refresh_data.refresh_token)
+        # Get refresh token from cookie
+        refresh_token = request.cookies.get("refresh_token")
+        if not refresh_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token found")
+        
+        new_access_token, new_refresh_token = await auth_service.refresh_tokens(refresh_token)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
+    # Update refresh token cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        path="/"
+    )
+
     return TokenResponse(
         access_token=new_access_token,
-        refresh_token=new_refresh_token,
         token_type="bearer"
     )
 
@@ -88,6 +115,19 @@ async def change_password(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+# Endpoint: Logout
+@router.post("/logout", response_model=MessageResponse)
+async def logout(response: Response):
+    """
+    Đăng xuất và clear refresh token cookie
+    """
+    response.delete_cookie(
+        key="refresh_token",
+        path="/"
+    )
+    return MessageResponse(message="Logged out successfully")
+
+
 # Endpoint: Simple reset password 
 @router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(
@@ -104,11 +144,3 @@ async def reset_password(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     
-@router.get("/me", response_model=UserResponse)
-async def get_my_profile(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    auth_service = AuthService(db)
-    user_dict = await auth_service.get_user_profile(current_user)
-    return UserResponse(**user_dict)
