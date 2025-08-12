@@ -43,7 +43,7 @@ async def update_role(role_id: int, data: RoleUpdate, db: AsyncSession = Depends
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
     if not updated_role:
-        raise HTTPException(statusocode=404, detail="Role not found")
+        raise HTTPException(status_code=404, detail="Role not found")
     return updated_role
 
 @router.delete("/roles/{role_id}")
