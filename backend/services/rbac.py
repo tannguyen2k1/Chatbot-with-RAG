@@ -1,18 +1,21 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from database.models import Role, Module, Permission, RolePermission, UserRole
 from schemas import RoleUpdate
 
 
 class RBACService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def get_role_by_id(self, role_id: int):
-        role = self.db.query(Role).filter_by(id=role_id).first()
+    async def get_role_by_id(self, role_id: int):
+        result = await self.db.execute(select(Role).filter_by(id=role_id))
+        role = result.scalar_one_or_none()
         if not role:
             return None
         # Lấy permissions cho role này
-        role_perms = self.db.query(RolePermission).filter_by(role_id=role_id).all()
+        result = await self.db.execute(select(RolePermission).filter_by(role_id=role_id))
+        role_perms = result.scalars().all()
         perms = [
             {"module_id": rp.module_id, "permission_id": rp.permission_id}
             for rp in role_perms
@@ -24,56 +27,66 @@ class RBACService:
             "permissions": perms
         }
 
-    def get_module_by_name(self, name: str):
-        return self.db.query(Module).filter_by(name=name).first()
+    async def get_module_by_name(self, name: str):
+        result = await self.db.execute(select(Module).filter_by(name=name))
+        return result.scalar_one_or_none()
 
-    def get_permission_by_name(self, name: str):
-        return self.db.query(Permission).filter_by(name=name).first()
+    async def get_permission_by_name(self, name: str):
+        result = await self.db.execute(select(Permission).filter_by(name=name))
+        return result.scalar_one_or_none()
     
-    def update_role(self, role_id: int, data: RoleUpdate):
-        role = self.db.query(Role).filter_by(id=role_id).first()
+    async def update_role(self, role_id: int, data: RoleUpdate):
+        result = await self.db.execute(select(Role).filter_by(id=role_id))
+        role = result.scalar_one_or_none()
         if not role:
             return None
         if data.name is not None:
             role.name = data.name
         if data.description is not None:
             role.description = data.description
-        self.db.commit()
-        self.db.refresh(role)
+        await self.db.commit()
+        await self.db.refresh(role)
         return role
 
-    def delete_role(self, role_id: int):
-        role = self.db.query(Role).filter_by(id=role_id).first()
+    async def delete_role(self, role_id: int):
+        result = await self.db.execute(select(Role).filter_by(id=role_id))
+        role = result.scalar_one_or_none()
         if not role:
             return False
         # Remove all RolePermission and UserRole linked to this role
-        self.db.query(RolePermission).filter_by(role_id=role_id).delete()
-        self.db.query(UserRole).filter_by(role_id=role_id).delete()
-        self.db.delete(role)
-        self.db.commit()
+        await self.db.execute(delete(RolePermission).filter_by(role_id=role_id))
+        await self.db.execute(delete(UserRole).filter_by(role_id=role_id))
+        await self.db.delete(role)
+        await self.db.commit()
         return True
     
-    def is_root(self, user):
+    async def is_root(self, user):
         """Trả về True nếu user có role là root"""
-        user_roles = self.db.query(UserRole).filter_by(user_id=user.id).all()
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
         role_ids = [ur.role_id for ur in user_roles]
         if not role_ids:
             return False
-        roles = self.db.query(Role).filter(Role.id.in_(role_ids)).all()
+        result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+        roles = result.scalars().all()
         role_names = [r.name for r in roles]
         return "root" in role_names
 
-    def can_manage_user(self, current_user, target_user):
+    async def can_manage_user(self, current_user, target_user):
         """
         Chỉ root có thể thao tác với mọi user, admin chỉ thao tác với user thường, user không thao tác ai.
         """
         # Lấy role của current_user và target_user
-        user_roles = self.db.query(UserRole).filter_by(user_id=current_user.id).all()
-        target_roles = self.db.query(UserRole).filter_by(user_id=target_user.id).all()
+        result = await self.db.execute(select(UserRole).filter_by(user_id=current_user.id))
+        user_roles = result.scalars().all()
+        result = await self.db.execute(select(UserRole).filter_by(user_id=target_user.id))
+        target_roles = result.scalars().all()
         role_ids = [ur.role_id for ur in user_roles]
         target_role_ids = [ur.role_id for ur in target_roles]
-        roles = self.db.query(Role).filter(Role.id.in_(role_ids)).all()
-        target_roles = self.db.query(Role).filter(Role.id.in_(target_role_ids)).all()
+        result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+        roles = result.scalars().all()
+        result = await self.db.execute(select(Role).filter(Role.id.in_(target_role_ids)))
+        target_roles = result.scalars().all()
         role_names = [r.name for r in roles]
         target_role_names = [r.name for r in target_roles]
         # Root quản lý tất cả
@@ -87,21 +100,25 @@ class RBACService:
         # User không thao tác ai
         return False
 
-    def get_user_permissions(self, user_id: int) -> dict:
+    async def get_user_permissions(self, user_id: int) -> dict:
         """
         Trả về dict dạng {module: [action, ...], ...} cho user
         """
         permissions_dict = {}
         # Lấy tất cả role của user
-        user_roles = self.db.query(UserRole).filter_by(user_id=user_id).all()
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user_id))
+        user_roles = result.scalars().all()
         role_ids = [ur.role_id for ur in user_roles]
         if not role_ids:
             return permissions_dict
         # Lấy tất cả RolePermission của các role này
-        role_perms = self.db.query(RolePermission).filter(RolePermission.role_id.in_(role_ids)).all()
+        result = await self.db.execute(select(RolePermission).filter(RolePermission.role_id.in_(role_ids)))
+        role_perms = result.scalars().all()
         # Lấy mapping module_id -> name, permission_id -> name
-        modules = {m.id: m.name for m in self.db.query(Module).all()}
-        perms = {p.id: p.name for p in self.db.query(Permission).all()}
+        result = await self.db.execute(select(Module))
+        modules = {m.id: m.name for m in result.scalars().all()}
+        result = await self.db.execute(select(Permission))
+        perms = {p.id: p.name for p in result.scalars().all()}
         for rp in role_perms:
             module_name = modules.get(rp.module_id)
             perm_name = perms.get(rp.permission_id)
@@ -109,34 +126,39 @@ class RBACService:
                 permissions_dict.setdefault(str(module_name), []).append(str(perm_name))
         return permissions_dict
     
-    def remove_permission_from_role(self, role_id: int, module_id: int, permission_id: int):
-        rp = self.db.query(RolePermission).filter_by(role_id=role_id, module_id=module_id, permission_id=permission_id).first()
+    async def remove_permission_from_role(self, role_id: int, module_id: int, permission_id: int):
+        result = await self.db.execute(select(RolePermission).filter_by(role_id=role_id, module_id=module_id, permission_id=permission_id))
+        rp = result.scalar_one_or_none()
         if rp:
-            self.db.delete(rp)
-            self.db.commit()
+            await self.db.delete(rp)
+            await self.db.commit()
             return True
         return False
 
-    def is_admin_or_above(self, user):
-        user_roles = self.db.query(UserRole).filter_by(user_id=user.id).all()
+    async def is_admin_or_above(self, user):
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
         if not user_roles:
             return False
         role_ids = [ur.role_id for ur in user_roles]
-        roles = self.db.query(Role).filter(Role.id.in_(role_ids)).all()
+        result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+        roles = result.scalars().all()
         role_names = [r.name for r in roles]
         return any(rn in ("admin", "root") for rn in role_names)
 
-    def create_role(self, name: str, description: str = ""):
+    async def create_role(self, name: str, description: str = ""):
         role = Role(name=name, description=description)
         self.db.add(role)
-        self.db.commit()
-        self.db.refresh(role)
+        await self.db.commit()
+        await self.db.refresh(role)
         return role
     
-    def get_all_roles(self):
-        roles = self.db.query(Role).all()
+    async def get_all_roles(self):
+        result = await self.db.execute(select(Role))
+        roles = result.scalars().all()
         # Get all role permissions
-        role_permissions = self.db.query(RolePermission).all()
+        result = await self.db.execute(select(RolePermission))
+        role_permissions = result.scalars().all()
         # Build mapping: role_id -> list of {module_id, permission_id}
         from collections import defaultdict
         role_perm_map = defaultdict(list)
@@ -157,30 +179,33 @@ class RBACService:
             result.append(role_dict)
         return result
     
-    def create_module(self, name: str, description: str = ""):
+    async def create_module(self, name: str, description: str = ""):
         module = Module(name=name, description=description)
         self.db.add(module)
-        self.db.commit()
-        self.db.refresh(module)
+        await self.db.commit()
+        await self.db.refresh(module)
         return module
     
-    def get_all_modules(self):
-        return self.db.query(Module).all()
+    async def get_all_modules(self):
+        result = await self.db.execute(select(Module))
+        return result.scalars().all()
 
-    def create_permission(self, name: str, description: str = ""):
+    async def create_permission(self, name: str, description: str = ""):
         permission = Permission(name=name, description=description)
         self.db.add(permission)
-        self.db.commit()
-        self.db.refresh(permission)
+        await self.db.commit()
+        await self.db.refresh(permission)
         return permission
     
-    def get_all_permissions(self):
+    async def get_all_permissions(self):
         # Lấy tất cả permissions, kèm module_id nếu có
-        permissions = self.db.query(Permission).all()
+        result = await self.db.execute(select(Permission))
+        permissions = result.scalars().all()
         # Map: module_id = module.id nếu permission thuộc module, else None
         # Giả định: tên permission dạng 'module.action', lấy module theo tên
         result = []
-        modules = {m.name: m.id for m in self.db.query(Module).all()}
+        result_modules = await self.db.execute(select(Module))
+        modules = {m.name: m.id for m in result_modules.scalars().all()}
         for perm in permissions:
             parts = perm.name.split(".")
             module_name = parts[0] if len(parts) > 1 else None
@@ -193,30 +218,34 @@ class RBACService:
             })
         return result
 
-    def assign_role_to_user(self, user_id: int, role_id: int):
+    async def assign_role_to_user(self, user_id: int, role_id: int):
         user_role = UserRole(user_id=user_id, role_id=role_id)
         self.db.add(user_role)
-        self.db.commit()
-        self.db.refresh(user_role)
+        await self.db.commit()
+        await self.db.refresh(user_role)
         return user_role
 
-    def assign_permission_to_role(self, role_id: int, module_id: int, permission_id: int):
+    async def assign_permission_to_role(self, role_id: int, module_id: int, permission_id: int):
         rp = RolePermission(role_id=role_id, module_id=module_id, permission_id=permission_id)
         self.db.add(rp)
-        self.db.commit()
-        self.db.refresh(rp)
+        await self.db.commit()
+        await self.db.refresh(rp)
         return rp
 
-    def check_user_permission(self, user_id: int, module_name: str, permission_name: str) -> bool:
-        roles = self.db.query(UserRole).filter_by(user_id=user_id).all()
+    async def check_user_permission(self, user_id: int, module_name: str, permission_name: str) -> bool:
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user_id))
+        roles = result.scalars().all()
         role_ids = [r.role_id for r in roles]
-        module = self.db.query(Module).filter_by(name=module_name).first()
-        permission = self.db.query(Permission).filter_by(name=permission_name).first()
+        result = await self.db.execute(select(Module).filter_by(name=module_name))
+        module = result.scalar_one_or_none()
+        result = await self.db.execute(select(Permission).filter_by(name=permission_name))
+        permission = result.scalar_one_or_none()
         if not module or not permission:
             return False
-        count = self.db.query(RolePermission).filter(
+        result = await self.db.execute(select(RolePermission).filter(
             RolePermission.role_id.in_(role_ids),
             RolePermission.module_id == module.id,
             RolePermission.permission_id == permission.id
-        ).count()
+        ))
+        count = len(result.scalars().all())
         return count > 0

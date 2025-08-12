@@ -1,5 +1,4 @@
 from sqlalchemy import event
-from sqlalchemy.orm import Session
 from database.models.audit_log import AuditLog
 from datetime import datetime, timezone
 from database.models.base import Base
