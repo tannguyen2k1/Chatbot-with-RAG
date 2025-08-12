@@ -3,6 +3,7 @@ from sqlalchemy import select
 from database.models import Demo
 from schemas import DemoCreate, DemoUpdate, PaginatedDemoResponse, DemoResponse
 from typing import Optional
+from services import RBACService
 
 
 class DemoService:
@@ -70,4 +71,65 @@ class DemoService:
         await self.db.delete(demo)
         await self.db.commit()
         return True
+
+    # "For" methods that handle permissions and business logic
+    async def get_all_demos_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
+        """Get all demos with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "demo", "view")
+        return await self.get_all_demos(page, page_size, search)
+
+    async def get_demo_for(self, current_user_id: int, demo_id: int) -> DemoResponse:
+        """Get demo by ID with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "demo", "view")
+        
+        demo = await self.get_demo_by_id(demo_id)
+        if not demo:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
+        
+        return DemoResponse.model_validate(demo)
+
+    async def create_demo_for(self, current_user_id: int, demo_data: DemoCreate) -> DemoResponse:
+        """Create demo with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "demo", "create")
+        
+        demo = await self.create_demo(demo_data)
+        return DemoResponse.model_validate(demo)
+
+    async def update_demo_for(self, current_user_id: int, demo_id: int, demo_data: DemoUpdate) -> DemoResponse:
+        """Update demo with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "demo", "update")
+        
+        demo = await self.get_demo_by_id(demo_id)
+        if not demo:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
+        
+        updated_demo = await self.update_demo(demo_id, demo_data)
+        if updated_demo is None:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found after update")
+        
+        return DemoResponse.model_validate(updated_demo)
+
+    async def delete_demo_for(self, current_user_id: int, demo_id: int) -> dict:
+        """Delete demo with permission check"""
+        role_service = RBACService(self.db)
+        await role_service.ensure_permission(current_user_id, "demo", "delete")
+        
+        demo = await self.get_demo_by_id(demo_id)
+        if not demo:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
+        
+        deleted = await self.delete_demo(demo_id)
+        if not deleted:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not delete demo")
+        
+        return {"message": f"Demo with ID: {demo_id} has been deleted"}
 

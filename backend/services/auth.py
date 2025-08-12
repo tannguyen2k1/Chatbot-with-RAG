@@ -2,7 +2,8 @@ from datetime import timedelta, datetime, timezone
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database.models import User
+from database.models import User, UserRole, Role
+from services.rbac import RBACService
 from config.settings import settings
 from passlib.context import CryptContext
 
@@ -110,6 +111,47 @@ class AuthService:
         
         return True
     
+    async def refresh_tokens(self, refresh_token: str) -> tuple[str, str]:
+        """Tạo cặp access/refresh token mới từ refresh token hợp lệ"""
+        try:
+            payload = jwt.decode(refresh_token, settings.JWT_REFRESH_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id is None:
+                raise ValueError("Invalid token payload")
+        except JWTError:
+            raise ValueError("Invalid or expired refresh token")
+
+        result = await self.db.execute(select(User).filter(User.id == int(user_id)))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ValueError("User not found")
+
+        new_access_token = self.create_access_token(user)
+        new_refresh_token = self.create_refresh_token(user)
+        return new_access_token, new_refresh_token
+
+    async def get_user_profile(self, current_user: User) -> dict:
+        """Trả về thông tin user kèm roles, permissions, status"""
+        # Permissions qua RBAC
+        rbac_service = RBACService(self.db)
+        permissions = await rbac_service.get_user_permissions(current_user.id)
+
+        # Roles tên dạng mảng
+        result = await self.db.execute(select(UserRole).filter_by(user_id=current_user.id))
+        user_roles = result.scalars().all()
+        role_ids = [ur.role_id for ur in user_roles]
+        if role_ids:
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+        else:
+            roles = []
+
+        user_dict = current_user.__dict__.copy()
+        user_dict["roles"] = [r.name for r in roles]
+        user_dict["permissions"] = permissions
+        user_dict["status"] = "active" if getattr(current_user, "is_active", 1) == 1 else "inactive"
+        return user_dict
+
     
     async def get_user_by_email(self, email: str) -> User:
         """Lấy user theo email"""

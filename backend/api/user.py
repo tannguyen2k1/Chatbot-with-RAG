@@ -1,8 +1,8 @@
-from schemas import UserResponse, PaginatedUserResponse, UserCreate, UserUpdate  # Pydantic response model for users
+from schemas import UserResponse, PaginatedUserResponse, UserCreate, UserUpdate, PermissionError  # Pydantic response model for users
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from middleware import get_db, get_current_user
-from services import RBACService, UserService
+from services import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -13,40 +13,11 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    role_service = RBACService(db)
-    # Check permission strictly by RBAC
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user", [])
-    if "user.create" not in actions:
-        raise HTTPException(status_code=403, detail="You don't have permission to create users")
     service = UserService(db)
-    user = await service.create_user(user_data)
-    # Ensure user has at least one role assigned if role is provided in user_data
-    from database.models.auth_models import UserRole, Role
-    from sqlalchemy import select
-    if hasattr(user_data, 'role') and user_data.role:
-        # Find role by name
-        result = await db.execute(select(Role).filter_by(name=user_data.role))
-        role_obj = result.scalar_one_or_none()
-        if role_obj:
-            # Check if user already has this role
-            result = await db.execute(select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id))
-            existing = result.scalar_one_or_none()
-            if not existing:
-                db.add(UserRole(user_id=user.id, role_id=role_obj.id))
-                await db.commit()
-    # Lấy roles dạng mảng
-    result = await db.execute(select(UserRole).filter_by(user_id=user.id))
-    user_roles = result.scalars().all()
-    role_ids = [ur.role_id for ur in user_roles]
-    if role_ids:
-        result = await db.execute(select(Role).filter(Role.id.in_(role_ids)))
-        roles = result.scalars().all()
-    else:
-        roles = []
-    user_dict = user.__dict__.copy()
-    user_dict["roles"] = [r.name for r in roles] if roles else []
-    return UserResponse(**user_dict)
+    try:
+        return await service.create_user_for(current_user.id, user_data)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 # Endpoint: Retrieve a list of users (Admin/Root only)
 @router.get("/", response_model=PaginatedUserResponse)
@@ -57,45 +28,11 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    role_service = RBACService(db)
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user", [])
-    if "user.view" not in actions:
-        raise HTTPException(status_code=403, detail="You don't have permission to view users")
     service = UserService(db)
-    skip = (page - 1) * page_size
-    users = await service.list_users(skip=skip, limit=page_size, search=search)
-    total = await service.count_users(search=search)
-    result = []
-    from database.models.auth_models import UserRole, Role
-    from sqlalchemy import select
-    for u in users:
-        status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
-        role_service = RBACService(db)
-        if hasattr(u, "id") and isinstance(u.id, int):
-            permissions = await role_service.get_user_permissions(u.id)
-        else:
-            permissions = {}
-        # Lấy roles dạng mảng
-        result_roles = await db.execute(select(UserRole).filter_by(user_id=u.id))
-        user_roles = result_roles.scalars().all()
-        role_ids = [ur.role_id for ur in user_roles]
-        if role_ids:
-            result_roles = await db.execute(select(Role).filter(Role.id.in_(role_ids)))
-            roles = result_roles.scalars().all()
-        else:
-            roles = []
-        user_dict = u.__dict__.copy()
-        user_dict["roles"] = [r.name for r in roles]
-        user_dict["permissions"] = permissions
-        user_dict["status"] = status
-        result.append(UserResponse(**user_dict))
-    return {
-        "data": result,
-        "total": total,
-        "page": page,
-        "page_size": page_size
-    }
+    try:
+        return await service.list_users_for(current_user.id, page, page_size, search)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 # Endpoint: Retrieve user details by ID (Root/Admin có thể xem theo cấp độ)
 @router.get("/{user_id}", response_model=UserResponse)
@@ -105,36 +42,10 @@ async def get_user(
     current_user = Depends(get_current_user)
 ):
     service = UserService(db)
-    role_service = RBACService(db)
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user", [])
-    if "user.view" not in actions:
-        raise HTTPException(status_code=403, detail="You don't have permission to view user details")
-    user = await service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
-    role_service = RBACService(db)
-    if hasattr(user, "id") and isinstance(user.id, int):
-        permissions = await role_service.get_user_permissions(user.id)
-    else:
-        permissions = {}
-    # Lấy roles dạng mảng
-    from database.models.auth_models import UserRole, Role
-    from sqlalchemy import select
-    result = await db.execute(select(UserRole).filter_by(user_id=user.id))
-    user_roles = result.scalars().all()
-    role_ids = [ur.role_id for ur in user_roles]
-    if role_ids:
-        result = await db.execute(select(Role).filter(Role.id.in_(role_ids)))
-        roles = result.scalars().all()
-    else:
-        roles = []
-    user_dict = user.__dict__.copy()
-    user_dict["roles"] = [r.name for r in roles]
-    user_dict["permissions"] = permissions
-    user_dict["status"] = status
-    return UserResponse(**user_dict)
+    try:
+        return await service.get_user_for(current_user.id, user_id)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 # Endpoint: Update user details by ID (Root/Admin có thể quản lý theo cấp độ)
 @router.put("/{user_id}", response_model=UserResponse)
@@ -145,36 +56,10 @@ async def update_user(
     current_user = Depends(get_current_user)
 ):
     service = UserService(db)
-    role_service = RBACService(db)
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user", [])
-    if "user.update" not in actions:
-        raise HTTPException(status_code=403, detail="You don't have permission to update users")
-    user = await service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    # Chỉ root mới được sửa role, và không cho sửa thành 'root'
-    if not await role_service.is_root(current_user):
-        update_data.role = None
-    elif update_data.role == "root":
-        raise HTTPException(status_code=403, detail="Không được gán role là root")
-    updated_user = await service.update_user(user_id, update_data)
-    # Lấy roles dạng mảng giống các API khác
-    from database.models.auth_models import UserRole, Role
-    from sqlalchemy import select
-    if updated_user is None:
-        raise HTTPException(status_code=404, detail="User not found after update")
-    result = await db.execute(select(UserRole).filter_by(user_id=getattr(updated_user, "id", None)))
-    user_roles = result.scalars().all()
-    role_ids = [ur.role_id for ur in user_roles]
-    if role_ids:
-        result = await db.execute(select(Role).filter(Role.id.in_(role_ids)))
-        roles = result.scalars().all()
-    else:
-        roles = []
-    user_dict = updated_user.__dict__.copy()
-    user_dict["roles"] = [r.name for r in roles]
-    return UserResponse(**user_dict)
+    try:
+        return await service.update_user_for(current_user.id, user_id, update_data)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 # Endpoint: Delete a user by ID (Root có thể xóa tất cả, Admin chỉ xóa user)
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
@@ -184,18 +69,10 @@ async def delete_user(
     current_user=Depends(get_current_user)
 ):
     service = UserService(db)
-    role_service = RBACService(db)
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("user", [])
-    if "user.delete" not in actions:
-        raise HTTPException(status_code=403, detail="You don't have permission to delete users")
-    user = await service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    success = await service.delete_user(user_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"message": f"User with ID: {user_id} has been deleted"}
+    try:
+        return await service.delete_user_for(current_user.id, user_id)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 

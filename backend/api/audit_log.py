@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.audit_log import AuditLogService
 from schemas.audit_log import PaginatedAuditLogResponse
 from middleware import get_db
 from middleware.dependency import get_current_user
-from services import RBACService
+from services.rbac import PermissionError
+
 
 router = APIRouter(prefix="/audit-logs", tags=["AuditLog"])
 
@@ -16,12 +17,8 @@ async def get_audit_logs(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    role_service = RBACService(db)
-    perms = await role_service.get_user_permissions(current_user.id)
-    actions = perms.get("audit_log", [])
-    if "audit_log.view" not in actions:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="You don't have permission to view audit logs")
     service = AuditLogService(db)
-    response = await service.get_all_audit_logs(page=page, page_size=page_size, search=search)
-    return response
+    try:
+        return await service.get_all_audit_logs_for(current_user.id, page, page_size, search)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))

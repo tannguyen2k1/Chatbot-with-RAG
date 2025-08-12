@@ -1,12 +1,83 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from database.models import Role, Module, Permission, RolePermission, UserRole
-from schemas import RoleUpdate
+from schemas import RoleUpdate, PermissionError
 
 
 class RBACService:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    # -----------------------
+    # Permission helpers
+    # -----------------------
+    async def ensure_permission(self, current_user_id: int, module: str, action: str) -> None:
+        perms = await self.get_user_permissions(current_user_id)
+        actions = perms.get(module, [])
+        required = f"{module}.{action}"
+        if required not in actions:
+            raise PermissionError(f"You don't have permission to {action} {module}")
+
+    # -----------------------
+    # Role operations with permission checks
+    # -----------------------
+    async def list_roles_for(self, current_user_id: int):
+        await self.ensure_permission(current_user_id, "role", "view")
+        return await self.get_all_roles()
+
+    async def get_role_detail_for(self, current_user_id: int, role_id: int):
+        await self.ensure_permission(current_user_id, "role", "view")
+        return await self.get_role_by_id(role_id)
+
+    async def create_role_for(self, current_user_id: int, name: str, description: str = ""):
+        await self.ensure_permission(current_user_id, "role", "create")
+        return await self.create_role(name, description)
+
+    async def update_role_for(self, current_user_id: int, role_id: int, data: RoleUpdate):
+        await self.ensure_permission(current_user_id, "role", "update")
+        return await self.update_role(role_id, data)
+
+    async def delete_role_for(self, current_user_id: int, role_id: int):
+        await self.ensure_permission(current_user_id, "role", "delete")
+        return await self.delete_role(role_id)
+
+    async def assign_role_to_user_for(self, current_user_id: int, user_id: int, role_id: int):
+        await self.ensure_permission(current_user_id, "role", "assign-role")
+        return await self.assign_role_to_user(user_id, role_id)
+
+    # -----------------------
+    # Module operations with permission checks
+    # -----------------------
+    async def list_modules_for(self, current_user_id: int):
+        await self.ensure_permission(current_user_id, "module", "view")
+        return await self.get_all_modules()
+
+    async def create_module_for(self, current_user_id: int, name: str, description: str = ""):
+        await self.ensure_permission(current_user_id, "module", "create")
+        return await self.create_module(name, description)
+
+    # -----------------------
+    # Permission entity operations with checks
+    # -----------------------
+    async def list_permissions_for(self, current_user_id: int):
+        await self.ensure_permission(current_user_id, "permission", "view")
+        return await self.get_all_permissions()
+
+    async def create_permission_for(self, current_user_id: int, name: str, description: str = ""):
+        await self.ensure_permission(current_user_id, "permission", "create")
+        return await self.create_permission(name, description)
+
+    async def remove_permission_from_role_for(self, current_user_id: int, role_id: int, module_id: int, permission_id: int):
+        await self.ensure_permission(current_user_id, "permission", "remove")
+        return await self.remove_permission_from_role(role_id, module_id, permission_id)
+
+    async def assign_permission_to_role_for(self, current_user_id: int, role_id: int, module_id: int, permission_id: int):
+        await self.ensure_permission(current_user_id, "permission", "assign")
+        return await self.assign_permission_to_role(role_id, module_id, permission_id)
+
+    async def check_user_permission_for(self, current_user_id: int, user_id: int, module_name: str, permission_name: str) -> bool:
+        await self.ensure_permission(current_user_id, "permission", "check")
+        return await self.check_user_permission(user_id, module_name, permission_name)
 
     async def get_role_by_id(self, role_id: int):
         result = await self.db.execute(select(Role).filter_by(id=role_id))
