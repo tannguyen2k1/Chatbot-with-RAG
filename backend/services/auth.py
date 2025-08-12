@@ -129,15 +129,17 @@ class AuthService:
         new_access_token = self.create_access_token(user)
         new_refresh_token = self.create_refresh_token(user)
         return new_access_token, new_refresh_token
-
-    async def get_user_profile(self, current_user: User) -> dict:
-        """Trả về thông tin user kèm roles, permissions, status"""
-        # Permissions qua RBAC
-        rbac_service = RBACService(self.db)
-        permissions = await rbac_service.get_user_permissions(current_user.id)
-
-        # Roles tên dạng mảng
-        result = await self.db.execute(select(UserRole).filter_by(user_id=current_user.id))
+            
+    async def get_user_info_dict(self, user: User) -> dict:
+        """Trả về dict user kèm roles, permissions, loại bỏ trường nhạy cảm"""
+        from services.rbac import RBACService
+        from database.models.auth_models import UserRole, Role
+        from sqlalchemy import select
+        role_service = RBACService(self.db)
+        user_dict = user.__dict__.copy()
+        perms = await role_service.get_user_permissions(user.id)
+        user_dict["permissions"] = perms
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
         user_roles = result.scalars().all()
         role_ids = [ur.role_id for ur in user_roles]
         if role_ids:
@@ -145,11 +147,9 @@ class AuthService:
             roles = result.scalars().all()
         else:
             roles = []
-
-        user_dict = current_user.__dict__.copy()
         user_dict["roles"] = [r.name for r in roles]
-        user_dict["permissions"] = permissions
-        user_dict["status"] = "active" if getattr(current_user, "is_active", 1) == 1 else "inactive"
+        user_dict.pop("hashed_password", None)
+        user_dict.pop("_sa_instance_state", None)
         return user_dict
 
     

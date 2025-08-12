@@ -1,6 +1,19 @@
 import { refreshTokenIfNeeded } from "./refreshTokenHelper";
 // SWR fetcher function
 
+// Global variable to store access token (will be set by AuthContext)
+let globalAccessToken = null;
+
+// Function to set access token from AuthContext
+export const setGlobalAccessToken = (token) => {
+  globalAccessToken = token;
+};
+
+// Function to get current access token
+const getCurrentAccessToken = () => {
+  return globalAccessToken;
+};
+
 const getBaseUrl = () => {
   // if (typeof window !== 'undefined') {
   //     return process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -17,8 +30,10 @@ const buildUrl = (url) => {
 
 function getAuthHeaders(options = {}) {
   let token = null;
-  if (typeof window !== "undefined") {
-    token = localStorage.getItem("access_token");
+  if (options.token) {
+    token = options.token;
+  } else {
+    token = getCurrentAccessToken();
   }
   return token
     ? { ...options.headers, Authorization: `Bearer ${token}` }
@@ -28,8 +43,7 @@ function getAuthHeaders(options = {}) {
 const getFetcher = (url, options = {}) => {
   let token = null;
   if (options.token) token = options.token;
-  else if (typeof window !== "undefined")
-    token = localStorage.getItem("access_token");
+  else token = getCurrentAccessToken();
   if (!token) return Promise.resolve(null);
   const doFetch = async () => {
     const res = await fetch(buildUrl(url), {
@@ -38,6 +52,7 @@ const getFetcher = (url, options = {}) => {
         browserrefreshed: "false",
         ...getAuthHeaders({ ...options, token }),
       },
+      credentials: 'include',
       ...options,
     });
     if (res.status === 401) {
@@ -58,8 +73,7 @@ const getFetcher = (url, options = {}) => {
 const postFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token;
-  else if (typeof window !== "undefined")
-    token = localStorage.getItem("access_token");
+  else token = getCurrentAccessToken();
   if (!token) return Promise.resolve(null);
   const doFetch = async () => {
     const res = await fetch(buildUrl(url), {
@@ -69,6 +83,7 @@ const postFetcher = (url, arg, options = {}) => {
         ...getAuthHeaders({ ...options, token }),
       },
       body: JSON.stringify(arg),
+      credentials: 'include',
       ...options,
     });
     if (res.status === 401) {
@@ -92,6 +107,7 @@ const rawPostFetcher = async (url, arg, options = {}) => {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     body: JSON.stringify(arg),
+    credentials: options.credentials || 'omit', // Support credentials for cookie handling
     ...options,
   });
   if (!res.ok) throw new Error("Failed to post data");
@@ -101,8 +117,7 @@ const rawPostFetcher = async (url, arg, options = {}) => {
 const putFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token;
-  else if (typeof window !== "undefined")
-    token = localStorage.getItem("access_token");
+  else token = getCurrentAccessToken();
   if (!token) return Promise.resolve(null);
   const doFetch = async () => {
     const res = await fetch(buildUrl(url), {
@@ -112,6 +127,7 @@ const putFetcher = (url, arg, options = {}) => {
         ...getAuthHeaders({ ...options, token }),
       },
       body: JSON.stringify(arg),
+      credentials: 'include',
       ...options,
     });
     if (res.status === 401) {
@@ -132,8 +148,7 @@ const putFetcher = (url, arg, options = {}) => {
 const patchFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token;
-  else if (typeof window !== "undefined")
-    token = localStorage.getItem("access_token");
+  else token = getCurrentAccessToken();
   if (!token) return Promise.resolve(null);
   const doFetch = async () => {
     const res = await fetch(buildUrl(url), {
@@ -143,6 +158,7 @@ const patchFetcher = (url, arg, options = {}) => {
         ...getAuthHeaders({ ...options, token }),
       },
       body: JSON.stringify(arg),
+      credentials: 'include',
       ...options,
     });
     if (res.status === 401) {
@@ -163,8 +179,7 @@ const patchFetcher = (url, arg, options = {}) => {
 const deleteFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token;
-  else if (typeof window !== "undefined")
-    token = localStorage.getItem("access_token");
+  else token = getCurrentAccessToken();
   if (!token) return Promise.resolve(null);
   const doFetch = async () => {
     const res = await fetch(buildUrl(url), {
@@ -174,6 +189,7 @@ const deleteFetcher = (url, arg, options = {}) => {
         ...getAuthHeaders({ ...options, token }),
       },
       body: JSON.stringify(arg),
+      credentials: 'include',
       ...options,
     });
     if (res.status === 401) {

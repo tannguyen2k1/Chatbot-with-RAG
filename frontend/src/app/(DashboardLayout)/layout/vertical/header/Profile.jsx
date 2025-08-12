@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { UserDataContext } from "@/app/context/UserDataContext";
+import { AuthContext } from "@/app/context/AuthContext";
 import Link from "next/link";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -22,7 +22,7 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const { user, logout } = useContext(UserDataContext);
+  const { user, logout } = useContext(AuthContext);
   // State cho đồng hồ
   const [now, setNow] = useState(new Date());
   useEffect(() => {
