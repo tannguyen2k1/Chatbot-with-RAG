@@ -88,9 +88,13 @@ async def refresh_access_token(
         path="/"
     )
 
+    # Lấy user từ refresh token
+    user = await auth_service.get_user_from_refresh_token(refresh_token)
+    user_dict = await auth_service.get_user_info_dict(user)
     return TokenResponse(
         access_token=new_access_token,
-        token_type="bearer"
+        token_type="bearer",
+        user=user_dict
     )
 
 # Endpoint: Change password

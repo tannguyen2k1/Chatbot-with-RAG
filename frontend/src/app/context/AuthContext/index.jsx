@@ -24,14 +24,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const storedUser = localStorage.getItem("user");
-        const storedToken = localStorage.getItem("access_token");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-        if (storedToken) {
-          setAccessToken(storedToken);
-          setGlobalAccessToken(storedToken);
+        // Luôn gọi refreshAccessToken để lấy lại accessToken và user từ backend
+        try {
+          const data = await refreshAccessToken();
+          if (data && data.user) setUser(data.user);
+        } catch (e) {
+          // Nếu refresh token fail, logout
+          await logout();
         }
       } catch (error) {
         console.error("Auth check failed:", error);
@@ -70,10 +69,9 @@ export const AuthProvider = ({ children }) => {
       }
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
-      localStorage.setItem("access_token", data.access_token);
+      // Không lưu access_token vào localStorage, chỉ dùng httpOnly cookie
       if (data.user) {
         setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
       }
       return data;
     } catch (error) {
@@ -94,8 +92,7 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(null);
       setGlobalAccessToken(null);
       setUser(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("access_token");
+      // Không cần xoá access_token trong localStorage nữa
       router.push("/auth/auth1/login");
     }
   };
@@ -112,8 +109,11 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
-      localStorage.setItem("access_token", data.access_token);
-      return data.access_token;
+      // Không lưu access_token vào localStorage, chỉ dùng httpOnly cookie
+      if (data.user) {
+        setUser(data.user);
+      }
+      return data; // Trả về toàn bộ object để lấy user ở ngoài
     } catch (error) {
       console.error("Token refresh error:", error);
       await logout();

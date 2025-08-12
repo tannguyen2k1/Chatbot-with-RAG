@@ -151,6 +151,22 @@ class AuthService:
         user_dict.pop("hashed_password", None)
         user_dict.pop("_sa_instance_state", None)
         return user_dict
+    
+    async def get_user_from_refresh_token(self, refresh_token: str) -> User:
+        """Giải mã refresh token và trả về user tương ứng"""
+        try:
+            payload = jwt.decode(refresh_token, settings.JWT_REFRESH_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id is None:
+                raise ValueError("Invalid token payload")
+        except JWTError:
+            raise ValueError("Invalid or expired refresh token")
+
+        result = await self.db.execute(select(User).filter(User.id == int(user_id)))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ValueError("User not found")
+        return user
 
     
     async def get_user_by_email(self, email: str) -> User:
