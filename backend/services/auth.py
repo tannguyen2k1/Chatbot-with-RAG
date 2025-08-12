@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, timezone
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from database.models import User
 from config.settings import settings
 from passlib.context import CryptContext
@@ -9,11 +10,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def authenticate_user(self, username: str, password: str) -> User:
-        user = self.db.query(User).filter(User.username == username).first()
+    async def authenticate_user(self, username: str, password: str) -> User:
+        result = await self.db.execute(select(User).filter(User.username == username))
+        user = result.scalar_one_or_none()
         if not user:
             raise ValueError("User not found")
         if not pwd_context.verify(password, str(user.hashed_password)):
@@ -38,7 +40,7 @@ class AuthService:
         }
         return jwt.encode(payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-    def change_password(self, user: User, current_password: str, new_password: str) -> bool:
+    async def change_password(self, user: User, current_password: str, new_password: str) -> bool:
         """Đổi mật khẩu cho user hiện tại"""
         # Verify current password
         if not pwd_context.verify(current_password, str(user.hashed_password)):
@@ -47,9 +49,14 @@ class AuthService:
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
-        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
-        self.db.commit()
-        self.db.refresh(user)
+        # Use async update
+        stmt = select(User).filter(User.id == user.id)
+        result = await self.db.execute(stmt)
+        user_to_update = result.scalar_one_or_none()
+        if user_to_update:
+            user_to_update.hashed_password = hashed_new_password
+            await self.db.commit()
+            await self.db.refresh(user_to_update)
         return True
     
     
@@ -65,7 +72,7 @@ class AuthService:
         return encoded_jwt
     
 
-    def verify_reset_token(self, token: str) -> User:
+    async def verify_reset_token(self, token: str) -> User:
         """Verify reset password token và trả về user"""
         try:
             payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
@@ -75,7 +82,8 @@ class AuthService:
             if user_id is None or token_type != "password_reset":
                 raise ValueError("Invalid token")
                 
-            user = self.db.query(User).filter(User.id == int(user_id)).first()
+            result = await self.db.execute(select(User).filter(User.id == int(user_id)))
+            user = result.scalar_one_or_none()
             if not user:
                 raise ValueError("User not found")
                 
@@ -84,32 +92,38 @@ class AuthService:
             raise ValueError("Invalid or expired reset token")
     
     
-    def reset_password(self, token: str, new_password: str) -> bool:
+    async def reset_password(self, token: str, new_password: str) -> bool:
         """Reset password bằng token"""
-        user = self.verify_reset_token(token)
+        user = await self.verify_reset_token(token)
         
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
         # Update password in database
-        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
-        self.db.commit()
-        self.db.refresh(user)
+        stmt = select(User).filter(User.id == user.id)
+        result = await self.db.execute(stmt)
+        user_to_update = result.scalar_one_or_none()
+        if user_to_update:
+            user_to_update.hashed_password = hashed_new_password
+            await self.db.commit()
+            await self.db.refresh(user_to_update)
         
         return True
     
     
-    def get_user_by_email(self, email: str) -> User:
+    async def get_user_by_email(self, email: str) -> User:
         """Lấy user theo email"""
-        user = self.db.query(User).filter(User.email == email).first()
+        result = await self.db.execute(select(User).filter(User.email == email))
+        user = result.scalar_one_or_none()
         if not user:
             raise ValueError("User with this email not found")
         return user
     
     
-    def simple_reset_password(self, username: str, new_password: str) -> bool:
+    async def simple_reset_password(self, username: str, new_password: str) -> bool:
         """Reset password đơn giản chỉ với username và new_password"""
-        user = self.db.query(User).filter(User.username == username).first()
+        result = await self.db.execute(select(User).filter(User.username == username))
+        user = result.scalar_one_or_none()
         if not user:
             raise ValueError("User not found")
         
@@ -117,8 +131,12 @@ class AuthService:
         hashed_new_password = pwd_context.hash(new_password)
         
         # Update password in database
-        self.db.query(User).filter(User.id == user.id).update({User.hashed_password: hashed_new_password})
-        self.db.commit()
-        self.db.refresh(user)
+        stmt = select(User).filter(User.id == user.id)
+        result = await self.db.execute(stmt)
+        user_to_update = result.scalar_one_or_none()
+        if user_to_update:
+            user_to_update.hashed_password = hashed_new_password
+            await self.db.commit()
+            await self.db.refresh(user_to_update)
         
         return True

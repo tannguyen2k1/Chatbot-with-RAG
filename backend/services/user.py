@@ -1,15 +1,17 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, update
 from database.models import User
 from schemas import UserCreate, UserUpdate
 from typing import Optional
 
 class UserService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def create_user(self, user_data: UserCreate) -> User:
+    async def create_user(self, user_data: UserCreate) -> User:
         # Check if username already exists
-        existing_username = self.db.query(User).filter_by(username=user_data.username).first()
+        result = await self.db.execute(select(User).filter_by(username=user_data.username))
+        existing_username = result.scalar_one_or_none()
         if existing_username:
             from fastapi import HTTPException, status
             raise HTTPException(
@@ -28,18 +30,19 @@ class UserService:
             is_active=user_data.is_active
         )
         self.db.add(new_user)
-        self.db.commit()
-        self.db.refresh(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
         return new_user
 
 
-    def get_user(self, user_id: int) -> Optional[User]:
-        return self.db.query(User).filter(User.id == user_id).first()
+    async def get_user(self, user_id: int) -> Optional[User]:
+        result = await self.db.execute(select(User).filter(User.id == user_id))
+        return result.scalar_one_or_none()
 
 
-    def update_user(self, user_id: int, update_data: UserUpdate) -> Optional[User]:
+    async def update_user(self, user_id: int, update_data: UserUpdate) -> Optional[User]:
         from database.models.auth_models import UserRole, Role
-        user = self.get_user(user_id)
+        user = await self.get_user(user_id)
         if not user:
             return None
         update_dict = {}
@@ -56,44 +59,49 @@ class UserService:
         # Xử lý cập nhật role (RBAC)
         if update_data.role is not None:
             # Xóa hết user_roles cũ
-            self.db.query(UserRole).filter_by(user_id=user_id).delete()
+            await self.db.execute(delete(UserRole).filter_by(user_id=user_id))
             # Tìm role id mới
-            role_obj = self.db.query(Role).filter_by(name=update_data.role).first()
+            result = await self.db.execute(select(Role).filter_by(name=update_data.role))
+            role_obj = result.scalar_one_or_none()
             if role_obj:
                 new_user_role = UserRole(user_id=user_id, role_id=role_obj.id)
                 self.db.add(new_user_role)
         if update_dict:
-            self.db.query(User).filter(User.id == user_id).update(update_dict)
-        self.db.commit()
-        self.db.refresh(user)
+            stmt = update(User).filter(User.id == user_id).values(**update_dict)
+            await self.db.execute(stmt)
+        await self.db.commit()
+        await self.db.refresh(user)
         return user
 
 
-    def delete_user(self, user_id: int) -> bool:
-        user = self.get_user(user_id)
+    async def delete_user(self, user_id: int) -> bool:
+        user = await self.get_user(user_id)
         if not user:
             return False
-        self.db.delete(user)
-        self.db.commit()
+        await self.db.delete(user)
+        await self.db.commit()
         return True
 
 
-    def list_users(self, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
-        query = self.db.query(User)
+    async def list_users(self, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
+        query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
             query = query.filter(
                 (User.username.ilike(search_lower)) |
                 (User.email.ilike(search_lower))
             )
-        return query.order_by(User.id.asc()).offset(skip).limit(limit).all()
+        query = query.order_by(User.id.asc()).offset(skip).limit(limit)
+        result = await self.db.execute(query)
+        return result.scalars().all()
 
-    def count_users(self, search: str = "") -> int:
-        query = self.db.query(User)
+    async def count_users(self, search: str = "") -> int:
+        query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
             query = query.filter(
                 (User.username.ilike(search_lower)) |
                 (User.email.ilike(search_lower))
             )
-        return query.count()
+        result = await self.db.execute(query)
+        return len(result.scalars().all())

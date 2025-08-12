@@ -1,7 +1,15 @@
 
 # Auto seed base modules and permissions for RBAC
-from database.database import SessionLocal
-from services import RBACService
+from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from database.models import Role, Permission, User, UserRole, Module, RolePermission
+from database.models.audit_log import AuditLog  # if referenced elsewhere
+from services import RBACService, DemoService
+from services.user import UserService
+from schemas import UserCreate
+from schemas import DemoCreate
 
 # Danh sách module cần seed
 MODULES = [
@@ -11,7 +19,6 @@ MODULES = [
     ("module", "module"),
     ("permission", "permission"),
     ("audit_log", "audit log"),
-    # Thêm module khác tại đây
 ]
 
 BASE_ACTIONS = [
@@ -22,10 +29,7 @@ BASE_ACTIONS = [
 ]
 
 CUSTOM_ACTIONS = [
-    #roles
     ("role.assign-role", "Gán role cho user"),
-
-    #permissions
     ("permission.assign", "Gán quyền cho role"),
     ("permission.remove", "Xóa quyền khỏi role"),
     ("permission.check", "Kiểm tra quyền user"),
@@ -34,122 +38,129 @@ CUSTOM_ACTIONS = [
 BASE_ROLES = [
     ("root", "Super Admin"),
     ("admin", "Admin"),
-    ("user", "User")
+    ("user", "User"),
 ]
 
 
-# Seed 3 role mặc định (root, admin, user)
-def seed_default_roles():
-    from database.models import Role
-    db = SessionLocal()
+async def seed_default_roles(db: AsyncSession) -> None:
     for name, desc in BASE_ROLES:
-        role = db.query(Role).filter_by(name=name).first()
+        result = await db.execute(select(Role).filter_by(name=name))
+        role = result.scalar_one_or_none()
         if not role:
             db.add(Role(name=name, description=desc))
-            db.commit()
-    db.close()
+            await db.commit()
 
 
-def seed_modules_and_permissions():
-    from database.models import Permission
-    db = SessionLocal()
+async def seed_modules_and_permissions(db: AsyncSession) -> None:
     rbac = RBACService(db)
+
+    # Tạo modules nếu thiếu
     for module_name, module_desc in MODULES:
-        # Tạo module nếu chưa có
-        module = rbac.get_module_by_name(module_name)
+        module = await rbac.get_module_by_name(module_name)
         if not module:
-            rbac.create_module(module_name, module_desc)
-        # Tạo 4 quyền mặc định cho từng module nếu chưa có
-        for action_tuple in BASE_ACTIONS:
-            action, action_desc = action_tuple
+            await rbac.create_module(module_name, module_desc)
+
+        # Tạo 4 quyền mặc định cho mỗi module
+        for action, action_desc in BASE_ACTIONS:
             perm_name = f"{module_name}.{action}"
-            perm = db.query(Permission).filter_by(name=perm_name).first()
+            result = await db.execute(select(Permission).filter_by(name=perm_name))
+            perm = result.scalar_one_or_none()
             if not perm:
-                rbac.create_permission(perm_name, f"{action_desc} {module_desc.lower()}")
+                await rbac.create_permission(perm_name, f"{action_desc} {module_desc.lower()}")
 
     # Seed các quyền custom
     for custom_perm, custom_desc in CUSTOM_ACTIONS:
-        perm = db.query(Permission).filter_by(name=custom_perm).first()
+        result = await db.execute(select(Permission).filter_by(name=custom_perm))
+        perm = result.scalar_one_or_none()
         if not perm:
-            rbac.create_permission(custom_perm, custom_desc)
-    db.close()
+            await rbac.create_permission(custom_perm, custom_desc)
 
-# Seed tài khoản mặc định (root, admin, user)
-def seed_default_accounts():
-    from database.models import User
-    from services.user import UserService, UserCreate
-    db = SessionLocal()
+
+async def seed_default_accounts(db: AsyncSession) -> None:
     user_service = UserService(db)
     default_accounts = [
         ("root", "Super Admin", "root@local.com", "root123456", "root"),
         ("admin", "Admin", "admin@local.com", "admin123456", "admin"),
         ("user", "User", "user@local.com", "user123456", "user"),
     ]
-    from database.models import UserRole, Role
+
     for username, full_name, email, password, role in default_accounts:
-        user = db.query(User).filter_by(username=username).first()
+        result = await db.execute(select(User).filter_by(username=username))
+        user = result.scalar_one_or_none()
         if not user:
-            user_create = UserCreate(username=username, email=email, password=password, full_name=full_name, role=role)
-            user = user_service.create_user(user_create)
+            user_create = UserCreate(
+                username=username,
+                email=email,
+                password=password,
+                full_name=full_name,
+                role=role,
+            )
+            user = await user_service.create_user(user_create)
+
         # Gán role vào bảng user_roles nếu chưa có
-        role_obj = db.query(Role).filter_by(name=role).first()
+        result = await db.execute(select(Role).filter_by(name=role))
+        role_obj = result.scalar_one_or_none()
         if user and role_obj:
-            existing = db.query(UserRole).filter_by(user_id=user.id, role_id=role_obj.id).first()
+            result = await db.execute(
+                select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id)
+            )
+            existing = result.scalar_one_or_none()
             if not existing:
                 db.add(UserRole(user_id=user.id, role_id=role_obj.id))
-                db.commit()
-    db.close()
+                await db.commit()
 
-# Seed demo mẫu (nếu chưa có)
-def seed_default_demos():
-    from services import DemoService
-    from schemas import DemoCreate
-    db = SessionLocal()
+
+async def seed_default_demos(db: AsyncSession) -> None:
     demo_service = DemoService(db)
-    demoResponse = demo_service.get_all_demos()
-    if not demoResponse.data:
-        demo_service.create_demo(DemoCreate(title="Demo 1", description="Demo mẫu 1"))
-        demo_service.create_demo(DemoCreate(title="Demo 2", description="Demo mẫu 2"))
-        demo_service.create_demo(DemoCreate(title="Demo 3", description="Demo mẫu 3"))
-        demo_service.create_demo(DemoCreate(title="Demo 4", description="Demo mẫu 4"))
-    db.close()
+    response = await demo_service.get_all_demos()
+    if not response.data:
+        for i in range(1, 5):
+            await demo_service.create_demo(
+                DemoCreate(title=f"Demo {i}", description=f"Demo mẫu {i}")
+            )
 
-# Gán tất cả quyền cho role 'root' và 'admin' nếu chưa có
-def seed_root_admin_permissions():
-    from database.models import Role, Permission, RolePermission, Module
-    db = SessionLocal()
+
+async def seed_root_admin_permissions(db: AsyncSession) -> None:
     # Lấy role root và admin
-    root_role = db.query(Role).filter_by(name="root").first()
-    admin_role = db.query(Role).filter_by(name="admin").first()
+    result = await db.execute(select(Role).filter_by(name="root"))
+    root_role = result.scalar_one_or_none()
+    result = await db.execute(select(Role).filter_by(name="admin"))
+    admin_role = result.scalar_one_or_none()
     if not root_role or not admin_role:
-        db.close()
         return
-    # Lấy tất cả permission (theo chuẩn mới: {module}.{action})
-    all_permissions = db.query(Permission).all()
-    modules = {m.name: m.id for m in db.query(Module).all()}
-    def assign_all_permissions(role):
-        existing = {(rp.permission_id, rp.module_id) for rp in db.query(RolePermission).filter_by(role_id=role.id).all()}
+
+    # Lấy tất cả permissions và modules
+    result = await db.execute(select(Permission))
+    all_permissions = result.scalars().all()
+    result = await db.execute(select(Module))
+    modules = {m.name: m.id for m in result.scalars().all()}
+
+    async def assign_all_permissions(role: Role) -> None:
+        # Existing role-permission pairs for this role
+        result = await db.execute(select(RolePermission).filter_by(role_id=role.id))
+        existing_pairs = {(rp.permission_id, rp.module_id) for rp in result.scalars().all()}
         count = 0
         for perm in all_permissions:
-            # Parse module từ tên permission
-            if '.' in perm.name:
-                module_name = perm.name.split('.', 1)[0]
+            module_id: Optional[int]
+            if "." in perm.name:
+                module_name = perm.name.split(".", 1)[0]
                 module_id = modules.get(module_name)
             else:
                 module_id = None
-            if module_id is not None and (perm.id, module_id) not in existing:
+            if module_id is not None and (perm.id, module_id) not in existing_pairs:
                 db.add(RolePermission(role_id=role.id, module_id=module_id, permission_id=perm.id))
                 count += 1
-        db.commit()
-    assign_all_permissions(root_role)
-    assign_all_permissions(admin_role)
-    db.close()
+        if count:
+            await db.commit()
 
-# Hàm tổng hợp seed tất cả
-def auto_seed_all():
-    seed_default_roles()
-    seed_modules_and_permissions()
-    seed_default_accounts()
-    seed_root_admin_permissions()
-    seed_default_demos()
+    await assign_all_permissions(root_role)
+    await assign_all_permissions(admin_role)
+
+
+async def auto_seed_all(db: AsyncSession) -> None:
+    await seed_default_roles(db)
+    await seed_modules_and_permissions(db)
+    await seed_default_accounts(db)
+    await seed_root_admin_permissions(db)
+    await seed_default_demos(db)
 

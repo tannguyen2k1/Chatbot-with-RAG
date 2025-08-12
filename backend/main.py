@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 from middleware import log_requests
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from database.database import engine, SessionLocal
+from database.database import engine, AsyncSessionLocal
 from database.models.base import Base
 from api import auth, rbac, demo, user, audit_log
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
@@ -11,16 +11,17 @@ from database.audit_event import register_audit_events  # Đăng ký audit event
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables if they don't exist
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     # Đăng ký audit event listener cho tất cả các bảng
     register_audit_events()
     # Auto seed RBAC (roles, modules, permissions)
-    db = SessionLocal()
-    try:
-        from database.seeds.auto_seed_data import auto_seed_all
-        auto_seed_all()
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as db:
+        try:
+            from database.seeds.auto_seed_data import auto_seed_all
+            await auto_seed_all(db)
+        except Exception as e:
+            print(f"Error during seeding: {e}")
     yield
 
 app = FastAPI(
@@ -54,7 +55,7 @@ app = FastAPI(
 
 # --- Root endpoint ---
 @app.get("/")
-def root():
+async def root():
     return {"message": "Welcome to the API"}
 
 # --- API Router with prefix /api ---
