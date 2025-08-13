@@ -14,11 +14,18 @@ class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def authenticate_user(self, username: str, password: str) -> User:
-        result = await self.db.execute(select(User).filter(User.username == username))
+    async def authenticate_user(self, username: str, password: str, tenant_id: int) -> User:
+        # Tìm user trong tenant cụ thể
+        result = await self.db.execute(
+            select(User).filter(
+                User.username == username,
+                User.tenant_id == tenant_id
+            )
+        )
+        
         user = result.scalar_one_or_none()
         if not user:
-            raise ValueError("User not found")
+            raise ValueError(f"User '{username}' not found in tenant {tenant_id}")
         if not pwd_context.verify(password, str(user.hashed_password)):
             raise ValueError("Incorrect password")
         return user
@@ -28,6 +35,7 @@ class AuthService:
         payload = {
             "sub": str(user.id),
             "role": user.role,
+            "tenant_id": str(user.tenant_id) if user.tenant_id else None,
             "exp": str(int(expire.timestamp()))
         }
         return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
@@ -37,6 +45,7 @@ class AuthService:
         payload = {
             "sub": str(user.id),
             "role": user.role,
+            "tenant_id": str(user.tenant_id) if user.tenant_id else None,
             "exp": str(int(expire.timestamp()))
         }
         return jwt.encode(payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
