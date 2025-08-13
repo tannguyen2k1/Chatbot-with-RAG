@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from middleware.dependency import get_db, get_current_user
-from services import DemoService, PermissionError
 from schemas import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
+from dependencies import get_db, get_current_user, get_current_tenant_id
+from services import DemoService, PermissionError
 
 router = APIRouter(prefix="/demos", tags=["Demos"])
 
@@ -14,12 +14,13 @@ async def get_demos(
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant_id)
 ):
     """Lấy danh sách tất cả demos (có tìm kiếm)"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.get_all_demos_for(current_user.id, page, page_size, search or None)
+        return await demo_service.get_all_demos_for(current_user.id, tenant_id, page, page_size, search or None)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -27,12 +28,13 @@ async def get_demos(
 async def create_demo(
     demo_data: DemoCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant_id)
 ):
     """Tạo demo mới"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.create_demo_for(current_user.id, demo_data)
+        return await demo_service.create_demo_for(current_user.id, demo_data, tenant_id)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -42,12 +44,13 @@ async def update_demo(
     demo_id: int,
     demo_data: DemoUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant_id)
 ):
     """Cập nhật demo"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.update_demo_for(current_user.id, demo_id, demo_data)
+        return await demo_service.update_demo_for(current_user.id, demo_id, demo_data, tenant_id)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -56,12 +59,13 @@ async def update_demo(
 async def delete_demo(
     demo_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant_id)
 ):
     """Xóa demo"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.delete_demo_for(current_user.id, demo_id)
+        return await demo_service.delete_demo_for(current_user.id, demo_id, tenant_id)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -70,11 +74,12 @@ async def delete_demo(
 async def get_demo(
     demo_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant_id)
 ):
     """Lấy chi tiết demo"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.get_demo_for(current_user.id, demo_id)
+        return await demo_service.get_demo_for(current_user.id, demo_id, tenant_id)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))

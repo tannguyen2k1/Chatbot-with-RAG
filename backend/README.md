@@ -45,9 +45,26 @@ uvicorn main:app --reload
 ## Sử dụng
 
 - API Docs: http://127.0.0.1:8000/docs
-- Tài khoản mặc định: `root` / root123456
+- Tài khoản mặc định: `root` / root123456 (thuộc tenant mặc định)
 - Đăng nhập tại `/api/auth/login` để lấy token
-- Sử dụng token với header: `Authorization: Bearer YOUR_TOKEN`
+
+### Đăng nhập:
+
+```json
+POST /api/auth/login
+{
+    "username": "root",
+    "password": "root123456",
+    "tenant_id": 1  // Bắt buộc: ID của tenant
+}
+```
+
+**Lưu ý:** `tenant_id` là bắt buộc để xác định user thuộc tenant nào.
+
+### Sử dụng token:
+- Header: `Authorization: Bearer YOUR_TOKEN`
+- Token sẽ chứa thông tin tenant_id để xác định context
+- Không cần API Key nữa!
 
 ## Một số lệnh hữu ích
 
