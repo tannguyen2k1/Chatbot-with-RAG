@@ -47,6 +47,19 @@ class UserService:
         user = await self.get_user(user_id)
         if not user:
             return None
+        
+        # Check trùng username
+        if update_data.username is not None:
+            result = await self.db.execute(
+                select(User).filter(User.username == update_data.username, User.id != user_id)
+            )
+            from fastapi import HTTPException, status
+            if result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"User with username '{update_data.username}' already exists."
+                )
+
         update_dict = {}
         if update_data.username is not None:
             update_dict["username"] = update_data.username
