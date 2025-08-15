@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from config.settings import settings
+from .tenant_session import TenantSession
 
 # Convert DATABASE_URL to async format if it's not already
 DATABASE_URL = settings.DATABASE_URL
@@ -16,10 +17,10 @@ engine = create_async_engine(
     pool_recycle=300
 )
 
-# Create async session factory
+# Create async session factory với TenantSession
 AsyncSessionLocal = async_sessionmaker(
     engine, 
-    class_=AsyncSession, 
+    class_=TenantSession,  # Sử dụng TenantSession thay vì AsyncSession
     expire_on_commit=False
 )
 

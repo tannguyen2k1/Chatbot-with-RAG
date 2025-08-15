@@ -16,6 +16,6 @@ async def get_audit_logs(
 ):
     service = AuditLogService(db)
     try:
-        return await service.get_all_audit_logs_for(current_user.id, page, page_size, search)
+        return await service.get_all_audit_logs_for(current_user.id, page=page, page_size=page_size, search=search)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))

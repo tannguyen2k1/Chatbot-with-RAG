@@ -1,53 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from typing import List, Optional
+from typing import Optional
 from dependencies import get_db, get_current_tenant
 from database.models import Tenant
-from pydantic import BaseModel
-from datetime import datetime
-# Bỏ imports không cần thiết
+from schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, PaginatedTenantResponse
 
 router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 
-# Pydantic models
-class TenantCreate(BaseModel):
-    name: str
-    domain: Optional[str] = None
-    subdomain: Optional[str] = None
-    max_users: int = 100
-    plan: str = "basic"
-    settings: Optional[str] = None
-
-class TenantUpdate(BaseModel):
-    name: Optional[str] = None
-    domain: Optional[str] = None
-    subdomain: Optional[str] = None
-    is_active: Optional[bool] = None
-    max_users: Optional[int] = None
-    plan: Optional[str] = None
-    settings: Optional[str] = None
-
-class TenantResponse(BaseModel):
-    id: int
-    name: str
-    domain: Optional[str]
-    subdomain: Optional[str]
-    is_active: bool
-    max_users: int
-    plan: str
-    settings: Optional[str]
-    created_at: datetime
-    updated_at: Optional[datetime]
-
-    class Config:
-        from_attributes = True
-
-class PaginatedTenantResponse(BaseModel):
-    data: List[TenantResponse]
-    total: int
-    page: int
-    page_size: int
 
 @router.post("/", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
@@ -55,6 +15,16 @@ async def create_tenant(
     db: AsyncSession = Depends(get_db)
 ):
     """Tạo tenant mới"""
+    
+    # Kiểm tra tenant_code unique
+    existing = await db.execute(
+        select(Tenant).where(Tenant.tenant_code == tenant_data.tenant_code)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="Tenant code already exists"
+        )
     
     # Kiểm tra domain/subdomain unique
     if tenant_data.domain:
@@ -80,11 +50,10 @@ async def create_tenant(
     # Tạo tenant
     tenant = Tenant(
         name=tenant_data.name,
+        tenant_code=tenant_data.tenant_code,
         domain=tenant_data.domain,
         subdomain=tenant_data.subdomain,
-        max_users=tenant_data.max_users,
-        plan=tenant_data.plan,
-        settings=tenant_data.settings
+        expiration_date=tenant_data.expiration_date
     )
     
     db.add(tenant)
@@ -95,12 +64,13 @@ async def create_tenant(
 
 @router.get("/", response_model=PaginatedTenantResponse)
 async def list_tenants(
-    page: int = 1,
-    page_size: int = 10,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant)
 ):
-    """Lấy danh sách tenants với phân trang"""
+    """Lấy danh sách tenants với phân trang và tìm kiếm"""
     
     # Tính offset
     skip = (page - 1) * page_size
@@ -115,13 +85,25 @@ async def list_tenants(
         )
     
     # Nếu không có tenant context, trả về tất cả (cho admin)
+    query = select(Tenant)
+    
+    # Thêm search filter nếu có
+    if search:
+        search_lower = f"%{search.lower()}%"
+        query = query.filter(
+            (Tenant.name.ilike(search_lower)) |
+            (Tenant.tenant_code.ilike(search_lower)) |
+            (Tenant.domain.ilike(search_lower)) |
+            (Tenant.subdomain.ilike(search_lower))
+        )
+    
     # Đếm tổng số records
-    count_result = await db.execute(select(Tenant))
+    count_result = await db.execute(query)
     total = len(count_result.scalars().all())
     
     # Lấy data với phân trang
     result = await db.execute(
-        select(Tenant).offset(skip).limit(page_size)
+        query.offset(skip).limit(page_size)
     )
     tenants = result.scalars().all()
     
@@ -189,7 +171,7 @@ async def update_tenant(
         )
     
     # Cập nhật dữ liệu
-    update_data = tenant_data.dict(exclude_unset=True)
+    update_data = tenant_data.model_dump(exclude_unset=True)
     
     # Kiểm tra domain/subdomain unique nếu có thay đổi
     if "domain" in update_data and update_data["domain"]:

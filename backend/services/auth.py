@@ -2,10 +2,12 @@ from datetime import timedelta, datetime, timezone
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database.models import User, UserRole, Role
+from database.models import User, UserRole, Role, Tenant
 from services.rbac import RBACService
 from config.settings import settings
 from passlib.context import CryptContext
+from database.tenant_session import TenantSession
+from database.database import engine
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -14,21 +16,39 @@ class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def authenticate_user(self, username: str, password: str, tenant_id: int) -> User:
-        # Tìm user trong tenant cụ thể
-        result = await self.db.execute(
-            select(User).filter(
-                User.username == username,
-                User.tenant_id == tenant_id
+    async def authenticate_user(self, username: str, password: str, tenant_code: str) -> User:
+        # Dùng TenantSession với context
+        async with TenantSession(bind=engine) as session:
+            # Tìm tenant theo tenant_code
+            tenant_result = await session.execute(
+                select(Tenant).filter(Tenant.tenant_code == tenant_code)
             )
-        )
-        
-        user = result.scalar_one_or_none()
-        if not user:
-            raise ValueError(f"User '{username}' not found in tenant {tenant_id}")
-        if not pwd_context.verify(password, str(user.hashed_password)):
-            raise ValueError("Incorrect password")
-        return user
+            tenant = tenant_result.scalar_one_or_none()
+            if not tenant:
+                raise ValueError(f"Tenant with code '{tenant_code}' not found")
+            
+            # Kiểm tra tenant có active không
+            if not tenant.is_active:
+                raise ValueError(f"Tenant '{tenant_code}' is deactivated")
+            
+            # Kiểm tra tenant có hết hạn không
+            if tenant.expiration_date and tenant.expiration_date < datetime.now(timezone.utc):
+                raise ValueError(f"Tenant '{tenant_code}' has expired")
+            
+            # Set tenant context cho session
+            session.set_tenant_context(tenant.id)
+            
+            # Tìm user trong tenant cụ thể (sẽ tự động filter)
+            result = await session.execute(
+                select(User).filter(User.username == username)
+            )
+            
+            user = result.scalar_one_or_none()
+            if not user:
+                raise ValueError(f"User '{username}' not found in tenant '{tenant_code}'")
+            if not pwd_context.verify(password, str(user.hashed_password)):
+                raise ValueError("Incorrect password")
+            return user
 
     def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
         expire = datetime.now(timezone.utc) + expires_delta
