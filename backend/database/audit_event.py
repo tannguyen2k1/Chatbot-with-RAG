@@ -4,8 +4,12 @@ from datetime import datetime, timezone
 from database.models.base import Base
 import contextvars
 
-# Biến contextvars lưu user_id cho từng request
+# Biến contextvars lưu user_id và tenant_id cho từng request
 current_user_id: contextvars.ContextVar = contextvars.ContextVar('current_user_id', default=None)
+current_tenant_id: contextvars.ContextVar = contextvars.ContextVar('current_tenant_id', default=None)
+
+# Export để có thể import từ middleware
+__all__ = ['current_user_id', 'current_tenant_id', 'register_audit_events']
 
 # Listener for after_delete event
 
@@ -13,6 +17,7 @@ def after_delete_listener(mapper, connection, target):
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         old_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        tenant_id = current_tenant_id.get()
         if user_id is None:
             return
         connection.execute(
@@ -22,6 +27,7 @@ def after_delete_listener(mapper, connection, target):
                 'table_name': target.__tablename__,
                 'record_id': getattr(target, 'id', None),
                 'user_id': user_id,
+                'tenant_id': tenant_id,
                 'timestamp': datetime.now(timezone.utc),
                 'old_value': old_value,
                 'new_value': None,
@@ -33,6 +39,7 @@ def after_insert_listener(mapper, connection, target):
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         new_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        tenant_id = current_tenant_id.get()
         if user_id is None:
             return
         connection.execute(
@@ -42,6 +49,7 @@ def after_insert_listener(mapper, connection, target):
                 'table_name': target.__tablename__,
                 'record_id': getattr(target, 'id', None),
                 'user_id': user_id,
+                'tenant_id': tenant_id,
                 'timestamp': datetime.now(timezone.utc),
                 'old_value': None,
                 'new_value': new_value,
@@ -59,6 +67,7 @@ def after_update_listener(mapper, connection, target):
         old_value = str(dict(old_row._mapping)) if old_row else None
         new_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         user_id = current_user_id.get()
+        tenant_id = current_tenant_id.get()
         if user_id is None:
             return
         connection.execute(
@@ -68,6 +77,7 @@ def after_update_listener(mapper, connection, target):
                 'table_name': target.__tablename__,
                 'record_id': pk,
                 'user_id': user_id,
+                'tenant_id': tenant_id,
                 'timestamp': datetime.now(timezone.utc),
                 'old_value': old_value,
                 'new_value': new_value,

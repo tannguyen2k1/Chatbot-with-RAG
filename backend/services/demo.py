@@ -10,9 +10,9 @@ class DemoService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all_demos(self, tenant_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
-        """Lấy tất cả demos của tenant với phân trang và tìm kiếm"""
-        query = select(Demo).filter(Demo.tenant_id == tenant_id)
+    async def get_all_demos(self, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
+        """Lấy tất cả demos với phân trang và tìm kiếm"""
+        query = select(Demo)
         if search:
             like = f"%{search}%"
             query = query.filter(
@@ -34,31 +34,27 @@ class DemoService:
             page_size=page_size
         )   
 
-    async def get_demo_by_id(self, demo_id: int, tenant_id: int) -> Optional[Demo]:
-        """Lấy demo theo ID trong tenant"""
+    async def get_demo_by_id(self, demo_id: int) -> Optional[Demo]:
+        """Lấy demo theo ID"""
         result = await self.db.execute(
-            select(Demo).filter(
-                Demo.id == demo_id,
-                Demo.tenant_id == tenant_id
-            )
+            select(Demo).filter(Demo.id == demo_id)
         )
         return result.scalar_one_or_none()
 
-    async def create_demo(self, demo_data: DemoCreate, tenant_id: int) -> Demo:
-        """Tạo demo mới trong tenant"""
+    async def create_demo(self, demo_data: DemoCreate) -> Demo:
+        """Tạo demo mới"""
         new_demo = Demo(
             title=demo_data.title,
-            description=demo_data.description,
-            tenant_id=tenant_id
+            description=demo_data.description
         )
         self.db.add(new_demo)
         await self.db.commit()
         await self.db.refresh(new_demo)
         return new_demo
 
-    async def update_demo(self, demo_id: int, demo_data: DemoUpdate, tenant_id: int) -> Optional[Demo]:
-        """Cập nhật demo trong tenant"""
-        demo = await self.get_demo_by_id(demo_id, tenant_id)
+    async def update_demo(self, demo_id: int, demo_data: DemoUpdate) -> Optional[Demo]:
+        """Cập nhật demo"""
+        demo = await self.get_demo_by_id(demo_id)
         if not demo:
             return None
         if demo_data.title is not None:
@@ -69,9 +65,9 @@ class DemoService:
         await self.db.refresh(demo)
         return demo
 
-    async def delete_demo(self, demo_id: int, tenant_id: int) -> bool:
-        """Xóa demo trong tenant"""
-        demo = await self.get_demo_by_id(demo_id, tenant_id)
+    async def delete_demo(self, demo_id: int) -> bool:
+        """Xóa demo"""
+        demo = await self.get_demo_by_id(demo_id)
         if not demo:
             return False
         await self.db.delete(demo)
@@ -79,60 +75,60 @@ class DemoService:
         return True
 
     # "For" methods that handle permissions and business logic
-    async def get_all_demos_for(self, current_user_id: int, tenant_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
+    async def get_all_demos_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
         """Get all demos with permission check"""
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "demo", "view")
-        return await self.get_all_demos(tenant_id, page, page_size, search)
+        return await self.get_all_demos(page, page_size, search)
 
-    async def get_demo_for(self, current_user_id: int, demo_id: int, tenant_id: int) -> DemoResponse:
+    async def get_demo_for(self, current_user_id: int, demo_id: int) -> DemoResponse:
         """Get demo by ID with permission check"""
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "demo", "view")
         
-        demo = await self.get_demo_by_id(demo_id, tenant_id)
+        demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
         
         return DemoResponse.model_validate(demo)
 
-    async def create_demo_for(self, current_user_id: int, demo_data: DemoCreate, tenant_id: int) -> DemoResponse:
+    async def create_demo_for(self, current_user_id: int, demo_data: DemoCreate) -> DemoResponse:
         """Create demo with permission check"""
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "demo", "create")
         
-        demo = await self.create_demo(demo_data, tenant_id)
+        demo = await self.create_demo(demo_data)
         return DemoResponse.model_validate(demo)
 
-    async def update_demo_for(self, current_user_id: int, demo_id: int, demo_data: DemoUpdate, tenant_id: int) -> DemoResponse:
+    async def update_demo_for(self, current_user_id: int, demo_id: int, demo_data: DemoUpdate) -> DemoResponse:
         """Update demo with permission check"""
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "demo", "update")
         
-        demo = await self.get_demo_by_id(demo_id, tenant_id)
+        demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
         
-        updated_demo = await self.update_demo(demo_id, demo_data, tenant_id)
+        updated_demo = await self.update_demo(demo_id, demo_data)
         if updated_demo is None:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found after update")
         
         return DemoResponse.model_validate(updated_demo)
 
-    async def delete_demo_for(self, current_user_id: int, demo_id: int, tenant_id: int) -> dict:
+    async def delete_demo_for(self, current_user_id: int, demo_id: int) -> dict:
         """Delete demo with permission check"""
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "demo", "delete")
         
-        demo = await self.get_demo_by_id(demo_id, tenant_id)
+        demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
         
-        deleted = await self.delete_demo(demo_id, tenant_id)
+        deleted = await self.delete_demo(demo_id)
         if not deleted:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not delete demo")

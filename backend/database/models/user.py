@@ -14,6 +14,5 @@ class User(BaseModel):
     is_active: Mapped[int] = mapped_column(Integer, default=1)
     role: Mapped[str] = mapped_column(String(50), default="user")
     
-    # Relationships
-    tenant = relationship("Tenant", back_populates="users")
+    # Relationships 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user")

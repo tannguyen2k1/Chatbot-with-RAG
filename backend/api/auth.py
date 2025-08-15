@@ -28,14 +28,14 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Đăng nhập với username, password và optional tenant_id
+    Đăng nhập với username, password và tenant_code
     """
     auth_service = AuthService(db)
     try:
         user = await auth_service.authenticate_user(
             login_data.username, 
             login_data.password,
-            login_data.tenant_id
+            login_data.tenant_code
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))

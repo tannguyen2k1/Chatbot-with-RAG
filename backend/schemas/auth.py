@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr
 class LoginRequest(BaseModel):
     username: str
     password: str
-    tenant_id: int  # Bắt buộc phải có tenant_id
+    tenant_code: str  # Ví dụ: "root", "admin", "company1"
 
 class TokenResponse(BaseModel):
     access_token: str

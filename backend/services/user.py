@@ -10,13 +10,10 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_user(self, user_data: UserCreate, tenant_id: int) -> User:
+    async def create_user(self, user_data: UserCreate) -> User:
         # Check if username already exists in the same tenant
         result = await self.db.execute(
-            select(User).filter(
-                User.username == user_data.username,
-                User.tenant_id == tenant_id
-            )
+            select(User).filter(User.username == user_data.username)
         )
         existing_username = result.scalar_one_or_none()
         if existing_username:
@@ -34,8 +31,7 @@ class UserService:
             hashed_password=hashed_password,
             full_name=user_data.full_name,
             phone=user_data.phone,
-            is_active=user_data.is_active,
-            tenant_id=tenant_id
+            is_active=user_data.is_active
         )
         self.db.add(new_user)
         await self.db.commit()
@@ -43,19 +39,16 @@ class UserService:
         return new_user
 
 
-    async def get_user(self, user_id: int, tenant_id: int) -> Optional[User]:
+    async def get_user(self, user_id: int) -> Optional[User]:
         result = await self.db.execute(
-            select(User).filter(
-                User.id == user_id,
-                User.tenant_id == tenant_id
-            )
+            select(User).filter(User.id == user_id)
         )
         return result.scalar_one_or_none()
 
 
-    async def update_user(self, user_id: int, update_data: UserUpdate, tenant_id: int) -> Optional[User]:
+    async def update_user(self, user_id: int, update_data: UserUpdate) -> Optional[User]:
         from database.models.auth_models import UserRole, Role
-        user = await self.get_user(user_id, tenant_id)
+        user = await self.get_user(user_id)
         if not user:
             return None
         
@@ -64,8 +57,7 @@ class UserService:
             result = await self.db.execute(
                 select(User).filter(
                     User.username == update_data.username, 
-                    User.id != user_id,
-                    User.tenant_id == tenant_id
+                    User.id != user_id
                 )
             )
             from fastapi import HTTPException, status
@@ -104,8 +96,8 @@ class UserService:
         return user
 
 
-    async def delete_user(self, user_id: int, tenant_id: int) -> bool:
-        user = await self.get_user(user_id, tenant_id)
+    async def delete_user(self, user_id: int) -> bool:
+        user = await self.get_user(user_id)
         if not user:
             return False
         await self.db.delete(user)
@@ -113,8 +105,8 @@ class UserService:
         return True
 
 
-    async def list_users(self, tenant_id: int, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
-        query = select(User).filter(User.tenant_id == tenant_id)
+    async def list_users(self, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
+        query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
             query = query.filter(
@@ -125,8 +117,8 @@ class UserService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def count_users(self, tenant_id: int, search: str = "") -> int:
-        query = select(User).filter(User.tenant_id == tenant_id)
+    async def count_users(self, search: str = "") -> int:
+        query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
             query = query.filter(
@@ -137,11 +129,11 @@ class UserService:
         return len(result.scalars().all())
 
     # "For" methods that handle permissions and business logic
-    async def create_user_for(self, current_user_id: int, user_data: UserCreate, tenant_id: int) -> UserResponse:
+    async def create_user_for(self, current_user_id: int, user_data: UserCreate) -> UserResponse:
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "user", "create")
         
-        user = await self.create_user(user_data, tenant_id)
+        user = await self.create_user(user_data)
         
         # Ensure user has at least one role assigned if role is provided in user_data
         if hasattr(user_data, 'role') and user_data.role:
@@ -170,13 +162,13 @@ class UserService:
         user_dict["roles"] = [r.name for r in roles] if roles else []
         return UserResponse(**user_dict)
 
-    async def list_users_for(self, current_user_id: int, tenant_id: int, page: int, page_size: int, search: str = "") -> PaginatedUserResponse:
+    async def list_users_for(self, current_user_id: int, page: int, page_size: int, search: str = "") -> PaginatedUserResponse:
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "user", "view")
         
         skip = (page - 1) * page_size
-        users = await self.list_users(tenant_id, skip=skip, limit=page_size, search=search)
-        total = await self.count_users(tenant_id, search=search)
+        users = await self.list_users(skip=skip, limit=page_size, search=search)
+        total = await self.count_users(search=search)
         
         result = []
         for u in users:
@@ -209,11 +201,11 @@ class UserService:
             page_size=page_size
         )
 
-    async def get_user_for(self, current_user_id: int, user_id: int, tenant_id: int) -> UserResponse:
+    async def get_user_for(self, current_user_id: int, user_id: int) -> UserResponse:
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "user", "view")
         
-        user = await self.get_user(user_id, tenant_id)
+        user = await self.get_user(user_id)
         if not user:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -240,11 +232,11 @@ class UserService:
         user_dict["status"] = status
         return UserResponse(**user_dict)
 
-    async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate, tenant_id: int) -> UserResponse:
+    async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate) -> UserResponse:
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "user", "update")
         
-        user = await self.get_user(user_id, tenant_id)
+        user = await self.get_user(user_id)
         if not user:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -256,7 +248,7 @@ class UserService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Không được gán role là root")
         
-        updated_user = await self.update_user(user_id, update_data, tenant_id)
+        updated_user = await self.update_user(user_id, update_data)
         if updated_user is None:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found after update")
@@ -275,16 +267,16 @@ class UserService:
         user_dict["roles"] = [r.name for r in roles]
         return UserResponse(**user_dict)
 
-    async def delete_user_for(self, current_user_id: int, user_id: int, tenant_id: int) -> dict:
+    async def delete_user_for(self, current_user_id: int, user_id: int) -> dict:
         role_service = RBACService(self.db)
         await role_service.ensure_permission(current_user_id, "user", "delete")
         
-        user = await self.get_user(user_id, tenant_id)
+        user = await self.get_user(user_id)
         if not user:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         
-        success = await self.delete_user(user_id, tenant_id)
+        success = await self.delete_user(user_id)
         if not success:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

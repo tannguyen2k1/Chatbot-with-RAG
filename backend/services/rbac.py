@@ -307,6 +307,7 @@ class RBACService:
         result = await self.db.execute(select(UserRole).filter_by(user_id=user_id))
         roles = result.scalars().all()
         role_ids = [r.role_id for r in roles]
+        
         result = await self.db.execute(select(Module).filter_by(name=module_name))
         module = result.scalar_one_or_none()
         result = await self.db.execute(select(Permission).filter_by(name=permission_name))

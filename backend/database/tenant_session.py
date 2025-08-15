@@ -1,62 +1,75 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import event
-from typing import Optional
-from database.models import BaseModel
-from database.models.tenant import Tenant
+from sqlalchemy import select, event
+from database.audit_event import current_tenant_id
+from typing import Optional, Any
+from database.models.base import BaseModel
 
-class TenantSessionWrapper:
-    """Wrapper cho AsyncSession với tenant context"""
+class TenantSession(AsyncSession):
+    """Custom session với automatic tenant filtering"""
     
-    def __init__(self, session: AsyncSession, tenant: Optional[Tenant] = None):
-        self._session = session
-        self._current_tenant = tenant
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._tenant_id = None
     
-    def set_tenant(self, tenant: Tenant):
-        """Set tenant context cho session"""
-        self._current_tenant = tenant
+    def set_tenant_context(self, tenant_id: int):
+        """Set tenant context cho session này"""
+        self._tenant_id = tenant_id
     
-    def get_tenant(self) -> Optional[Tenant]:
-        """Lấy tenant context hiện tại"""
-        return self._current_tenant
+    def _get_current_tenant_id(self) -> Optional[int]:
+        """Lấy tenant_id từ context hoặc session"""
+        # Ưu tiên tenant_id từ session trước
+        if self._tenant_id is not None:
+            return self._tenant_id
+        
+        # Sau đó mới lấy từ context
+        tenant_id = current_tenant_id.get()
+        if tenant_id is None or tenant_id == "-":
+            return None
+        try:
+            return int(tenant_id)
+        except (ValueError, TypeError):
+            return None
     
-    def clear_tenant(self):
-        """Xóa tenant context"""
-        self._current_tenant = None
+    def _add_tenant_filter(self, query: Any) -> Any:
+        """Tự động thêm tenant filter vào query"""
+        tenant_id = self._get_current_tenant_id()
+        if tenant_id is None:
+            return query
+        
+        # Kiểm tra xem query có model kế thừa từ BaseModel không
+        if hasattr(query, 'column_descriptions'):
+            for desc in query.column_descriptions:
+                if hasattr(desc['type'], '__table__'):
+                    table = desc['type'].__table__
+                    if hasattr(table.c, 'tenant_id'):
+                        # Thêm tenant filter
+                        return query.filter(table.c.tenant_id == tenant_id)
+        
+        return query
     
-    def __getattr__(self, name):
-        """Delegate tất cả methods khác cho AsyncSession gốc"""
-        return getattr(self._session, name)
+    async def execute(self, statement, *args, **kwargs):
+        """Override execute để tự động thêm tenant filter"""
+        # Chỉ áp dụng cho SELECT queries
+        if hasattr(statement, 'is_select') and statement.is_select:
+            statement = self._add_tenant_filter(statement)
+        
+        return await super().execute(statement, *args, **kwargs)
+    
+    async def get(self, entity, ident, *args, **kwargs):
+        """Override get để tự động thêm tenant filter"""
+        tenant_id = self._get_current_tenant_id()
+        if tenant_id is not None and issubclass(entity, BaseModel):
+            # Thêm tenant filter cho get
+            stmt = select(entity).filter(
+                entity.id == ident,
+                entity.tenant_id == tenant_id
+            )
+            result = await self.execute(stmt)
+            return result.scalar_one_or_none()
+        
+        return await super().get(entity, ident, *args, **kwargs)
 
-def get_tenant_session(tenant: Optional[Tenant] = None):
-    """Tạo tenant session với tenant context"""
-    from database.database import AsyncSessionLocal
-    
-    # Tạo session mới
-    session = AsyncSessionLocal()
-    
-    # Wrap session với tenant context
-    return TenantSessionWrapper(session, tenant)
-
-# Event listener để tự động filter theo tenant
-@event.listens_for(AsyncSession, 'do_orm_execute')
-def _add_tenant_filter(execute_state):
-    """Tự động thêm tenant filter cho tất cả queries"""
-    if not execute_state.is_select:
-        return
-    
-    session = execute_state.session
-    
-    # Kiểm tra nếu session có tenant context
-    if hasattr(session, '_current_tenant') and session._current_tenant:
-        # Chỉ áp dụng filter cho models kế thừa từ BaseModel
-        if hasattr(execute_state.statement, 'from_obj'):
-            for from_obj in execute_state.statement.from_obj:
-                if hasattr(from_obj, 'entity') and issubclass(from_obj.entity, BaseModel):
-                    # Thêm tenant filter
-                    tenant_filter = from_obj.entity.tenant_id == session._current_tenant.id
-                    if execute_state.statement.where is None:
-                        execute_state.statement = execute_state.statement.where(tenant_filter)
-                    else:
-                        execute_state.statement = execute_state.statement.where(
-                            execute_state.statement.where & tenant_filter
-                        )
+# Factory function để tạo TenantSession
+def create_tenant_session(bind, **kwargs):
+    """Tạo TenantSession instance"""
+    return TenantSession(bind=bind, **kwargs)

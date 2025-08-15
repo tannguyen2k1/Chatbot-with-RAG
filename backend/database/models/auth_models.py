@@ -10,7 +10,6 @@ class Role(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Relationships
-    tenant = relationship("Tenant", back_populates="roles")
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="role")
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="role")
 
@@ -20,7 +19,6 @@ class Module(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Relationships
-    tenant = relationship("Tenant", back_populates="modules")
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="module")
 
 class Permission(BaseModel):
