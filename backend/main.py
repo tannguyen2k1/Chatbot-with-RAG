@@ -74,9 +74,10 @@ app.include_router(api_router)
 
 
 # --- CORS config (must be before routers) ---
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","http://127.0.0.1:3000"],  # no trailing slash
+    allow_origin_regex=r"^http://([a-zA-Z0-9-]+\.)?localhost:3000$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
