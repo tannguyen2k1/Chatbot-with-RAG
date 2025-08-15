@@ -6,15 +6,13 @@ from datetime import timedelta
 from typing import Optional
 from database.models import User
 from dependencies import get_db, get_current_user
-from services.user import UserService
 from services.auth import AuthService
 from config.settings import settings
 from schemas import (TokenResponse, 
                      LoginRequest,
                      ChangePasswordRequest, 
                      SimpleResetPasswordRequest, 
-                     MessageResponse,
-                     UserCreate, UserResponse)
+                     MessageResponse)
 
 
 
