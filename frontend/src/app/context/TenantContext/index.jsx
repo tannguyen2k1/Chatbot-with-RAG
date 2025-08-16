@@ -34,11 +34,11 @@ export const TenantProvider = ({ children }) => {
       if (subdomain && !["www", "api"].includes(subdomain.toLowerCase())) {
         setTenantCode(subdomain)
       } else {
-        setTenantCode("root")
+        setTenantCode("default")
       }
     } catch (error) {
       console.error("Error detecting tenant:", error)
-      setTenantCode("root")
+      setTenantCode("default")
     } finally {
       setIsLoading(false)
     }

@@ -19,12 +19,14 @@ import {
   Tab,
 } from "@mui/material";
 import { getFetcher, putFetcher, postFetcher } from "@/app/api/globalFetcher";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function PermissionManagementPage() {
   // Không cần BASE_ACTIONS/CUSTOM_ACTIONS nữa, chỉ render toàn bộ quyền
 
   const searchParams = useSearchParams();
   const roleId = searchParams.get("roleId");
+  const { user } = useAuth(); // Lấy thông tin user hiện tại
   const [role, setRole] = useState(null);
   const [permissions, setPermissions] = useState([]);
   const [modules, setModules] = useState([]);
@@ -36,6 +38,10 @@ export default function PermissionManagementPage() {
     message: "",
     severity: "success",
   });
+
+  // Kiểm tra xem user hiện tại có phải là admin không
+  const isCurrentUserAdmin = user?.roles?.includes("admin");
+  const isCurrentUserRoot = user?.roles?.includes("root");
 
   useEffect(() => {
     if (!roleId) return;
@@ -149,6 +155,13 @@ export default function PermissionManagementPage() {
               <Tab label={mod} key={mod} />
             ))}
           </Tabs>
+          {/* Thông báo khi admin không thể chỉnh sửa tenant */}
+          {isCurrentUserAdmin && modules[tab] === "tenant" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Admin không thể chỉnh sửa quyền của module Tenant. Chỉ Root mới có quyền này.
+            </Alert>
+          )}
+          
           {/* Bảng quyền cho module đang chọn */}
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small">
@@ -183,7 +196,7 @@ export default function PermissionManagementPage() {
                             checked={checked}
                             onChange={() => handleToggle(perm.id)}
                             color={checked ? "success" : "default"}
-                            disabled={loading}
+                            disabled={loading || (isCurrentUserAdmin && modules[tab] === "tenant")}
                           />
                         </TableCell>
                       </TableRow>
