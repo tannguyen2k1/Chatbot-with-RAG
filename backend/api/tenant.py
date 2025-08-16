@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import Optional
-from dependencies import get_db, get_current_tenant
+from dependencies import get_db, get_current_tenant, get_current_user
 from database.models import Tenant
 from schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, PaginatedTenantResponse
+from services.rbac import RBACService
 
 router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 
@@ -12,9 +13,14 @@ router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 @router.post("/", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     tenant_data: TenantCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Tạo tenant mới"""
+    
+    # Kiểm tra quyền
+    rbac_service = RBACService(db)
+    await rbac_service.ensure_permission(current_user.id, "tenant", "create")
     
     # Kiểm tra tenant_code unique
     existing = await db.execute(
@@ -68,9 +74,14 @@ async def list_tenants(
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_db),
-    current_tenant: Optional[Tenant] = Depends(get_current_tenant)
+    current_tenant: Optional[Tenant] = Depends(get_current_tenant),
+    current_user = Depends(get_current_user)
 ):
     """Lấy danh sách tenants với phân trang và tìm kiếm"""
+    
+    # Kiểm tra quyền
+    rbac_service = RBACService(db)
+    await rbac_service.ensure_permission(current_user.id, "tenant", "view")
     
     # Tính offset
     skip = (page - 1) * page_size
@@ -118,9 +129,14 @@ async def list_tenants(
 async def get_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_db),
-    current_tenant: Optional[Tenant] = Depends(get_current_tenant)
+    current_tenant: Optional[Tenant] = Depends(get_current_tenant),
+    current_user = Depends(get_current_user)
 ):
     """Lấy thông tin tenant theo ID"""
+    
+    # Kiểm tra quyền
+    rbac_service = RBACService(db)
+    await rbac_service.ensure_permission(current_user.id, "tenant", "view")
     
     # Kiểm tra quyền truy cập
     if current_tenant and current_tenant.id != tenant_id:
@@ -147,9 +163,14 @@ async def update_tenant(
     tenant_id: int,
     tenant_data: TenantUpdate,
     db: AsyncSession = Depends(get_db),
-    current_tenant: Optional[Tenant] = Depends(get_current_tenant)
+    current_tenant: Optional[Tenant] = Depends(get_current_tenant),
+    current_user = Depends(get_current_user)
 ):
     """Cập nhật thông tin tenant"""
+    
+    # Kiểm tra quyền
+    rbac_service = RBACService(db)
+    await rbac_service.ensure_permission(current_user.id, "tenant", "update")
     
     # Kiểm tra quyền truy cập
     if current_tenant and current_tenant.id != tenant_id:
@@ -218,9 +239,14 @@ async def update_tenant(
 async def delete_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_db),
-    current_tenant: Optional[Tenant] = Depends(get_current_tenant)
+    current_tenant: Optional[Tenant] = Depends(get_current_tenant),
+    current_user = Depends(get_current_user)
 ):
     """Xóa tenant (soft delete)"""
+    
+    # Kiểm tra quyền
+    rbac_service = RBACService(db)
+    await rbac_service.ensure_permission(current_user.id, "tenant", "delete")
     
     # Kiểm tra quyền truy cập
     if current_tenant and current_tenant.id != tenant_id:

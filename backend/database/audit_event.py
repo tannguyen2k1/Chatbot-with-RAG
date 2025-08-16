@@ -1,7 +1,7 @@
 from sqlalchemy import event
 from database.models.audit_log import AuditLog
 from datetime import datetime, timezone
-from database.models.base import Base, BaseModel
+from database.models.base import BaseModel
 from database.database import engine
 from database.context import current_user_id, current_tenant_id
 
