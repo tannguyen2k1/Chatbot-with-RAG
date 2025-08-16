@@ -1,10 +1,11 @@
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, BigInteger, Integer, ForeignKey
-from database.models import BaseModel
+from database.models import BaseModel, GlobalBaseModel
 from typing import Optional, List
 
-class Role(BaseModel):
+class Role(GlobalBaseModel):
+    """Role là global, không thuộc tenant nào"""
     __tablename__ = "roles"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -13,7 +14,8 @@ class Role(BaseModel):
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="role")
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="role")
 
-class Module(BaseModel):
+class Module(GlobalBaseModel):
+    """Module là global, không thuộc tenant nào"""
     __tablename__ = "modules"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -21,7 +23,8 @@ class Module(BaseModel):
     # Relationships
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="module")
 
-class Permission(BaseModel):
+class Permission(GlobalBaseModel):
+    """Permission là global, không thuộc tenant nào"""
     __tablename__ = "permissions"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

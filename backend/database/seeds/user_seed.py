@@ -8,7 +8,7 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
     """Seed tài khoản mặc định cho tenant"""
     user_service = UserService(db)
     default_accounts = [
-        ("root", "Super Admin", "root@local.com", "root123456", "root"),
+        # Skip root user - đã được tạo trong global seed với tenant_id = NULL
         ("admin", "Admin", "admin@local.com", "admin123456", "admin"),
         ("user", "User", "user@local.com", "user123456", "user"),
     ]
@@ -38,8 +38,8 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                 print(f"❌ Error creating user {username}: {str(e)}")
                 continue
 
-        # Gán role vào bảng user_roles nếu chưa có
-        result = await db.execute(select(Role).filter_by(name=role, tenant_id=tenant.id))
+        # Gán role vào bảng user_roles nếu chưa có (roles giờ là global)
+        result = await db.execute(select(Role).filter_by(name=role))
         role_obj = result.scalar_one_or_none()
         if user and role_obj:
             result = await db.execute(
@@ -50,3 +50,4 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                 user_role = UserRole(user_id=user.id, role_id=role_obj.id, tenant_id=tenant.id)
                 db.add(user_role)
                 await db.commit()
+                print(f"✅ Assigned role {role} to user {username}")

@@ -7,6 +7,7 @@ from typing import Optional
 from services import RBACService
 from database.tenant_session import TenantSession
 from database.database import engine
+from .rbac_helper import ensure_permission_global
 
 class AuditLogService:
     def __init__(self, db: AsyncSession):
@@ -42,9 +43,8 @@ class AuditLogService:
     # "For" method that handles permissions and business logic
     async def get_all_audit_logs_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedAuditLogResponse:
         """Get all audit logs with permission check"""
-        async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "audit_log", "view")
-            return await self.get_all_audit_logs(page, page_size, search)
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "audit_log", "view")
+        return await self.get_all_audit_logs(page, page_size, search)
     
 

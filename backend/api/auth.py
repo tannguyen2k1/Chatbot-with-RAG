@@ -30,7 +30,7 @@ async def login(
     """
     auth_service = AuthService(db)
     try:
-        user = await auth_service.authenticate_user(
+        user, tenant = await auth_service.authenticate_user(
             login_data.username, 
             login_data.password,
             login_data.tenant_code
@@ -40,10 +40,12 @@ async def login(
 
     access_token = await auth_service.create_access_token(
         user,
+        tenant,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     refresh_token = await auth_service.create_refresh_token(
         user,
+        tenant,
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     )
 

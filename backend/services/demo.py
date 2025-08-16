@@ -6,6 +6,7 @@ from typing import Optional
 from services import RBACService
 from database.tenant_session import TenantSession
 from database.database import engine
+from .rbac_helper import ensure_permission_global
 
 
 class DemoService:
@@ -84,16 +85,16 @@ class DemoService:
     # "For" methods that handle permissions and business logic
     async def get_all_demos_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
         """Get all demos with permission check"""
+        await ensure_permission_global(current_user_id, "demo", "view")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "demo", "view")
             return await self.get_all_demos(page, page_size, search)
 
     async def get_demo_for(self, current_user_id: int, demo_id: int) -> DemoResponse:
         """Get demo by ID with permission check"""
+        await ensure_permission_global(current_user_id, "demo", "view")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "demo", "view")
             
             demo = await self.get_demo_by_id(demo_id)
             if not demo:
@@ -104,18 +105,18 @@ class DemoService:
 
     async def create_demo_for(self, current_user_id: int, demo_data: DemoCreate) -> DemoResponse:
         """Create demo with permission check"""
+        await ensure_permission_global(current_user_id, "demo", "create")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "demo", "create")
             
             demo = await self.create_demo(demo_data)
             return DemoResponse.model_validate(demo)
 
     async def update_demo_for(self, current_user_id: int, demo_id: int, demo_data: DemoUpdate) -> DemoResponse:
         """Update demo with permission check"""
+        await ensure_permission_global(current_user_id, "demo", "update")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "demo", "update")
             
             demo = await self.get_demo_by_id(demo_id)
             if not demo:
@@ -131,9 +132,9 @@ class DemoService:
 
     async def delete_demo_for(self, current_user_id: int, demo_id: int) -> dict:
         """Delete demo with permission check"""
+        await ensure_permission_global(current_user_id, "demo", "delete")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "demo", "delete")
             
             demo = await self.get_demo_by_id(demo_id)
             if not demo:
