@@ -18,8 +18,6 @@ async def auto_seed_all(db: AsyncSession) -> None:
         # Chỉ seed 1 tenant mặc định
         default_tenant = await seed_default_tenant(db)
         
-        print(f"🏢 Seeding tenant: {default_tenant.name} (ID: {default_tenant.id})")
-        
         # Set tenant context cho seeding
         current_tenant_id.set(str(default_tenant.id))
         
@@ -27,11 +25,8 @@ async def auto_seed_all(db: AsyncSession) -> None:
         await seed_default_roles(db, default_tenant)
         await seed_modules_and_permissions(db, default_tenant)
         await seed_default_accounts(db, default_tenant)
-        await seed_root_admin_permissions(db, default_tenant)
+        await seed_root_admin_permissions(db, default_tenant)  # Root có tất cả quyền, admin có tất cả trừ tenant
         await seed_default_demos(db, default_tenant)
-        
-        print(f"✅ Completed seeding for tenant: {default_tenant.name}")
-        print("\n🎉 Seeding completed successfully!")
         
     except Exception as e:
         print(f"❌ Critical error during seeding: {str(e)}")
