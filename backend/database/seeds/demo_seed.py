@@ -10,4 +10,4 @@ async def seed_default_demos(db: AsyncSession, tenant: Tenant) -> None:
     if not response.data:
         for i in range(1, 5):
             demo_create = DemoCreate(title=f"Demo {i}", description=f"Demo mẫu {i}")
-            demo = await demo_service.create_demo(demo_create)
+            await demo_service.create_demo(demo_create)

@@ -35,19 +35,43 @@ class AuthService:
             if tenant.expiration_date and tenant.expiration_date < datetime.now(timezone.utc):
                 raise ValueError(f"Tenant '{tenant_code}' has expired")
             
-            # Set tenant context cho session
-            session.set_tenant_context(tenant.id)
-            
-            # Tìm user trong tenant cụ thể (sẽ tự động filter)
+            # Tìm user với username (không filter theo tenant để root có thể login vào bất kỳ tenant nào)
             result = await session.execute(
                 select(User).filter(User.username == username)
             )
             
             user = result.scalar_one_or_none()
             if not user:
-                raise ValueError(f"User '{username}' not found in tenant '{tenant_code}'")
+                raise ValueError(f"User '{username}' not found")
+            
+            # Kiểm tra password
             if not pwd_context.verify(password, str(user.hashed_password)):
                 raise ValueError("Incorrect password")
+            
+            # Kiểm tra xem user có quyền truy cập tenant này không
+            # Root có thể truy cập bất kỳ tenant nào
+            if user.tenant_id != tenant.id:
+                # Kiểm tra xem user có phải là root không
+                user_roles_result = await session.execute(
+                    select(UserRole).filter_by(user_id=user.id)
+                )
+                user_roles = user_roles_result.scalars().all()
+                
+                if user_roles:
+                    role_ids = [ur.role_id for ur in user_roles]
+                    roles_result = await session.execute(
+                        select(Role).filter(Role.id.in_(role_ids))
+                    )
+                    roles = roles_result.scalars().all()
+                    role_names = [r.name for r in roles]
+                    
+                    # Nếu không phải root, thì không cho phép truy cập tenant khác
+                    if "root" not in role_names:
+                        raise ValueError(f"User '{username}' does not have permission to access tenant '{tenant_code}'")
+            
+            # Set tenant context cho session
+            session.set_tenant_context(tenant.id)
+            
             return user
 
     async def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:

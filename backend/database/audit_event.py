@@ -10,7 +10,6 @@ __all__ = ['current_user_id', 'current_tenant_id', 'register_audit_events']
 
 def create_audit_log_sync(action: str, table_name: str, record_id: int, old_value: str = None, new_value: str = None, description: str = None):
     """Helper function to create audit log using sync approach"""
-    print(f"Creating audit log: {action} for {table_name} record {record_id}")
     try:
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
@@ -23,10 +22,7 @@ def create_audit_log_sync(action: str, table_name: str, record_id: int, old_valu
         user_id = current_user_id.get()
         tenant_id = current_tenant_id.get()
         
-        print(f"User ID: {user_id}, Tenant ID: {tenant_id}")
-        
         if user_id is None:
-            print("No user_id found, skipping audit log")
             session.close()
             return
             
@@ -44,7 +40,6 @@ def create_audit_log_sync(action: str, table_name: str, record_id: int, old_valu
         session.add(audit_log)
         session.commit()
         session.close()
-        print(f"Audit log created successfully for {action} on {table_name}")
     except Exception as e:
         # Log error but don't fail the main operation
         print(f"Audit log error: {e}")
@@ -54,7 +49,6 @@ def create_audit_log_sync(action: str, table_name: str, record_id: int, old_valu
 # Listener for after_delete event
 
 def after_delete_listener(mapper, connection, target):
-    print(f"DELETE event triggered for {target.__tablename__}")
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         old_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         
@@ -69,7 +63,6 @@ def after_delete_listener(mapper, connection, target):
         )
 
 def after_insert_listener(mapper, connection, target):
-    print(f"INSERT event triggered for {target.__tablename__}")
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         new_value = str({k: v for k, v in vars(target).items() if not k.startswith('_')})
         
@@ -84,7 +77,6 @@ def after_insert_listener(mapper, connection, target):
         )
 
 def after_update_listener(mapper, connection, target):
-    print(f"UPDATE event triggered for {target.__tablename__}")
     if hasattr(target, '__tablename__') and target.__tablename__ != 'audit_logs':
         pk = getattr(target, 'id', None)
         table = mapper.local_table

@@ -34,12 +34,9 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                     role=role,
                 )
                 user = await user_service.create_user(user_create, tenant_id=tenant.id)
-                print(f"✅ Created user: {username} for tenant: {tenant.name}")
             except Exception as e:
                 print(f"❌ Error creating user {username}: {str(e)}")
                 continue
-        else:
-            print(f"ℹ️ User {username} already exists for tenant: {tenant.name}")
 
         # Gán role vào bảng user_roles nếu chưa có
         result = await db.execute(select(Role).filter_by(name=role, tenant_id=tenant.id))
@@ -53,6 +50,3 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                 user_role = UserRole(user_id=user.id, role_id=role_obj.id, tenant_id=tenant.id)
                 db.add(user_role)
                 await db.commit()
-                print(f"🔗 Assigned role {role} to user {username}")
-            else:
-                print(f"ℹ️ Role {role} already assigned to user {username}")
