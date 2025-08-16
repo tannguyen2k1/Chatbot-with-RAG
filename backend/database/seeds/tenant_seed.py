@@ -18,6 +18,7 @@ async def seed_default_tenant(db: AsyncSession):
             tenant_code="default",
             domain="localhost",
             subdomain="default",
+            tenant_id=1,
             is_active=True,
             expiration_date=None
         )
