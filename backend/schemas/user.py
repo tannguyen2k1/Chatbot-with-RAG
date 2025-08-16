@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     is_active: int = 1
-    role: str = "user"
+    role: Optional[str] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
