@@ -5,6 +5,7 @@ import {
   IconPackage,
   IconAperture,
   IconFileCheck,
+  IconHome,
 } from "@tabler/icons-react";
 
 const Menuitems = [
@@ -51,6 +52,14 @@ const Menuitems = [
     chipColor: "secondary",
     href: "/systems/role-management",
     permission: "role.view",
+  },
+  {
+    id: uniqueId(),
+    title: "TenantManagement",
+    icon: IconHome, // Changed to IconPackage for roles
+    chipColor: "secondary",
+    href: "/systems/tenant-management",
+    permission: "tenant.view",
   },
   {
     id: uniqueId(),
