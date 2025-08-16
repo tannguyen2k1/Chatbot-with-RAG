@@ -1,11 +1,8 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.audit_log import AuditLogService
-from schemas.audit_log import PaginatedAuditLogResponse
-from middleware import get_db
-from middleware.dependency import get_current_user
-from services.rbac import PermissionError
-
+from dependencies import get_db, get_current_user
+from schemas import  PaginatedAuditLogResponse
+from services import AuditLogService, PermissionError
 
 router = APIRouter(prefix="/audit-logs", tags=["AuditLog"])
 
@@ -19,6 +16,6 @@ async def get_audit_logs(
 ):
     service = AuditLogService(db)
     try:
-        return await service.get_all_audit_logs_for(current_user.id, page, page_size, search)
+        return await service.get_all_audit_logs_for(current_user.id, page=page, page_size=page_size, search=search)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))

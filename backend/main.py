@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, AsyncSessionLocal
 from database.models.base import Base
-from api import auth, rbac, demo, user, audit_log
+from api import auth, rbac, demo, user, audit_log, tenant
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
@@ -13,8 +13,10 @@ async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
     # Đăng ký audit event listener cho tất cả các bảng
     register_audit_events()
+    
     # Auto seed RBAC (roles, modules, permissions)
     async with AsyncSessionLocal() as db:
         try:
@@ -67,13 +69,15 @@ api_router.include_router(user.router)
 api_router.include_router(demo.router)
 api_router.include_router(rbac.router)
 api_router.include_router(audit_log.router)
+api_router.include_router(tenant.router)
 app.include_router(api_router)
 
 
 # --- CORS config (must be before routers) ---
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","http://127.0.0.1:3000"],  # no trailing slash
+    allow_origin_regex=r"^http://([a-zA-Z0-9-]+\.)?localhost:3000$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -15,6 +15,9 @@ class RBACService:
         perms = await self.get_user_permissions(current_user_id)
         actions = perms.get(module, [])
         required = f"{module}.{action}"
+        
+
+        
         if required not in actions:
             raise PermissionError(f"You don't have permission to {action} {module}")
 
@@ -43,6 +46,27 @@ class RBACService:
 
     async def assign_role_to_user_for(self, current_user_id: int, user_id: int, role_id: int):
         await self.ensure_permission(current_user_id, "role", "assign-role")
+        
+        # Kiểm tra xem current_user có phải là root không
+        current_user = await self.get_user_by_id(current_user_id)
+        if not current_user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found")
+        
+        is_root_user = await self.is_root(current_user)
+        
+        # Nếu không phải root, kiểm tra xem có đang assign role root không
+        if not is_root_user:
+            result = await self.db.execute(select(Role).filter_by(id=role_id))
+            role = result.scalar_one_or_none()
+            
+            if role and role.name == "root":
+                from fastapi import HTTPException, status
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Only root users can assign root role"
+                )
+        
         return await self.assign_role_to_user(user_id, role_id)
 
     # -----------------------
@@ -69,10 +93,53 @@ class RBACService:
 
     async def remove_permission_from_role_for(self, current_user_id: int, role_id: int, module_id: int, permission_id: int):
         await self.ensure_permission(current_user_id, "permission", "remove")
+        
+        # Kiểm tra xem current_user có phải là root không
+        current_user = await self.get_user_by_id(current_user_id)
+        if not current_user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found")
+        
+        is_root_user = await self.is_root(current_user)
+        
+        # Nếu không phải root, kiểm tra xem có đang remove quyền tenant không
+        if not is_root_user:
+            result = await self.db.execute(select(Permission).filter_by(id=permission_id))
+            permission = result.scalar_one_or_none()
+            
+            if permission and "tenant" in permission.name:
+                from fastapi import HTTPException, status
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Only root users can remove tenant permissions"
+                )
+        
         return await self.remove_permission_from_role(role_id, module_id, permission_id)
 
     async def assign_permission_to_role_for(self, current_user_id: int, role_id: int, module_id: int, permission_id: int):
         await self.ensure_permission(current_user_id, "permission", "assign")
+        
+        # Kiểm tra xem current_user có phải là root không
+        current_user = await self.get_user_by_id(current_user_id)
+        if not current_user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found")
+        
+        is_root_user = await self.is_root(current_user)
+        
+        # Nếu không phải root, kiểm tra xem có đang assign quyền tenant không
+        if not is_root_user:
+            # Lấy thông tin permission và module
+            result = await self.db.execute(select(Permission).filter_by(id=permission_id))
+            permission = result.scalar_one_or_none()
+            
+            if permission and "tenant" in permission.name:
+                from fastapi import HTTPException, status
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Only root users can assign tenant permissions"
+                )
+        
         return await self.assign_permission_to_role(role_id, module_id, permission_id)
 
     async def check_user_permission_for(self, current_user_id: int, user_id: int, module_name: str, permission_name: str) -> bool:
@@ -104,6 +171,12 @@ class RBACService:
 
     async def get_permission_by_name(self, name: str):
         result = await self.db.execute(select(Permission).filter_by(name=name))
+        return result.scalar_one_or_none()
+    
+    async def get_user_by_id(self, user_id: int):
+        """Lấy user theo ID"""
+        from database.models import User
+        result = await self.db.execute(select(User).filter_by(id=user_id))
         return result.scalar_one_or_none()
     
     async def update_role(self, role_id: int, data: RoleUpdate):
@@ -297,7 +370,27 @@ class RBACService:
         return user_role
 
     async def assign_permission_to_role(self, role_id: int, module_id: int, permission_id: int):
-        rp = RolePermission(role_id=role_id, module_id=module_id, permission_id=permission_id)
+        # Get role to verify it exists
+        result = await self.db.execute(select(Role).filter_by(id=role_id))
+        role = result.scalar_one_or_none()
+        if not role:
+            raise ValueError(f"Role with id {role_id} not found")
+        
+        # Check if permission already exists for this role
+        result = await self.db.execute(select(RolePermission).filter_by(
+            role_id=role_id, 
+            module_id=module_id, 
+            permission_id=permission_id
+        ))
+        existing_rp = result.scalar_one_or_none()
+        
+        if existing_rp:
+            # Permission already exists, return existing record
+            return existing_rp
+        
+        # Create new permission assignment (RolePermission vẫn cần tenant_id vì nó thuộc BaseModel)
+        # Nhưng giá trị tenant_id sẽ là NULL cho global roles/permissions
+        rp = RolePermission(role_id=role_id, module_id=module_id, permission_id=permission_id, tenant_id=None)
         self.db.add(rp)
         await self.db.commit()
         await self.db.refresh(rp)
@@ -307,6 +400,7 @@ class RBACService:
         result = await self.db.execute(select(UserRole).filter_by(user_id=user_id))
         roles = result.scalars().all()
         role_ids = [r.role_id for r in roles]
+        
         result = await self.db.execute(select(Module).filter_by(name=module_name))
         module = result.scalar_one_or_none()
         result = await self.db.execute(select(Permission).filter_by(name=permission_name))

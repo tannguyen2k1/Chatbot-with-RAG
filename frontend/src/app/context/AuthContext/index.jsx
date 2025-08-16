@@ -3,6 +3,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { setGlobalAccessToken } from "../../api/globalFetcher";
+import { useTenant } from "../TenantContext";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 export const AuthContext = createContext();
 
@@ -19,27 +22,33 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { tenantCode } = useTenant();
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("info");
 
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Luôn gọi refreshAccessToken để lấy lại accessToken và user từ backend
-        try {
-          const data = await refreshAccessToken();
-          if (data && data.user) setUser(data.user);
-        } catch (e) {
-          // Nếu refresh token fail, logout
-          await logout();
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
+        const data = await refreshAccessToken();
+        if (data && data.user) setUser(data.user);
+      } catch {
+        await logout(false); // Không cần thông báo khi mở trang
       } finally {
         setIsLoading(false);
       }
     };
     checkAuth();
   }, []);
+
+  const showSnackbar = (message, severity = "info") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
 
   const login = async (username, password) => {
     try {
@@ -48,39 +57,35 @@ export const AuthProvider = ({ children }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
-        credentials: "include", // Always include cookies for refresh token
+        body: JSON.stringify({ username, password, tenant_code: tenantCode }),
+        credentials: "include",
       });
-      // Log raw response for debugging
+
       const text = await response.text();
       let data;
       try {
         data = JSON.parse(text);
-      } catch (e) {
-        console.error("Login response is not valid JSON:", text);
+      } catch {
         throw new Error("Login response is not valid JSON");
       }
-      console.log("Login response data:", data);
-      if (!response.ok) {
-        throw new Error(data.detail || "Login failed");
-      }
-      if (!data.access_token) {
-        throw new Error("No access_token in response");
-      }
+
+      if (!response.ok) throw new Error(data.detail || "Login failed");
+      if (!data.access_token) throw new Error("No access_token in response");
+
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
-      // Không lưu access_token vào localStorage, chỉ dùng httpOnly cookie
-      if (data.user) {
-        setUser(data.user);
-      }
+      if (data.user) setUser(data.user);
+
+      showSnackbar("Đăng nhập thành công!", "success");
       return data;
     } catch (error) {
       console.error("Login error:", error);
+      showSnackbar(error.message || "Đăng nhập thất bại", "error");
       throw error;
     }
   };
 
-  const logout = async () => {
+  const logout = async (showMessage = true) => {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -92,8 +97,8 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(null);
       setGlobalAccessToken(null);
       setUser(null);
-      // Không cần xoá access_token trong localStorage nữa
       router.push("/auth/auth1/login");
+      if (showMessage) showSnackbar("Đã đăng xuất", "info");
     }
   };
 
@@ -103,30 +108,19 @@ export const AuthProvider = ({ children }) => {
         method: "POST",
         credentials: "include",
       });
-      if (!response.ok) {
-        throw new Error("Token refresh failed");
-      }
+      if (!response.ok) throw new Error("Token refresh failed");
+
       const data = await response.json();
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
-      // Không lưu access_token vào localStorage, chỉ dùng httpOnly cookie
-      if (data.user) {
-        setUser(data.user);
-      }
-      return data; // Trả về toàn bộ object để lấy user ở ngoài
+      if (data.user) setUser(data.user);
+
+      return data;
     } catch (error) {
       console.error("Token refresh error:", error);
-      await logout();
+      await logout(false);
       throw error;
     }
-  };
-
-  const getAccessToken = () => {
-    return accessToken;
-  };
-
-  const isAuthenticated = () => {
-    return !!accessToken && !!user;
   };
 
   const value = {
@@ -136,9 +130,28 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     refreshAccessToken,
-    getAccessToken,
-    isAuthenticated,
+    getAccessToken: () => accessToken,
+    isAuthenticated: () => !!accessToken && !!user,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Snackbar UI */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </AuthContext.Provider>
+  );
 };

@@ -1,54 +1,48 @@
 "use client";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import FormGroup from "@mui/material/FormGroup";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+
+import { useState, useContext } from "react";
+import { useRouter } from "next/navigation";
+import { AuthContext } from "@/app/context/AuthContext";
+import {
+  Box,
+  Button,
+  Typography,
+  Stack,
+  FormControlLabel,
+  FormGroup,
+} from "@mui/material";
 import Link from "next/link";
 import CustomCheckbox from "@/app/components/forms/theme-elements/CustomCheckbox";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
-import { useState, useContext } from "react";
-import { useRouter } from "next/navigation";
-import { AuthContext } from "@/app/context/AuthContext";
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const { login } = useContext(AuthContext);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
-      await login(username, password);
-      setLoading(false);
-      setError(null);
+      await login(username, password); // AuthContext sẽ tự hiện snackbar
       router.push("/");
-    } catch (err) {
-      setError(err.message || "Đăng nhập thất bại");
+    } catch {
+      // Không cần xử lý error ở đây vì snackbar đã hiện trong AuthContext
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} autoComplete="off">
-      {title ? (
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: "700",
-            mb: 1,
-          }}
-        >
+      {title && (
+        <Typography variant="h3" fontWeight={700} mb={1}>
           {title}
         </Typography>
-      ) : null}
-
+      )}
       {subtext}
 
       <Stack>
@@ -79,23 +73,21 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         </Box>
         <Stack
           direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            my: 2,
-          }}
+          justifyContent="space-between"
+          alignItems="center"
+          my={2}
         >
           <FormGroup>
             <FormControlLabel
               control={<CustomCheckbox defaultChecked disabled={loading} />}
-              label="Remeber this Device"
+              label="Remember this Device"
             />
           </FormGroup>
           <Typography
             component={Link}
             href="/auth/auth1/forgot-password"
+            fontWeight={500}
             sx={{
-              fontWeight: "500",
               textDecoration: "none",
               color: "primary.main",
             }}
@@ -104,12 +96,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           </Typography>
         </Stack>
       </Stack>
-      {error && (
-        <Typography color="error" sx={{ mt: 1 }}>
-          {error}
-        </Typography>
-      )}
-      <Box sx={{ mt: 2 }}>
+
+      <Box mt={2}>
         <Button
           color="primary"
           variant="contained"

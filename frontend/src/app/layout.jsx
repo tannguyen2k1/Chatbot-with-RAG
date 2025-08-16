@@ -5,6 +5,7 @@ import MyApp from "./App";
 import "./global.css";
 import ClientCustomizerProvider from "./context/ClientCustomizerContext/ClientCustomizerProvider";
 import { AuthProvider } from "./context/AuthContext";
+import { TenantProvider } from "./context/TenantContext";
 
 export const metadata = {
   title: "Modernize Nextjs",
@@ -17,9 +18,11 @@ export default function RootLayout({ children }) {
       <body>
         <NextTopLoader color="#5D87FF" />
         <ClientCustomizerProvider>
-          <AuthProvider>
-            <MyApp>{children}</MyApp>
-          </AuthProvider>
+          <TenantProvider>
+            <AuthProvider>
+              <MyApp>{children}</MyApp>
+            </AuthProvider>
+          </TenantProvider>
         </ClientCustomizerProvider>
       </body>
     </html>
