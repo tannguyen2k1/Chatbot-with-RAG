@@ -191,6 +191,7 @@ class AuthService:
         try:
             payload = jwt.decode(refresh_token, settings.JWT_REFRESH_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
             user_id = payload.get("sub")
+            tenant_id = payload.get("tenant_id")
             if user_id is None:
                 raise ValueError("Invalid token payload")
         except JWTError:
@@ -201,8 +202,15 @@ class AuthService:
         if not user:
             raise ValueError("User not found")
 
-        new_access_token = await self.create_access_token(user)
-        new_refresh_token = await self.create_refresh_token(user)
+        # Lấy tenant từ tenant_id trong token
+        tenant = None
+        if tenant_id:
+            from database.models import Tenant
+            result = await self.db.execute(select(Tenant).filter(Tenant.id == int(tenant_id)))
+            tenant = result.scalar_one_or_none()
+
+        new_access_token = await self.create_access_token(user, tenant)
+        new_refresh_token = await self.create_refresh_token(user, tenant)
         return new_access_token, new_refresh_token
             
     async def get_user_info_dict(self, user: User) -> dict:
