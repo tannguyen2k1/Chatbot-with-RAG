@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from database.models import Tenant
+from database.context import current_tenant_id
 from database.seeds.tenant_seed import seed_default_tenant
 from database.seeds.role_seed import seed_default_roles
 from database.seeds.module_permission_seed import seed_modules_and_permissions
@@ -18,6 +19,9 @@ async def auto_seed_all(db: AsyncSession) -> None:
         default_tenant = await seed_default_tenant(db)
         
         print(f"🏢 Seeding tenant: {default_tenant.name} (ID: {default_tenant.id})")
+        
+        # Set tenant context cho seeding
+        current_tenant_id.set(str(default_tenant.id))
         
         # Seed dữ liệu cho tenant mặc định
         await seed_default_roles(db, default_tenant)

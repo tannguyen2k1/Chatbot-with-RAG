@@ -38,11 +38,11 @@ async def login(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    access_token = auth_service.create_access_token(
+    access_token = await auth_service.create_access_token(
         user,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    refresh_token = auth_service.create_refresh_token(
+    refresh_token = await auth_service.create_refresh_token(
         user,
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     )

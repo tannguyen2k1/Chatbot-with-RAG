@@ -33,10 +33,7 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                     full_name=full_name,
                     role=role,
                 )
-                user = await user_service.create_user(user_create)
-                # Gán tenant_id cho user
-                user.tenant_id = tenant.id
-                await db.commit()
+                user = await user_service.create_user(user_create, tenant_id=tenant.id)
                 print(f"✅ Created user: {username} for tenant: {tenant.name}")
             except Exception as e:
                 print(f"❌ Error creating user {username}: {str(e)}")

@@ -12,7 +12,6 @@ class User(BaseModel):
     full_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     is_active: Mapped[int] = mapped_column(Integer, default=1)
-    role: Mapped[str] = mapped_column(String(50), default="user")
     
     # Relationships 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user")

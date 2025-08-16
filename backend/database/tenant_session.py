@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, event
-from database.audit_event import current_tenant_id
+from database.context import current_tenant_id
 from typing import Optional, Any
 from database.models.base import BaseModel
 
@@ -68,6 +68,16 @@ class TenantSession(AsyncSession):
             return result.scalar_one_or_none()
         
         return await super().get(entity, ident, *args, **kwargs)
+
+    def add(self, instance):
+        """Override add để tự động set tenant_id cho record mới"""
+        tenant_id = self._get_current_tenant_id()
+        if tenant_id is not None and isinstance(instance, BaseModel):
+            # Tự động set tenant_id nếu chưa có
+            if getattr(instance, 'tenant_id', None) is None:
+                instance.tenant_id = tenant_id
+        
+        return super().add(instance)
 
 # Factory function để tạo TenantSession
 def create_tenant_session(bind, **kwargs):

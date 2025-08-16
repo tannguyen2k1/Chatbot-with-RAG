@@ -50,21 +50,51 @@ class AuthService:
                 raise ValueError("Incorrect password")
             return user
 
-    def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+    async def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+        # Get user's primary role from user_roles table
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
+        
+        # Get role names
+        role_names = []
+        if user_roles:
+            role_ids = [ur.role_id for ur in user_roles]
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+            role_names = [r.name for r in roles]
+        
+        # Use first role as primary role, or "user" as default
+        primary_role = role_names[0] if role_names else "user"
+        
         expire = datetime.now(timezone.utc) + expires_delta
         payload = {
             "sub": str(user.id),
-            "role": user.role,
+            "role": primary_role,
             "tenant_id": str(user.tenant_id) if user.tenant_id else None,
             "exp": str(int(expire.timestamp()))
         }
         return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-    def create_refresh_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
+    async def create_refresh_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
+        # Get user's primary role from user_roles table
+        result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
+        user_roles = result.scalars().all()
+        
+        # Get role names
+        role_names = []
+        if user_roles:
+            role_ids = [ur.role_id for ur in user_roles]
+            result = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+            roles = result.scalars().all()
+            role_names = [r.name for r in roles]
+        
+        # Use first role as primary role, or "user" as default
+        primary_role = role_names[0] if role_names else "user"
+        
         expire = datetime.now(timezone.utc) + expires_delta
         payload = {
             "sub": str(user.id),
-            "role": user.role,
+            "role": primary_role,
             "tenant_id": str(user.tenant_id) if user.tenant_id else None,
             "exp": str(int(expire.timestamp()))
         }
@@ -155,8 +185,8 @@ class AuthService:
         if not user:
             raise ValueError("User not found")
 
-        new_access_token = self.create_access_token(user)
-        new_refresh_token = self.create_refresh_token(user)
+        new_access_token = await self.create_access_token(user)
+        new_refresh_token = await self.create_refresh_token(user)
         return new_access_token, new_refresh_token
             
     async def get_user_info_dict(self, user: User) -> dict:
