@@ -30,25 +30,48 @@ app = FastAPI(
     title="FastAPI User Management Base Project",
     description="""
     🚀 **FastAPI Base Project với JWT Authentication & RBAC**
+    
     ## 🔐 Cách sử dụng:
-    1. **Login:** POST `/api/auth/login`
+    1. **Login:** POST `/api/auth/login` (cần tenant_id)
     2. **Copy token** từ response 
     3. **Authorize:** Click nút "Authorize" và nhập: `Bearer YOUR_TOKEN`
+    
     ## 👤 Tài khoản mặc định:
     - Username: `root`  
     - Password: `root123456`
-    ## 🎯 Hệ thống phân quyền Module:
-    **Gán quyền user abcd quản lý module demo:**
+    - Tenant Code: `default` (tenant mặc định)
+    
+    ## 🏢 Hệ thống Multi-Tenant:
+    - Mỗi user thuộc về một tenant
+    - API calls tự động filter theo tenant context
+    - Admin có thể quản lý tất cả tenants
+    
+    ## 🎯 Hệ thống phân quyền RBAC:
+    **Cấu trúc:** User → Role → Permission → Module
+    
+    **Các loại quyền:** `view`, `create`, `update`, `delete`
+    
+    **Modules chính:** 
+    - `tenant` - Quản lý tenant
+    - `user` - Quản lý user  
+    - `role` - Quản lý role
+    - `permission` - Quản lý permission
+    - `demo` - Module demo
+    - `audit_log` - Xem audit logs
+    
+    **Ví dụ gán quyền:**
     ```json
-    POST /user-module-permissions/grant
+    POST /api/rbac/assign-permission
     {
-        "user_id": 2,
-        "module_name": "demo",
-        "permissions": "manage"
+        "role_id": 1,
+        "module_id": 1,
+        "permission_id": 1
     }
     ```
-    **Các loại quyền:**  `view`, `create`, `update`, `delete`
-    **Modules:** `demo`, `user`, `role`, v.v.
+    
+    ## 📊 Audit Logging:
+    - Tự động log tất cả thay đổi CRUD
+    - Xem tại: `/api/audit-logs`
     """,
     version="1.0.0",
     lifespan=lifespan
