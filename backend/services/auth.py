@@ -16,7 +16,7 @@ class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def authenticate_user(self, username: str, password: str, tenant_code: str) -> User:
+    async def authenticate_user(self, username: str, password: str, tenant_code: str) -> tuple[User, Tenant]:
         # Dùng TenantSession với context
         async with TenantSession(bind=engine) as session:
             # Tìm tenant theo tenant_code
@@ -49,32 +49,16 @@ class AuthService:
                 raise ValueError("Incorrect password")
             
             # Kiểm tra xem user có quyền truy cập tenant này không
-            # Root có thể truy cập bất kỳ tenant nào
-            if user.tenant_id != tenant.id:
-                # Kiểm tra xem user có phải là root không
-                user_roles_result = await session.execute(
-                    select(UserRole).filter_by(user_id=user.id)
-                )
-                user_roles = user_roles_result.scalars().all()
-                
-                if user_roles:
-                    role_ids = [ur.role_id for ur in user_roles]
-                    roles_result = await session.execute(
-                        select(Role).filter(Role.id.in_(role_ids))
-                    )
-                    roles = roles_result.scalars().all()
-                    role_names = [r.name for r in roles]
-                    
-                    # Nếu không phải root, thì không cho phép truy cập tenant khác
-                    if "root" not in role_names:
-                        raise ValueError(f"User '{username}' does not have permission to access tenant '{tenant_code}'")
+            # Root user (tenant_id = NULL) có thể truy cập bất kỳ tenant nào
+            if not user.is_root_user and user.tenant_id != tenant.id:
+                raise ValueError(f"User '{username}' does not have permission to access tenant '{tenant_code}'")
             
             # Set tenant context cho session
             session.set_tenant_context(tenant.id)
             
-            return user
+            return user, tenant
 
-    async def create_access_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+    async def create_access_token(self, user: User, tenant: Tenant = None, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
         # Get user's primary role from user_roles table
         result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
         user_roles = result.scalars().all()
@@ -90,16 +74,20 @@ class AuthService:
         # Use first role as primary role, or "user" as default
         primary_role = role_names[0] if role_names else "user"
         
+        # Nếu có tenant được truyền vào (cho root user), sử dụng tenant đó
+        # Ngược lại sử dụng tenant_id của user
+        current_tenant_id = tenant.id if tenant else user.tenant_id
+        
         expire = datetime.now(timezone.utc) + expires_delta
         payload = {
             "sub": str(user.id),
             "role": primary_role,
-            "tenant_id": str(user.tenant_id) if user.tenant_id else None,
-            "exp": str(int(expire.timestamp()))
+            "tenant_id": str(current_tenant_id) if current_tenant_id else None,
+            "exp": int(expire.timestamp())  # exp phải là integer, không phải string!
         }
         return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-    async def create_refresh_token(self, user: User, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
+    async def create_refresh_token(self, user: User, tenant: Tenant = None, expires_delta: timedelta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
         # Get user's primary role from user_roles table
         result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
         user_roles = result.scalars().all()
@@ -115,12 +103,16 @@ class AuthService:
         # Use first role as primary role, or "user" as default
         primary_role = role_names[0] if role_names else "user"
         
+        # Nếu có tenant được truyền vào (cho root user), sử dụng tenant đó
+        # Ngược lại sử dụng tenant_id của user
+        current_tenant_id = tenant.id if tenant else user.tenant_id
+        
         expire = datetime.now(timezone.utc) + expires_delta
         payload = {
             "sub": str(user.id),
             "role": primary_role,
-            "tenant_id": str(user.tenant_id) if user.tenant_id else None,
-            "exp": str(int(expire.timestamp()))
+            "tenant_id": str(current_tenant_id) if current_tenant_id else None,
+            "exp": int(expire.timestamp())  # exp phải là integer, không phải string!
         }
         return jwt.encode(payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
@@ -150,7 +142,7 @@ class AuthService:
         payload = {
             "sub": str(user.id), 
             "type": "password_reset",
-            "exp": str(int(expire.timestamp()))  # Token có hiệu lực 15 phút
+            "exp": int(expire.timestamp())  # exp phải là integer, không phải string!  # Token có hiệu lực 15 phút
         }
         encoded_jwt = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt

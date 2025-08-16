@@ -9,10 +9,14 @@ BASE_ROLES = [
 ]
 
 async def seed_default_roles(db: AsyncSession, tenant: Tenant) -> None:
-    """Seed roles mặc định cho tenant"""
+    """Seed roles mặc định cho tenant (giờ roles là global, chỉ seed nếu chưa có)"""
     for name, desc in BASE_ROLES:
-        result = await db.execute(select(Role).filter_by(name=name, tenant_id=tenant.id))
+        result = await db.execute(select(Role).filter_by(name=name))
         role = result.scalar_one_or_none()
         if not role:
-            db.add(Role(name=name, description=desc, tenant_id=tenant.id))
+            # Tạo global role (không có tenant_id)
+            db.add(Role(name=name, description=desc))
             await db.commit()
+            print(f"✅ Created global role: {name}")
+        else:
+            print(f"ℹ️ Role {name} already exists")

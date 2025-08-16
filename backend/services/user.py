@@ -7,6 +7,9 @@ from services import RBACService
 from database.models.auth_models import UserRole, Role
 from database.tenant_session import TenantSession
 from database.database import engine
+from dependencies.database import GlobalAsyncSessionLocal
+
+from .rbac_helper import ensure_permission_global, get_user_permissions_global, is_root_user_global
 
 class UserService:
     def __init__(self, db: AsyncSession):
@@ -144,9 +147,10 @@ class UserService:
 
     # "For" methods that handle permissions and business logic
     async def create_user_for(self, current_user_id: int, user_data: UserCreate) -> UserResponse:
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "create")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "user", "create")
             
             # Get current user to get tenant_id
             current_user = await self.get_user(current_user_id)
@@ -189,49 +193,49 @@ class UserService:
             return UserResponse(**user_dict)
 
     async def list_users_for(self, current_user_id: int, page: int, page_size: int, search: str = "") -> PaginatedUserResponse:
-        async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "user", "view")
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "view")
+                    
+        skip = (page - 1) * page_size
+        users = await self.list_users(skip=skip, limit=page_size, search=search)
+        total = await self.count_users(search=search)
+        
+        result = []
+        for u in users:
+            status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
+            if hasattr(u, "id") and isinstance(u.id, int):
+                permissions = await get_user_permissions_global(u.id)
+            else:
+                permissions = {}
             
-            skip = (page - 1) * page_size
-            users = await self.list_users(skip=skip, limit=page_size, search=search)
-            total = await self.count_users(search=search)
+            # Get roles array (sử dụng self.db thay vì session)
+            result_roles = await self.db.execute(select(UserRole).filter_by(user_id=u.id))
+            user_roles = result_roles.scalars().all()
+            role_ids = [ur.role_id for ur in user_roles]
+            if role_ids:
+                result_roles = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
+                roles = result_roles.scalars().all()
+            else:
+                roles = []
             
-            result = []
-            for u in users:
-                status = "active" if getattr(u, "is_active", 1) == 1 else "inactive"
-                if hasattr(u, "id") and isinstance(u.id, int):
-                    permissions = await role_service.get_user_permissions(u.id)
-                else:
-                    permissions = {}
-                
-                # Get roles array
-                result_roles = await session.execute(select(UserRole).filter_by(user_id=u.id))
-                user_roles = result_roles.scalars().all()
-                role_ids = [ur.role_id for ur in user_roles]
-                if role_ids:
-                    result_roles = await session.execute(select(Role).filter(Role.id.in_(role_ids)))
-                    roles = result_roles.scalars().all()
-                else:
-                    roles = []
-                
-                user_dict = u.__dict__.copy()
-                user_dict["roles"] = [r.name for r in roles]
-                user_dict["permissions"] = permissions
-                user_dict["status"] = status
-                result.append(UserResponse(**user_dict))
-            
-            return PaginatedUserResponse(
-                data=result,
-                total=total,
-                page=page,
-                page_size=page_size
-            )
+            user_dict = u.__dict__.copy()
+            user_dict["roles"] = [r.name for r in roles]
+            user_dict["permissions"] = permissions
+            user_dict["status"] = status
+            result.append(UserResponse(**user_dict))
+        
+        return PaginatedUserResponse(
+            data=result,
+            total=total,
+            page=page,
+            page_size=page_size
+        )
 
     async def get_user_for(self, current_user_id: int, user_id: int) -> UserResponse:
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "view")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "user", "view")
             
             user = await self.get_user(user_id)
             if not user:
@@ -240,7 +244,7 @@ class UserService:
             
             status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
             if hasattr(user, "id") and isinstance(user.id, int):
-                permissions = await role_service.get_user_permissions(user.id)
+                permissions = await get_user_permissions_global(user.id)
             else:
                 permissions = {}
             
@@ -261,9 +265,10 @@ class UserService:
             return UserResponse(**user_dict)
 
     async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate) -> UserResponse:
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "update")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "user", "update")
             
             user = await self.get_user(user_id)
             if not user:
@@ -271,7 +276,7 @@ class UserService:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
             
             # Only root can edit role, and cannot set to 'root'
-            if not await role_service.is_root(current_user_id):
+            if not await is_root_user_global(current_user_id):
                 update_data.role = None
             elif update_data.role == "root":
                 from fastapi import HTTPException, status
@@ -297,9 +302,10 @@ class UserService:
             return UserResponse(**user_dict)
 
     async def delete_user_for(self, current_user_id: int, user_id: int) -> dict:
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "delete")
+        
         async with TenantSession(bind=engine) as session:
-            role_service = RBACService(session)
-            await role_service.ensure_permission(current_user_id, "user", "delete")
             
             user = await self.get_user(user_id)
             if not user:

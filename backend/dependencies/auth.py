@@ -7,14 +7,14 @@ from jose import JWTError, jwt
 from config.settings import settings
 from database.database import get_async_db
 from database.models.user import User
-from .database import get_db
+from .database import get_db, get_global_db
 
 # Sử dụng HTTPBearer thay vì OAuth2PasswordBearer để đơn giản hơn
 security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security), 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_global_db)  # Sử dụng global DB cho auth
 ) -> User:
     """Lấy thông tin user hiện tại từ JWT token"""
     credentials_exception = HTTPException(
@@ -32,28 +32,30 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         tenant_id: str = payload.get("tenant_id")
         
+
+        
         if user_id is None:
             raise credentials_exception
             
-    except JWTError:
+    except JWTError as e:
         raise credentials_exception
     
     # Lấy user từ database
-    if tenant_id:
-        # Nếu có tenant_id trong token, tìm user trong tenant đó
-        result = await db.execute(
-            select(User).filter(
-                User.id == int(user_id),
-                User.tenant_id == int(tenant_id)
-            )
-        )
-    else:
-        # Fallback: tìm user theo ID (cho trường hợp global user)
-        result = await db.execute(select(User).filter(User.id == int(user_id)))
-    
+    # Luôn tìm user theo ID trước
+    result = await db.execute(select(User).filter(User.id == int(user_id)))
     user = result.scalar_one_or_none()
+    
     if user is None:
         raise credentials_exception
+    
+    # Kiểm tra quyền truy cập tenant
+    if tenant_id:
+        # Nếu user là root (tenant_id = NULL), cho phép truy cập bất kỳ tenant nào
+        if not user.is_root_user and user.tenant_id != int(tenant_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have access to this tenant"
+            )
     
     return user
 

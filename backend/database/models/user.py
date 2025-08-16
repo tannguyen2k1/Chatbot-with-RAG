@@ -15,3 +15,8 @@ class User(BaseModel):
     
     # Relationships 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user")
+    
+    @property
+    def is_root_user(self) -> bool:
+        """Kiểm tra xem user có phái là root user không (tenant_id = NULL)"""
+        return self.tenant_id is None
