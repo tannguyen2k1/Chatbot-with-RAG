@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from datetime import timedelta
+from typing import Optional
 from database.models import User
-from middleware.dependency import get_db, get_current_user
-from services import AuthService
+from dependencies import get_db, get_current_user
+from services.auth import AuthService
 from config.settings import settings
 from schemas import (TokenResponse, 
                      LoginRequest,
@@ -23,20 +26,26 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Đăng nhập đơn giản với username và password
+    Đăng nhập với username, password và tenant_code
     """
     auth_service = AuthService(db)
     try:
-        user = await auth_service.authenticate_user(login_data.username, login_data.password)
+        user, tenant = await auth_service.authenticate_user(
+            login_data.username, 
+            login_data.password,
+            login_data.tenant_code
+        )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    access_token = auth_service.create_access_token(
+    access_token = await auth_service.create_access_token(
         user,
+        tenant,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    refresh_token = auth_service.create_refresh_token(
+    refresh_token = await auth_service.create_refresh_token(
         user,
+        tenant,
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     )
 

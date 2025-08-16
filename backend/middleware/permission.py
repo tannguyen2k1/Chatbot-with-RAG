@@ -1,15 +1,18 @@
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from middleware import get_current_user, get_db
-from services import RBACService
+from sqlalchemy import select
+from dependencies import get_db, get_current_user
+from dependencies.database import get_global_db
+from database.models import User, Role, Permission, Module, RolePermission, UserRole
+from services.rbac import RBACService
 
 
 # RBAC permission dependency generator (chuẩn RBAC, không dùng privilege cũ)
 def require_permission(module: str, action: str):
     async def dependency(
         current_user = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_global_db)
     ):
         rbac = RBACService(db)
         has_perm = await rbac.check_user_permission(current_user.id, module, action)

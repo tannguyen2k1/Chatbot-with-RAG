@@ -26,6 +26,7 @@
     "Edit": "Edit",
     "UserManagement": "User Management",
     "RoleManagement": "Role Management",
+    "TenantManagement":"Tenant Management",
     "Demo": "Demo",
     "AuditLog": "Audit Log"
 }
