@@ -11,6 +11,7 @@ class TenantCreate(BaseModel):
     domain: Optional[str] = None
     subdomain: Optional[str] = None
     expiration_date: Optional[datetime] = None
+    is_active: Optional[bool] = True
 
 class TenantUpdate(BaseModel):
     name: Optional[str] = None

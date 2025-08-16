@@ -59,7 +59,8 @@ async def create_tenant(
         tenant_code=tenant_data.tenant_code,
         domain=tenant_data.domain,
         subdomain=tenant_data.subdomain,
-        expiration_date=tenant_data.expiration_date
+        expiration_date=tenant_data.expiration_date,
+        is_active=tenant_data.is_active if tenant_data.is_active is not None else True
     )
     
     db.add(tenant)
@@ -242,7 +243,7 @@ async def delete_tenant(
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
     current_user = Depends(get_current_user)
 ):
-    """Xóa tenant (soft delete)"""
+    """Xóa tenant vĩnh viễn (hard delete)"""
     
     # Kiểm tra quyền
     rbac_service = RBACService(db)
@@ -255,12 +256,13 @@ async def delete_tenant(
             detail="Access denied to this tenant"
         )
     
-    # Soft delete - chỉ đánh dấu không active
-    await db.execute(
-        update(Tenant)
-        .where(Tenant.id == tenant_id)
-        .values(is_active=False)
-    )
+    # Lấy tenant
+    result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = result.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    # Hard delete
+    db.delete(tenant)
     await db.commit()
-    
     return None
