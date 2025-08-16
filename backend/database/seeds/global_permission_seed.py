@@ -8,29 +8,45 @@ GLOBAL_MODULES = [
     ("permission", "Permission management"),
     ("module", "Module management"),
     ("tenant", "Tenant management"),
+    ("audit_log", "Audit log management"),
+    ("demo", "Demo data management"),
 ]
 
 GLOBAL_PERMISSIONS = [
+    # User
     ("user.view", "View users"),
     ("user.create", "Create users"),
     ("user.update", "Update users"),
     ("user.delete", "Delete users"),
+    # Role
     ("role.view", "View roles"),
     ("role.create", "Create roles"),
     ("role.update", "Update roles"),
     ("role.delete", "Delete roles"),
     ("role.assign-role", "Assign roles to users"),
+    # Permission
     ("permission.view", "View permissions"),
     ("permission.create", "Create permissions"),
     ("permission.assign", "Assign permissions to roles"),
     ("permission.remove", "Remove permissions from roles"),
     ("permission.check", "Check user permissions"),
+    # Module
     ("module.view", "View modules"),
     ("module.create", "Create modules"),
+    # Tenant
     ("tenant.view", "View tenants"),
     ("tenant.create", "Create tenants"),
     ("tenant.update", "Update tenants"),
     ("tenant.delete", "Delete tenants"),
+    ("audit_log.view", "View audit logs"),
+    ("audit_log.create", "Create audit logs"),
+    ("audit_log.update", "Update audit logs"),
+    ("audit_log.delete", "Delete audit logs"),
+    # Demo
+    ("demo.view", "View demo data"),
+    ("demo.create", "Create demo data"),
+    ("demo.update", "Update demo data"),
+    ("demo.delete", "Delete demo data"),
 ]
 
 async def seed_global_modules_and_permissions(db: AsyncSession) -> None:

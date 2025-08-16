@@ -4,7 +4,7 @@
 from .database import get_db
 
 # Authentication dependencies  
-from .auth import get_current_user
+from .auth import get_current_user, get_current_tenant_id_from_token
 
 # Tenant dependencies
 from .tenant import (
@@ -23,6 +23,7 @@ __all__ = [
     
     # Authentication
     "get_current_user",
+    "get_current_tenant_id_from_token",
     
     # Tenant
     "get_current_tenant",

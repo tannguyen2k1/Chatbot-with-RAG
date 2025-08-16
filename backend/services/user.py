@@ -146,37 +146,31 @@ class UserService:
             return len(result.scalars().all())
 
     # "For" methods that handle permissions and business logic
-    async def create_user_for(self, current_user_id: int, user_data: UserCreate) -> UserResponse:
+    async def create_user_for(self, current_user_id: int, user_data: UserCreate, tenant_id: int) -> UserResponse:
         # Check permission với global session
         await ensure_permission_global(current_user_id, "user", "create")
         
         async with TenantSession(bind=engine) as session:
             
-            # Get current user to get tenant_id
-            current_user = await self.get_user(current_user_id)
-            if not current_user:
-                from fastapi import HTTPException, status
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found")
-            
-            # Create user with tenant_id
-            user = await self.create_user(user_data, tenant_id=current_user.tenant_id)
+            # Create user with tenant_id from token
+            user = await self.create_user(user_data, tenant_id=tenant_id)
             
             # Assign default role if no role specified
             default_role_name = user_data.role if user_data.role else "user"
             
-            # Find role by name and tenant_id
-            result = await session.execute(select(Role).filter_by(name=default_role_name, tenant_id=current_user.tenant_id))
+            # Find role by name (roles are global now)
+            result = await session.execute(select(Role).filter_by(name=default_role_name))
             role_obj = result.scalar_one_or_none()
             if role_obj:
                 # Check if user already has this role
                 result = await session.execute(select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id))
                 existing = result.scalar_one_or_none()
                 if not existing:
-                    session.add(UserRole(user_id=user.id, role_id=role_obj.id, tenant_id=current_user.tenant_id))
+                    session.add(UserRole(user_id=user.id, role_id=role_obj.id, tenant_id=tenant_id))
                     await session.commit()
             else:
                 # Log error if role not found
-                print(f"Warning: Role '{default_role_name}' not found for tenant_id {current_user.tenant_id}")
+                print(f"Warning: Role '{default_role_name}' not found")
             
             # Get roles array
             result = await session.execute(select(UserRole).filter_by(user_id=user.id))
@@ -192,13 +186,39 @@ class UserService:
             user_dict["roles"] = [r.name for r in roles] if roles else []
             return UserResponse(**user_dict)
 
-    async def list_users_for(self, current_user_id: int, page: int, page_size: int, search: str = "") -> PaginatedUserResponse:
+    async def list_users_for(self, current_user_id: int, page: int, page_size: int, search: str = "", tenant_id: int = None) -> PaginatedUserResponse:
         # Check permission với global session
         await ensure_permission_global(current_user_id, "user", "view")
                     
         skip = (page - 1) * page_size
-        users = await self.list_users(skip=skip, limit=page_size, search=search)
-        total = await self.count_users(search=search)
+        
+        # Use global session to avoid tenant filter
+        async with GlobalAsyncSessionLocal() as global_session:
+            query = select(User)
+            if tenant_id:
+                query = query.filter(User.tenant_id == tenant_id)
+            if search:
+                search_lower = f"%{search.lower()}%"
+                query = query.filter(
+                    (User.username.ilike(search_lower)) |
+                    (User.email.ilike(search_lower))
+                )
+            query = query.order_by(User.id.asc()).offset(skip).limit(page_size)
+            result = await global_session.execute(query)
+            users = result.scalars().all()
+            
+            # Count total
+            count_query = select(User)
+            if tenant_id:
+                count_query = count_query.filter(User.tenant_id == tenant_id)
+            if search:
+                search_lower = f"%{search.lower()}%"
+                count_query = count_query.filter(
+                    (User.username.ilike(search_lower)) |
+                    (User.email.ilike(search_lower))
+                )
+            result = await global_session.execute(count_query)
+            total = len(result.scalars().all())
         
         result = []
         for u in users:
