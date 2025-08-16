@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from typing import Optional
 from dependencies import get_db, get_current_tenant, get_current_user
 from dependencies.database import get_global_db
@@ -263,7 +263,34 @@ async def delete_tenant(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    # Hard delete
-    db.delete(tenant)
-    await db.commit()
+    try:
+        # Xóa các records liên quan trước (foreign key constraints)
+        from database.models import User, Demo, AuditLog, UserRole, RolePermission
+        
+        # Xóa audit logs
+        await db.execute(delete(AuditLog).where(AuditLog.tenant_id == tenant_id))
+        
+        # Xóa user roles
+        await db.execute(delete(UserRole).where(UserRole.tenant_id == tenant_id))
+        
+        # Xóa role permissions
+        await db.execute(delete(RolePermission).where(RolePermission.tenant_id == tenant_id))
+        
+        # Xóa demos
+        await db.execute(delete(Demo).where(Demo.tenant_id == tenant_id))
+        
+        # Xóa users
+        await db.execute(delete(User).where(User.tenant_id == tenant_id))
+        
+        # Cuối cùng xóa tenant
+        await db.delete(tenant)
+        await db.commit()
+        
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Không thể xóa tenant: {str(e)}"
+        )
+    
     return None
