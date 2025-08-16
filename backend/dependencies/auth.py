@@ -32,8 +32,6 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         tenant_id: str = payload.get("tenant_id")
         
-
-        
         if user_id is None:
             raise credentials_exception
             
@@ -59,10 +57,35 @@ async def get_current_user(
     
     return user
 
+async def get_current_tenant_id_from_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> int:
+    """Lấy tenant_id từ JWT token"""
+    try:
+        payload = jwt.decode(
+            credentials.credentials, 
+            settings.JWT_SECRET_KEY, 
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+        tenant_id: str = payload.get("tenant_id")
+        
+        if tenant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token does not contain tenant_id"
+            )
+        return int(tenant_id)
+            
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+
 async def get_current_tenant_id(
     current_user: User = Depends(get_current_user)
 ) -> int:
-    """Lấy tenant_id từ current user"""
+    """Lấy tenant_id từ current user (deprecated - use get_current_tenant_id_from_token instead)"""
     if not current_user.tenant_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
