@@ -6,8 +6,6 @@ from database.models import User, UserRole, Role, Tenant
 from services.rbac import RBACService
 from config.settings import settings
 from passlib.context import CryptContext
-from database.tenant_session import TenantSession
-from database.database import engine
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -17,46 +15,45 @@ class AuthService:
         self.db = db
 
     async def authenticate_user(self, username: str, password: str, tenant_code: str) -> tuple[User, Tenant]:
-        # Dùng TenantSession với context
-        async with TenantSession(bind=engine) as session:
-            # Tìm tenant theo tenant_code
-            tenant_result = await session.execute(
-                select(Tenant).filter(Tenant.tenant_code == tenant_code)
-            )
-            tenant = tenant_result.scalar_one_or_none()
-            if not tenant:
-                raise ValueError(f"Tenant with code '{tenant_code}' not found")
-            
-            # Kiểm tra tenant có active không
-            if not tenant.is_active:
-                raise ValueError(f"Tenant '{tenant_code}' is deactivated")
-            
-            # Kiểm tra tenant có hết hạn không
-            if tenant.expiration_date and tenant.expiration_date < datetime.now(timezone.utc):
-                raise ValueError(f"Tenant '{tenant_code}' has expired")
-            
-            # Tìm user với username (không filter theo tenant để root có thể login vào bất kỳ tenant nào)
-            result = await session.execute(
-                select(User).filter(User.username == username)
-            )
-            
-            user = result.scalar_one_or_none()
-            if not user:
-                raise ValueError(f"User '{username}' not found")
-            
-            # Kiểm tra password
-            if not pwd_context.verify(password, str(user.hashed_password)):
-                raise ValueError("Incorrect password")
-            
-            # Kiểm tra xem user có quyền truy cập tenant này không
-            # Root user (tenant_id = NULL) có thể truy cập bất kỳ tenant nào
-            if not user.is_root_user and user.tenant_id != tenant.id:
-                raise ValueError(f"User '{username}' does not have permission to access tenant '{tenant_code}'")
-            
-            # Set tenant context cho session
-            session.set_tenant_context(tenant.id)
-            
-            return user, tenant
+        # Tìm tenant theo tenant_code
+        tenant_result = await self.db.execute(
+            select(Tenant).filter(Tenant.tenant_code == tenant_code)
+        )
+        tenant = tenant_result.scalar_one_or_none()
+        if not tenant:
+            raise ValueError(f"Tenant with code '{tenant_code}' not found")
+        
+        # Kiểm tra tenant có active không
+        if not tenant.is_active:
+            raise ValueError(f"Tenant '{tenant_code}' is deactivated")
+        
+        # Kiểm tra tenant có hết hạn không
+        if tenant.expiration_date and tenant.expiration_date < datetime.now(timezone.utc):
+            raise ValueError(f"Tenant '{tenant_code}' has expired")
+        
+        # Tìm user với username (không filter theo tenant để root có thể login vào bất kỳ tenant nào)
+        result = await self.db.execute(
+            select(User).filter(User.username == username)
+        )
+        
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ValueError(f"User '{username}' not found")
+        
+        # Kiểm tra password
+        if not pwd_context.verify(password, str(user.hashed_password)):
+            raise ValueError("Incorrect password")
+        
+        # Kiểm tra xem user có quyền truy cập tenant này không
+        # Root user (tenant_id = NULL) có thể truy cập bất kỳ tenant nào
+        if not user.is_root_user and user.tenant_id != tenant.id:
+            raise ValueError(f"User '{username}' does not have permission to access tenant '{tenant_code}'")
+        
+        # Set tenant context cho session nếu là TenantSession
+        if hasattr(self.db, 'set_tenant_context'):
+            self.db.set_tenant_context(tenant.id)
+        
+        return user, tenant
 
     async def create_access_token(self, user: User, tenant: Tenant = None, expires_delta: timedelta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
         # Get user's primary role from user_roles table

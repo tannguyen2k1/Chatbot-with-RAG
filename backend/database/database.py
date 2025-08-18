@@ -13,8 +13,10 @@ engine = create_async_engine(
     DATABASE_URL, 
     echo=False, 
     future=True,
-    pool_pre_ping=True,
-    pool_recycle=300
+    pool_pre_ping=False,
+    pool_recycle=300,
+    pool_size=10,
+    max_overflow=20
 )
 
 # Create async session factory với TenantSession
