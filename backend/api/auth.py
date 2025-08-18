@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Optional
 from database.models import User
 from dependencies import get_db, get_current_user
+from dependencies.database import get_global_db
 from services.auth import AuthService
 from config.settings import settings
 from schemas import (TokenResponse, 
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def login(
     login_data: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_global_db)
 ):
     """
     Đăng nhập với username, password và tenant_code
