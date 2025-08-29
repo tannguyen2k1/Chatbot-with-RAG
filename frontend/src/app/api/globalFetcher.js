@@ -1,17 +1,17 @@
 import { refreshTokenIfNeeded } from "./refreshTokenHelper";
 // SWR fetcher function
 
-// Global variable to store access token (will be set by AuthContext)
-let globalAccessToken = null;
+// Global function để lấy access token từ AuthContext
+let getAccessTokenFromContext = null;
 
-// Function to set access token from AuthContext
-export const setGlobalAccessToken = (token) => {
-  globalAccessToken = token;
+// Function to set the getter function from AuthContext
+export const setGlobalAccessToken = (getter) => {
+  getAccessTokenFromContext = getter;
 };
 
 // Function to get current access token
 const getCurrentAccessToken = () => {
-  return globalAccessToken;
+  return getAccessTokenFromContext ? getAccessTokenFromContext() : null;
 };
 
 const getBaseUrl = () => {

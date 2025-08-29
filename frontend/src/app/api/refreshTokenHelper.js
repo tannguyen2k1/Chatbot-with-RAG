@@ -1,5 +1,5 @@
 // Token refresh helper for globalFetcher
-import { rawPostFetcher, setGlobalAccessToken } from './globalFetcher';
+import { rawPostFetcher } from './globalFetcher';
 
 export async function refreshTokenIfNeeded(error, originalRequest) {
   if (!error || !error.message) return null;
@@ -22,9 +22,6 @@ export async function refreshTokenIfNeeded(error, originalRequest) {
   }
   
   if (data && data.access_token) {
-    // Update global access token in memory
-    setGlobalAccessToken(data.access_token);
-    
     // Call original request again with new token
     if (typeof originalRequest === 'function') {
       return originalRequest();
