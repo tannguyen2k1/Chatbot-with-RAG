@@ -123,6 +123,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function để cập nhật tokens từ refresh token helper
+  const updateTokensFromRefresh = (accessToken, user) => {
+    setAccessToken(accessToken);
+    if (user) setUser(user);
+  };
+
   const value = {
     accessToken,
     user,
@@ -132,7 +138,15 @@ export const AuthProvider = ({ children }) => {
     refreshAccessToken,
     getAccessToken: () => accessToken,
     isAuthenticated: () => !!accessToken && !!user,
+    updateTokensFromRefresh,
   };
+
+  // Set global getter function khi component mount
+  useEffect(() => {
+    setGlobalAccessToken(() => accessToken);
+  }, [accessToken]);
+
+
 
   return (
     <AuthContext.Provider value={value}>
