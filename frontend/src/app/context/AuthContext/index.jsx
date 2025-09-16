@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { setGlobalAccessToken } from "../../api/globalFetcher";
 import { useTenant } from "../TenantContext";
 import Snackbar from "@mui/material/Snackbar";
@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const { tenantCode } = useTenant();
 
   // Snackbar state
@@ -31,6 +32,12 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on mount
   useEffect(() => {
+    // Skip auth check on auth pages
+    if (pathname && pathname.startsWith("/auth")) {
+      setIsLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         const data = await refreshAccessToken();
@@ -42,7 +49,8 @@ export const AuthProvider = ({ children }) => {
       }
     };
     checkAuth();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const showSnackbar = (message, severity = "info") => {
     setSnackbarMessage(message);
@@ -146,7 +154,10 @@ export const AuthProvider = ({ children }) => {
     setGlobalAccessToken(() => accessToken);
   }, [accessToken]);
 
-
+  // Gate rendering until auth check completes (except on auth pages)
+  if (isLoading && !(pathname && pathname.startsWith("/auth"))) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider value={value}>
