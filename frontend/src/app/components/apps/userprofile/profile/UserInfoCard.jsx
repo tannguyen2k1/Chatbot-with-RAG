@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   Grid,
   Card,
@@ -11,6 +11,8 @@ import {
   Stack,
   Avatar,
   Tooltip,
+  Button,
+  IconButton,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
@@ -19,10 +21,16 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import SecurityIcon from "@mui/icons-material/Security";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import StarIcon from "@mui/icons-material/Star";
+import { IconEdit, IconLock } from "@tabler/icons-react";
 import { UserDataContext } from "@/app/context/UserDataContext";
+import EditProfileDialog from "./EditProfileDialog";
+import ChangePasswordDialog from "./ChangePasswordDialog";
 
 function UserInfoCard() {
   const { user, loading, error } = useContext(UserDataContext);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+
   if (loading)
     return (
       <Box sx={{ textAlign: "center", py: 4 }}>
@@ -95,6 +103,38 @@ function UserInfoCard() {
                 >
                   {user.full_name || user.username}
                 </Typography>
+                <Stack direction="row" spacing={1} mb={2}>
+                  <Tooltip title="Chỉnh sửa thông tin">
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditDialogOpen(true)}
+                      sx={{
+                        bgcolor: "primary.main",
+                        color: "white",
+                        "&:hover": {
+                          bgcolor: "primary.dark",
+                        },
+                      }}
+                    >
+                      <IconEdit size={18} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Đổi mật khẩu">
+                    <IconButton
+                      size="small"
+                      onClick={() => setChangePasswordDialogOpen(true)}
+                      sx={{
+                        bgcolor: "secondary.main",
+                        color: "white",
+                        "&:hover": {
+                          bgcolor: "secondary.dark",
+                        },
+                      }}
+                    >
+                      <IconLock size={18} />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
                 <Stack
                   direction="row"
                   spacing={1}
@@ -263,6 +303,18 @@ function UserInfoCard() {
           </CardContent>
         </Card>
       </Grid>
+      
+      {/* Edit Profile Dialog */}
+      <EditProfileDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+      />
+      
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        open={changePasswordDialogOpen}
+        onClose={() => setChangePasswordDialogOpen(false)}
+      />
     </Grid>
   );
 }

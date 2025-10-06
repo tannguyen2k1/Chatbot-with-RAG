@@ -137,6 +137,63 @@ export const AuthProvider = ({ children }) => {
     if (user) setUser(user);
   };
 
+
+  const changePassword = async (passwordData) => {
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(passwordData),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Change password failed");
+      }
+
+      const data = await response.json();
+      showSnackbar("Đổi mật khẩu thành công!", "success");
+      return data;
+    } catch (error) {
+      console.error("Change password error:", error);
+      showSnackbar(error.message || "Đổi mật khẩu thất bại", "error");
+      throw error;
+    }
+  };
+
+  const updateProfile = async (profileData) => {
+    try {
+      const response = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(profileData),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Update profile failed");
+      }
+
+      const data = await response.json();
+      // Update user data in context
+      setUser(data);
+      showSnackbar("Cập nhật thông tin thành công!", "success");
+      return data;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      showSnackbar(error.message || "Cập nhật thông tin thất bại", "error");
+      throw error;
+    }
+  };
+
   const value = {
     accessToken,
     user,
@@ -144,6 +201,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     refreshAccessToken,
+    changePassword,
+    updateProfile,
     getAccessToken: () => accessToken,
     isAuthenticated: () => !!accessToken && !!user,
     updateTokensFromRefresh,

@@ -6,6 +6,21 @@ from services import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+# Endpoint: User tự cập nhật thông tin cá nhân
+@router.put("/me", response_model=UserResponse)
+async def update_my_profile(
+    update_data: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """User tự cập nhật thông tin cá nhân (email, phone, full_name)"""
+    service = UserService(db)
+    try:
+        return await service.update_user_for(current_user.id, current_user.id, update_data)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
+
 # Endpoint: Create a new user (Root/Admin only)
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
