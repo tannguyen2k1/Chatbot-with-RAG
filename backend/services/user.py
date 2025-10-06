@@ -3,7 +3,6 @@ from sqlalchemy import select, delete, update
 from database.models import User
 from schemas import UserCreate, UserUpdate, UserResponse, PaginatedUserResponse
 from typing import Optional
-from services import RBACService
 from database.models.auth_models import UserRole, Role
 from dependencies.database import GlobalAsyncSessionLocal
 
@@ -273,8 +272,10 @@ class UserService:
         return UserResponse(**user_dict)
 
     async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate) -> UserResponse:
-        # Check permission với global session
-        await ensure_permission_global(current_user_id, "user", "update")
+        # Check if user is updating their own profile
+        if current_user_id != user_id:
+            # If updating someone else, check permission
+            await ensure_permission_global(current_user_id, "user", "update")
         
         user = await self.get_user(user_id)
         if not user:
