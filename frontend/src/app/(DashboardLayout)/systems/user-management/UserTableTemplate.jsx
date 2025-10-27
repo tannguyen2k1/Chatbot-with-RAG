@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import UserFormDialog from "./UserFormDialog";
-import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
+import { getFetcher, deleteFetcher, postFetcher } from "@/app/api/globalFetcher";
 import {
   Typography,
   Menu,
@@ -18,7 +18,7 @@ import {
   TextField,
 } from "@mui/material";
 import UserThemeTable from "@/app/components/tables/UserThemeTable";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconKey } from "@tabler/icons-react";
 
 const fetchUsers = async (page, pageSize, search) => {
   // getFetcher sẽ tự động lấy token từ localStorage
@@ -43,6 +43,7 @@ export default function UserTableTemplate({
   onActionDone,
   canUpdate = false,
   canDelete = false,
+  canResetPassword = false,
 }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,8 @@ export default function UserTableTemplate({
   const [menuRow, setMenuRow] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordId, setResetPasswordId] = useState(null);
   // Snackbar state
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -132,6 +135,24 @@ export default function UserTableTemplate({
     }
   };
 
+  const handleResetPassword = async () => {
+    try {
+      await postFetcher(`/api/users/${resetPasswordId}/reset-password`, {
+        new_password: "user123456"
+      });
+      setSnackbar({
+        open: true,
+        message: "Reset mật khẩu thành công (mật khẩu mới: user123456)",
+        severity: "success",
+      });
+      setResetPasswordId(null);
+      setResetPasswordOpen(false);
+    } catch (e) {
+      setSnackbar({ open: true, message: e.message, severity: "error" });
+      if (onActionDone) onActionDone(false, e.message, "error");
+    }
+  };
+
   return (
     <Box
       sx={{ borderRadius: 2, boxShadow: 1, p: 2, bgcolor: "background.paper" }}
@@ -196,6 +217,17 @@ export default function UserTableTemplate({
         <MenuItem
           onClick={() => {
             handleMenuClose();
+            setResetPasswordId(menuRow.id);
+            setResetPasswordOpen(true);
+          }}
+          disabled={!canResetPassword || menuRow?.roles?.includes("root")}
+        >
+          <IconKey width={18} style={{ marginRight: 8 }} color="orange" />
+          Reset mật khẩu
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
             setDeleteId(menuRow.id);
             setConfirmOpen(true);
           }}
@@ -213,6 +245,24 @@ export default function UserTableTemplate({
           <Button onClick={() => setConfirmOpen(false)}>Huỷ</Button>
           <Button color="error" onClick={handleDelete}>
             Xoá
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Reset password dialog */}
+      <Dialog open={resetPasswordOpen} onClose={() => setResetPasswordOpen(false)}>
+        <DialogTitle>Reset mật khẩu</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bạn có chắc chắn muốn reset mật khẩu cho user này?
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            Mật khẩu mới sẽ là: <strong>user123456</strong>
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetPasswordOpen(false)}>Huỷ</Button>
+          <Button color="primary" onClick={handleResetPassword}>
+            Reset
           </Button>
         </DialogActions>
       </Dialog>

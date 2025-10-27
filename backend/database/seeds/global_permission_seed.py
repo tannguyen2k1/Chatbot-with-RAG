@@ -18,6 +18,7 @@ GLOBAL_PERMISSIONS = [
     ("user.create", "Create users"),
     ("user.update", "Update users"),
     ("user.delete", "Delete users"),
+    ("user.reset-password", "Reset user password"),
     # Role
     ("role.view", "View roles"),
     ("role.create", "Create roles"),

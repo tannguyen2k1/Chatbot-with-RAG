@@ -31,6 +31,9 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserResetPassword(BaseModel):
+    new_password: str
+
 class PaginatedUserResponse(BaseModel):
     data: List[UserResponse]
     total: int

@@ -42,6 +42,7 @@ export default function UserManagementPage() {
   const canCreate = useHasPermission("user", "create");
   const canUpdate = useHasPermission("user", "update");
   const canDelete = useHasPermission("user", "delete");
+  const canResetPassword = useHasPermission("user", "reset-password");
 
   return (
     <Box sx={{ p: { xs: 1, sm: 3 } }}>
@@ -69,6 +70,7 @@ export default function UserManagementPage() {
         onActionDone={handleCloseForm}
         canUpdate={canUpdate}
         canDelete={canDelete}
+        canResetPassword={canResetPassword}
       />
       <UserFormDialog
         open={openForm}
