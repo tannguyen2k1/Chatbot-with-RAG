@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from typing import Optional
-from dependencies import get_db, get_current_tenant, get_current_user
+from dependencies import get_current_tenant, get_current_user
 from dependencies.database import get_global_db
 from database.models import Tenant
 from schemas.tenant import TenantCreate, TenantUpdate, TenantResponse, PaginatedTenantResponse
@@ -11,7 +11,7 @@ from services.rbac import RBACService
 router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 
 
-@router.post("/", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     tenant_data: TenantCreate,
     db: AsyncSession = Depends(get_global_db),
@@ -70,7 +70,7 @@ async def create_tenant(
     
     return tenant
 
-@router.get("/", response_model=PaginatedTenantResponse)
+@router.get("", response_model=PaginatedTenantResponse)
 async def list_tenants(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),

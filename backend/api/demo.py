@@ -8,7 +8,7 @@ from services import DemoService, PermissionError
 router = APIRouter(prefix="/demos", tags=["Demos"])
 
 
-@router.get("/", response_model=PaginatedDemoResponse)
+@router.get("", response_model=PaginatedDemoResponse)
 async def get_demos(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
@@ -23,7 +23,7 @@ async def get_demos(
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
-@router.post("/", response_model=DemoResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=DemoResponse, status_code=status.HTTP_201_CREATED)
 async def create_demo(
     demo_data: DemoCreate,
     db: AsyncSession = Depends(get_db),
