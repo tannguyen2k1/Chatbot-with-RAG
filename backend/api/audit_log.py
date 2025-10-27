@@ -6,7 +6,7 @@ from services import AuditLogService, PermissionError
 
 router = APIRouter(prefix="/audit-logs", tags=["AuditLog"])
 
-@router.get("/", summary="Lấy danh sách audit logs", response_model=PaginatedAuditLogResponse)
+@router.get("", summary="Lấy danh sách audit logs", response_model=PaginatedAuditLogResponse)
 async def get_audit_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),

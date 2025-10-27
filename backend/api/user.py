@@ -22,7 +22,7 @@ async def update_my_profile(
 
 
 # Endpoint: Create a new user (Root/Admin only)
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
@@ -36,7 +36,7 @@ async def create_user(
         raise HTTPException(status_code=403, detail=str(e))
 
 # Endpoint: Retrieve a list of users (Admin/Root only)
-@router.get("/", response_model=PaginatedUserResponse)
+@router.get("", response_model=PaginatedUserResponse)
 async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
