@@ -323,3 +323,29 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         
         return {"message": f"User with ID: {user_id} has been deleted"}
+
+    async def reset_password_for(self, current_user_id: int, user_id: int, new_password: str) -> dict:
+        """Reset password cho user (chỉ admin/root có quyền)"""
+        # Check permission với global session
+        await ensure_permission_global(current_user_id, "user", "reset-password")
+        
+        user = await self.get_user(user_id)
+        if not user:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        # Hash password mới
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        hashed_password = pwd_context.hash(new_password)
+        
+        # Cập nhật password
+        from sqlalchemy import update
+        await self.db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(hashed_password=hashed_password)
+        )
+        await self.db.commit()
+        
+        return {"message": f"Password for user {user.username} has been reset successfully"}

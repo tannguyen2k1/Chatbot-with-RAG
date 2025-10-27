@@ -1,8 +1,10 @@
 from schemas import UserResponse, PaginatedUserResponse, UserCreate, UserUpdate, PermissionError  # Pydantic response model for users
+from schemas.user import UserResetPassword
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from dependencies import get_db, get_current_user, get_current_tenant_id_from_token
 from services import UserService
+from services.rbac_helper import ensure_permission_global
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -92,5 +94,24 @@ async def delete_user(
         raise HTTPException(status_code=403, detail=str(e))
 
 
+# Endpoint: Reset password cho user (chỉ admin/root có quyền)
+@router.post("/{user_id}/reset-password", status_code=status.HTTP_200_OK)
+async def reset_user_password(
+    user_id: int,
+    reset_data: UserResetPassword,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """Reset password cho user (chỉ admin/root có quyền)"""
+    # Kiểm tra quyền reset password
+    await ensure_permission_global(current_user.id, "user", "reset-password")
+    
+    service = UserService(db)
+    try:
+        return await service.reset_password_for(current_user.id, user_id, reset_data.new_password)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
