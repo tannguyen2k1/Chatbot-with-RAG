@@ -30,8 +30,9 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const [isLoading, setIsLoading] = useState(false)
 
   const {
-    authenticationStore: { 
-      setAuthToken, 
+    authenticationStore: {
+      setAuthToken,
+      setRefreshToken,
       setCurrentUser,
       setPassword: setStorePassword,
       setTenantCode: setStoreTenantCode,
@@ -59,7 +60,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
     console.log("Username:", username)
     console.log("Password:", password ? "***" : "empty")
     console.log("Tenant:", tenantCode)
-    
+
     // Validate inputs
     if (!username.trim() || !password.trim() || !tenantCode.trim()) {
       console.log("Validation failed - missing fields")
@@ -77,19 +78,18 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
         password: password.trim(),
         tenant_code: tenantCode.trim(),
       })
-      
+
       console.log("Response received:", response.kind)
 
       if (response.kind === "ok") {
         // Success! Save credentials
         setAuthToken(response.data.access_token)
+        // Note: refresh_token is stored in HTTP-only cookie by backend
         setCurrentUser(response.data.user)
-        
+
         // Show success message
-        Alert.alert("Thành công", `Chào mừng ${response.data.user.username}!`, [
-          { text: "OK" }
-        ])
-        
+        Alert.alert("Thành công", `Chào mừng ${response.data.user.username}!`, [{ text: "OK" }])
+
         // Navigate will happen automatically via isAuthenticated check in AppNavigator
       } else {
         // Handle different error types
@@ -255,7 +255,7 @@ const $title: ThemedStyle<TextStyle> = ({ typography, spacing, colors }) => ({
   fontWeight: "bold",
   marginBottom: spacing.xs,
   color: colors.text,
-  lineHeight:48,
+  lineHeight: 48,
 })
 
 const $subtitle: ThemedStyle<TextStyle> = ({ spacing, colors }) => ({

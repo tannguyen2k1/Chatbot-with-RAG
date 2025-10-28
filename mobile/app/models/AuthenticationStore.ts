@@ -1,4 +1,5 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { User } from "@/services/api/api.types"
 
 export const AuthenticationStoreModel = types
@@ -11,6 +12,7 @@ export const AuthenticationStoreModel = types
     tenant_code: "",
     currentUser: types.maybe(types.frozen<User>()),
     isLoadingAuth: types.optional(types.boolean, false),
+    isInitialized: types.optional(types.boolean, false),
   })
   .views((store) => ({
     get isAuthenticated() {
@@ -27,11 +29,26 @@ export const AuthenticationStoreModel = types
     setIsLoadingAuth(value: boolean) {
       store.isLoadingAuth = value
     },
+    setIsInitialized(value: boolean) {
+      store.isInitialized = value
+    },
     setAuthToken(value?: string) {
       store.authToken = value
+      // Save to AsyncStorage when token changes
+      if (value) {
+        AsyncStorage.setItem("authToken", value)
+      } else {
+        AsyncStorage.removeItem("authToken")
+      }
     },
     setRefreshToken(value?: string) {
       store.refreshToken = value
+      // Save to AsyncStorage when refresh token changes
+      if (value) {
+        AsyncStorage.setItem("refreshToken", value)
+      } else {
+        AsyncStorage.removeItem("refreshToken")
+      }
     },
     setUsername(value: string) {
       store.username = value
@@ -44,34 +61,11 @@ export const AuthenticationStoreModel = types
     },
     setCurrentUser(user?: User) {
       store.currentUser = user
-    },
-    async checkAuth() {
-      // If no token, mark as not authenticated
-      if (!store.authToken) {
-        store.isLoadingAuth = false
-        return false
-      }
-
-      // Try to refresh token to validate
-      try {
-        // Import at top level to avoid dynamic import issues
-        const { authApi } = require("@/services/api")
-        const response = await authApi.refreshToken()
-
-        if (response.kind === "ok" && response.data.user) {
-          store.authToken = response.data.access_token
-          store.currentUser = response.data.user
-          store.isLoadingAuth = false
-          return true
-        } else {
-          // Token invalid, logout
-          this.logout()
-          return false
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-        this.logout()
-        return false
+      // Save user to AsyncStorage when user changes
+      if (user) {
+        AsyncStorage.setItem("currentUser", JSON.stringify(user))
+      } else {
+        AsyncStorage.removeItem("currentUser")
       }
     },
     logout() {
@@ -82,6 +76,9 @@ export const AuthenticationStoreModel = types
       store.tenant_code = ""
       store.currentUser = undefined
       store.isLoadingAuth = false
+      
+      // Clear AsyncStorage
+      AsyncStorage.multiRemove(["authToken", "refreshToken", "currentUser"])
     },
   }))
 

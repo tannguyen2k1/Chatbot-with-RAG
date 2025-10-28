@@ -38,6 +38,8 @@ export class Api {
       headers: {
         Accept: "application/json",
       },
+      // Enable cookies for refresh token support
+      withCredentials: true,
     })
   }
 
