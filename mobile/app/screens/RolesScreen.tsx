@@ -3,6 +3,9 @@ import { FC, useCallback, useEffect, useState } from "react"
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert, ActivityIndicator, TextInput } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { AppStackScreenProps } from "../navigators"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import type { MenuStackParamList } from "../navigators/MenuStackNavigator"
 import { useStores } from "../models"
 import { rolesApi } from "@/services/api"
 import type { Role } from "@/services/api/api.types"
@@ -12,6 +15,7 @@ interface RolesScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen() {
   const { authenticationStore } = useStores()
+  const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
 
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(false)
@@ -155,6 +159,9 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
         {!!item.description && <Text style={styles.roleSub}>{item.description}</Text>}
       </View>
       <View style={styles.roleActions}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("RolePermissions", { roleId: item.id, roleName: item.name })}>
+          <Text style={styles.editButton}>🔐</Text>
+        </TouchableOpacity>
         {canUpdate && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
             <Text style={styles.editButton}>✏️</Text>
