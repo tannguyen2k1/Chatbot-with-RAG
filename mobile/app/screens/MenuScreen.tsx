@@ -47,6 +47,7 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
 
     const canViewUsers = hasPermission(authenticationStore.currentUser?.permissions, "user", "view")
     const canViewRoles = hasPermission(authenticationStore.currentUser?.permissions, "role", "view")
+    const canViewTenants = hasPermission(authenticationStore.currentUser?.permissions, "tenant", "view")
 
     return (
       <Screen
@@ -95,6 +96,15 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
                   style={themed($button)}
                   preset="default"
                   onPress={() => navigation.navigate("Roles")}
+                />
+              )}
+
+              {canViewTenants && (
+                <Button
+                  text="Quản lý tenant"
+                  style={themed($button)}
+                  preset="default"
+                  onPress={() => navigation.navigate("Tenants")}
                 />
               )}
 

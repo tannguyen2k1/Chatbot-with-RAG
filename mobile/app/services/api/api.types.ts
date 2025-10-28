@@ -150,3 +150,30 @@ export interface RoleRequest {
   name: string
   description?: string
 }
+
+// Tenant types
+export interface Tenant {
+  id: number
+  name: string
+  tenant_code: string
+  domain?: string | null
+  subdomain?: string | null
+  expiration_date?: string | null
+  is_active: boolean
+}
+
+export interface PaginatedTenantResponse {
+  data: Tenant[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface TenantRequest {
+  name: string
+  tenant_code: string
+  domain?: string | null
+  subdomain?: string | null
+  expiration_date?: string | null
+  is_active?: boolean
+}
