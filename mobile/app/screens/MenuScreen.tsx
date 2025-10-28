@@ -4,11 +4,16 @@ import { ViewStyle, TextStyle, View, Alert } from "react-native"
 import { Button, Screen, Text } from "../components"
 import { useStores } from "../models"
 import { DashboardTabScreenProps } from "../navigators/DashboardTabNavigator"
+import { useNavigation } from "@react-navigation/native"
+import type { MenuStackParamList } from "../navigators/MenuStackNavigator"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { hasPermission } from "@/utils/permissions"
 import type { ThemedStyle } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
 export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function MenuScreen(_props) {
   const { authenticationStore } = useStores()
+  const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
   const { themed } = useAppTheme()
 
   const handleLogout = () => {
@@ -46,6 +51,8 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function
       ]
     )
   }
+
+  const canViewUsers = hasPermission(authenticationStore.currentUser?.permissions, "user", "view")
 
   return (
     <Screen
@@ -92,6 +99,14 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function
               preset="default"
               onPress={() => Alert.alert("Phiên bản", "VTMS Mobile v1.0.0")}
             />
+          {canViewUsers && (
+            <Button
+              text="Quản lý người dùng"
+              style={themed($button)}
+              preset="default"
+              onPress={() => navigation.navigate("Users")}
+            />
+          )}
             
             <Button
               text="Xóa cache"

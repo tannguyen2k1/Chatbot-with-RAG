@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Icon } from "../components"
 import { DashboardScreen } from "../screens/DashboardScreen"
 import { DemoScreen } from "../screens/DemoScreen"
-import { MenuScreen } from "../screens/MenuScreen"
+import { MenuStackNavigator } from "./MenuStackNavigator"
 import type { ThemedStyle } from "@/theme"
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -76,7 +76,7 @@ export function DashboardTabNavigator() {
 
       <Tab.Screen
         name="Menu"
-        component={MenuScreen as any}
+        component={MenuStackNavigator as any}
         options={{
           tabBarLabel: "Menu",
           tabBarIcon: ({ focused }) => (

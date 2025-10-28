@@ -66,6 +66,23 @@ export interface User {
   updated_at?: string
 }
 
+export interface PaginatedUserResponse {
+  data: User[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface UserRequest {
+  username: string
+  password?: string
+  email?: string
+  full_name?: string
+  phone?: string
+  is_active?: boolean | number
+  roles?: string[]
+}
+
 /**
  * Login request type
  */
