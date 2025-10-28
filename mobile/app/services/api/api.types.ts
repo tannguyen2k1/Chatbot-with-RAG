@@ -83,3 +83,32 @@ export interface LoginResponse {
   token_type: string
   user: User
 }
+
+/**
+ * Demo type
+ */
+export interface Demo {
+  id: number
+  title: string
+  description?: string
+  created_at: string
+  updated_at?: string
+}
+
+/**
+ * Paginated Demo response
+ */
+export interface PaginatedDemoResponse {
+  data: Demo[]
+  total: number
+  page: number
+  page_size: number
+}
+
+/**
+ * Demo create/update request
+ */
+export interface DemoRequest {
+  title: string
+  description?: string
+}
