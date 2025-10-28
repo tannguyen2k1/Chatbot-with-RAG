@@ -14,6 +14,7 @@ import { useStores } from "../models"
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
+import { AuthService } from "@/services/authService"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -65,10 +66,45 @@ const AppStack = observer(function AppStack() {
   React.useEffect(() => {
     const initializeAuth = async () => {
       if (!hasCheckedAuth) {
-        authenticationStore.setIsLoadingAuth(true)
-        await authenticationStore.checkAuth()
-        setHasCheckedAuth(true)
-        authenticationStore.setIsLoadingAuth(false)
+        try {
+          console.log("Starting auth initialization...")
+          authenticationStore.setIsLoadingAuth(true)
+          
+          // Load stored auth data
+          const storedAuth = await AuthService.loadStoredAuth()
+          
+          if (storedAuth.authToken) {
+            // Set stored data to store
+            if (storedAuth.authToken) authenticationStore.setAuthToken(storedAuth.authToken)
+            if (storedAuth.refreshToken) authenticationStore.setRefreshToken(storedAuth.refreshToken)
+            if (storedAuth.currentUser) authenticationStore.setCurrentUser(storedAuth.currentUser)
+            
+            // Validate token with backend
+            const validation = await AuthService.validateToken()
+            
+            if (validation.isValid && validation.authData) {
+              // Update with fresh data from backend
+              if (validation.authData.authToken) authenticationStore.setAuthToken(validation.authData.authToken)
+              if (validation.authData.currentUser) authenticationStore.setCurrentUser(validation.authData.currentUser)
+              console.log("Auth initialization successful")
+            } else {
+              // Token invalid, clear everything
+              authenticationStore.logout()
+              await AuthService.clearStoredAuth()
+              console.log("Token validation failed, logged out")
+            }
+          } else {
+            console.log("No stored auth token found")
+          }
+        } catch (error) {
+          console.error("Auth initialization error:", error)
+          authenticationStore.logout()
+          await AuthService.clearStoredAuth()
+        } finally {
+          authenticationStore.setIsLoadingAuth(false)
+          authenticationStore.setIsInitialized(true)
+          setHasCheckedAuth(true)
+        }
       }
     }
     initializeAuth()
