@@ -55,8 +55,14 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   }
 
   const handleLogin = async () => {
+    console.log("=== Login button pressed ===")
+    console.log("Username:", username)
+    console.log("Password:", password ? "***" : "empty")
+    console.log("Tenant:", tenantCode)
+    
     // Validate inputs
     if (!username.trim() || !password.trim() || !tenantCode.trim()) {
+      console.log("Validation failed - missing fields")
       setErrorMessage("Vui lòng điền đầy đủ thông tin")
       return
     }
@@ -64,12 +70,15 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
     setIsLoading(true)
     setErrorMessage("")
 
+    console.log("Calling authApi.login...")
     try {
       const response = await authApi.login({
         username: username.trim(),
         password: password.trim(),
         tenant_code: tenantCode.trim(),
       })
+      
+      console.log("Response received:", response.kind)
 
       if (response.kind === "ok") {
         // Success! Save credentials
