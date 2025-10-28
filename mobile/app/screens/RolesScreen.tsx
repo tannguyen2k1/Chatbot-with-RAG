@@ -20,8 +20,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
+  // Roles: no pagination (mirrors frontend). We'll keep a simple list with search.
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [modalVisible, setModalVisible] = useState(false)
@@ -29,29 +28,24 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const [pageSize, setPageSize] = useState(20)
+  // pageSize unused for roles (no pagination)
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search)
-      setPage(1)
     }, 500)
     return () => clearTimeout(handler)
   }, [search])
 
-  const loadRoles = async (currentPage: number = page, searchTerm: string = debouncedSearch) => {
+  const loadRoles = async (_currentPage: number = 1, searchTerm: string = debouncedSearch) => {
     setLoading(true)
     setErrorMessage("")
     try {
-      const response = await rolesApi.getRoles(currentPage, pageSize, searchTerm)
+      const response = await rolesApi.getRoles(1, 1000, searchTerm)
       if (response.kind === "ok") {
         const payload: any = response.data as any
         const list: Role[] = Array.isArray(payload) ? payload : payload?.data ?? []
         setRoles(list)
-        const totalCount = Array.isArray(payload)
-          ? payload.length
-          : payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0)
-        setTotal(totalCount)
       } else {
         setErrorMessage("Không thể tải danh sách vai trò")
       }
@@ -65,13 +59,13 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   }
 
   useEffect(() => {
-    loadRoles(page, debouncedSearch)
-  }, [page, debouncedSearch, pageSize])
+    loadRoles(1, debouncedSearch)
+  }, [debouncedSearch])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    loadRoles(page, debouncedSearch)
-  }, [page, debouncedSearch])
+    loadRoles(1, debouncedSearch)
+  }, [debouncedSearch])
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -94,7 +88,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
         setFormData({ name: "", description: "" })
         setEditingRole(null)
         setErrorMessage("")
-        await loadRoles(page, debouncedSearch)
+        await loadRoles(1, debouncedSearch)
         Alert.alert("Thành công", editingRole ? "Cập nhật vai trò thành công" : "Thêm vai trò thành công")
       } else {
         setErrorMessage("Không thể lưu vai trò")
@@ -127,7 +121,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
             try {
               const response = await rolesApi.deleteRole(role.id)
               if (response.kind === "ok") {
-                await loadRoles(page, debouncedSearch)
+                await loadRoles(1, debouncedSearch)
                 Alert.alert("Thành công", "Xóa vai trò thành công")
               } else {
                 Alert.alert("Lỗi", "Không thể xóa vai trò")
@@ -228,27 +222,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
           />
         )}
 
-        {total > 0 && (
-          <View style={styles.pagination}>
-            <TouchableOpacity
-              style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]}
-              onPress={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              <Text style={styles.paginationButtonText}>Trước</Text>
-            </TouchableOpacity>
-            <Text style={styles.paginationText}>
-              Trang {page} / {Math.ceil(total / pageSize)}
-            </Text>
-            <TouchableOpacity
-              style={[styles.paginationButton, page * pageSize >= total && styles.paginationButtonDisabled]}
-              onPress={() => setPage((p) => p + 1)}
-              disabled={page * pageSize >= total}
-            >
-              <Text style={styles.paginationButtonText}>Sau</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* No pagination for roles */}
       </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
