@@ -1,4 +1,7 @@
 export * from "./WelcomeScreen"
+export * from "./DashboardScreen"
+export * from "./DashboardTabScreens"
+export * from "./MenuScreen"
 
 export * from "./LoginScreen"
 export * from "./DemoCommunityScreen"
