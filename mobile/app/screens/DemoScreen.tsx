@@ -154,6 +154,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   const canCreate = hasPermission(userPermissions, "demo", "create")
   const canUpdate = hasPermission(userPermissions, "demo", "update")
   const canDelete = hasPermission(userPermissions, "demo", "delete")
+  const canView = hasPermission(userPermissions, "demo", "view")
 
 
   const renderDemoItem = ({ item }: { item: Demo }) => (
@@ -179,6 +180,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
       </View>
     </View>
   )
+
+  if (!canView) return null
 
   return (
     <SafeAreaView style={styles.safeArea}>

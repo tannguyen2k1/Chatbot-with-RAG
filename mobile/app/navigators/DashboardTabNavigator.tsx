@@ -9,6 +9,8 @@ import { MenuScreen } from "../screens/MenuScreen"
 import type { ThemedStyle } from "@/theme"
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useStores } from "../models"
+import { hasPermission } from "@/utils/permissions"
 
 export type DashboardTabParamList = {
   Home: undefined
@@ -29,6 +31,12 @@ export function DashboardTabNavigator() {
     themed,
     theme: { colors },
   } = useAppTheme()
+  const { authenticationStore } = useStores()
+  const canViewDemo = hasPermission(
+    authenticationStore.currentUser?.permissions,
+    "demo",
+    "view",
+  )
 
   return (
     <Tab.Navigator
@@ -53,16 +61,18 @@ export function DashboardTabNavigator() {
         }}
       />
 
-      <Tab.Screen
-        name="Demo"
-        component={DemoScreen as any}
-        options={{
-          tabBarLabel: "Demo",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="community" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
-          ),
-        }}
-      />
+      {canViewDemo && (
+        <Tab.Screen
+          name="Demo"
+          component={DemoScreen as any}
+          options={{
+            tabBarLabel: "Demo",
+            tabBarIcon: ({ focused }) => (
+              <Icon icon="community" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
+            ),
+          }}
+        />
+      )}
 
       <Tab.Screen
         name="Menu"
