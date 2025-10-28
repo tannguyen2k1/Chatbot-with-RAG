@@ -15,6 +15,11 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  Pagination,
+  Select,
+  MenuItem as MMenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import AddIcon from "@mui/icons-material/Add";
@@ -228,26 +233,32 @@ export default function DemoManagementPage() {
           loading={loading}
           onMenuClick={handleMenuClick}
         />
-        {/* Pagination */}
-        <Stack
-          direction="row"
-          justifyContent="flex-end"
-          alignItems="center"
-          spacing={2}
-          mt={2}
-        >
-          <Typography>Trang:</Typography>
-          <Button disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-            Trước
-          </Button>
-          <Typography>{page + 1}</Typography>
-          <Button
-            disabled={(page + 1) * pageSize >= rowCount}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Sau
-          </Button>
-          <Typography>Tổng: {rowCount}</Typography>
+        {/* Pagination (MUI) */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mt={2}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel id="page-size-label">Số dòng</InputLabel>
+            <Select
+              labelId="page-size-label"
+              label="Số dòng"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(0);
+              }}
+            >
+              {[10, 20, 50, 100].map((s) => (
+                <MMenuItem key={s} value={s}>{s}</MMenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Pagination
+            page={page + 1}
+            count={Math.max(1, Math.ceil(rowCount / pageSize))}
+            color="primary"
+            onChange={(_, p) => setPage(p - 1)}
+            showFirstButton
+            showLastButton
+          />
         </Stack>
         {/* Menu for actions */}
         <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>

@@ -16,6 +16,11 @@ import {
   TextField,
   Stack,
   Button,
+  Pagination,
+  Select,
+  MenuItem as MMenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { getFetcher } from "@/app/api/globalFetcher";
 
@@ -131,26 +136,29 @@ export default function AuditLogPage() {
       ) : (
         <Alert severity="info">Không có dữ liệu audit log.</Alert>
       )}
-      {/* Pagination giống màn demos */}
-      <Stack
-        direction="row"
-        justifyContent="flex-end"
-        alignItems="center"
-        spacing={2}
-        mt={2}
-      >
-        <Typography>Trang:</Typography>
-        <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          Trước
-        </Button>
-        <Typography>{page}</Typography>
-        <Button
-          disabled={page * pageSize >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Sau
-        </Button>
-        <Typography>Tổng: {total}</Typography>
+      {/* Pagination (MUI) */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mt={2}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel id="audit-page-size-label">Số dòng</InputLabel>
+          <Select
+            labelId="audit-page-size-label"
+            label="Số dòng"
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+          >
+            {[10, 20, 50, 100].map((s) => (
+              <MMenuItem key={s} value={s}>{s}</MMenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Pagination
+          page={page}
+          count={Math.max(1, Math.ceil(total / pageSize))}
+          color="primary"
+          onChange={(_, p) => setPage(p)}
+          showFirstButton
+          showLastButton
+        />
       </Stack>
       <Snackbar
         open={snackbar.open}
