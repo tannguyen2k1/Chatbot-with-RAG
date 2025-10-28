@@ -22,6 +22,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const passwordInputRef = useRef<TextInput>(null)
   const tenantInputRef = useRef<TextInput>(null)
 
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [tenantCode, setTenantCode] = useState("")
   const [isPasswordHidden, setIsPasswordHidden] = useState(true)
@@ -30,15 +31,10 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
 
   const {
     authenticationStore: { 
-      username, 
-      password: storePassword,
-      tenant_code: storeTenantCode,
-      setUsername, 
-      setPassword: setStorePassword,
-      setTenantCode: setStoreTenantCode,
       setAuthToken, 
       setCurrentUser,
-      validationError 
+      setPassword: setStorePassword,
+      setTenantCode: setStoreTenantCode,
     },
   } = useStores()
 
@@ -55,7 +51,6 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
 
   const getErrorMessage = () => {
     if (errorMessage) return errorMessage
-    if (validationError) return validationError
     return ""
   }
 
