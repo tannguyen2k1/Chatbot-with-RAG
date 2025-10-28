@@ -12,6 +12,7 @@ import * as Screens from "@/screens"
 import Config from "../config"
 import { useStores } from "../models"
 import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
+import { DashboardTabNavigator } from "./DashboardTabNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
 import { AuthService } from "@/services/authService"
@@ -30,9 +31,8 @@ import { AuthService } from "@/services/authService"
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
 export type AppStackParamList = {
-  Welcome: undefined
   Login: undefined
-  Demo: NavigatorScreenParams<DemoTabParamList>
+  Main: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
@@ -124,13 +124,11 @@ const AppStack = observer(function AppStack() {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={authenticationStore.isAuthenticated ? "Welcome" : "Login"}
+      initialRouteName={authenticationStore.isAuthenticated ? "Main" : "Login"}
     >
       {authenticationStore.isAuthenticated ? (
         <>
-          <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} />
-
-          <Stack.Screen name="Demo" component={DemoNavigator} />
+          <Stack.Screen name="Main" component={DashboardTabNavigator} />
         </>
       ) : (
         <>
