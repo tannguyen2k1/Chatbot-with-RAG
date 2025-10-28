@@ -11,16 +11,14 @@ import { hasPermission } from "@/utils/permissions"
 import type { ThemedStyle } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function MenuScreen(_props) {
-  const { authenticationStore } = useStores()
-  const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
-  const { themed } = useAppTheme()
+export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
+  function MenuScreen(_props) {
+    const { authenticationStore } = useStores()
+    const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
+    const { themed } = useAppTheme()
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Đăng xuất",
-      "Bạn có chắc chắn muốn đăng xuất?",
-      [
+    const handleLogout = () => {
+      Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
         { text: "Hủy", style: "cancel" },
         {
           text: "Đăng xuất",
@@ -30,15 +28,11 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function
             // Navigation will automatically redirect to Login due to isAuthenticated check
           },
         },
-      ]
-    )
-  }
+      ])
+    }
 
-  const handleClearCache = () => {
-    Alert.alert(
-      "Xóa cache",
-      "Bạn có chắc chắn muốn xóa cache?",
-      [
+    const handleClearCache = () => {
+      Alert.alert("Xóa cache", "Bạn có chắc chắn muốn xóa cache?", [
         { text: "Hủy", style: "cancel" },
         {
           text: "Xóa",
@@ -48,85 +42,72 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(function
             Alert.alert("Thành công", "Cache đã được xóa")
           },
         },
-      ]
+      ])
+    }
+
+    const canViewUsers = hasPermission(authenticationStore.currentUser?.permissions, "user", "view")
+
+    return (
+      <Screen
+        preset="auto"
+        contentContainerStyle={themed($screenContentContainer)}
+        safeAreaEdges={["top", "bottom"]}
+      >
+        <View style={themed($container)}>
+          <View style={themed($header)}>
+            <Text style={themed($title)}>Menu</Text>
+            <Text style={themed($subtitle)}>
+              {authenticationStore.currentUser?.username || "User"}
+            </Text>
+          </View>
+
+          <View style={themed($content)}>
+            <View style={themed($infoCard)}>
+              <Text style={themed($infoTitle)}>Thông tin tài khoản</Text>
+              <Text style={themed($infoText)}>
+                Username: {authenticationStore.currentUser?.username || "N/A"}
+              </Text>
+              <Text style={themed($infoText)}>
+                Email: {authenticationStore.currentUser?.email || "N/A"}
+              </Text>
+              <Text style={themed($infoText)}>
+                Tenant: {authenticationStore.currentUser?.tenant_id || "N/A"}
+              </Text>
+              <Text style={themed($infoText)}>
+                Roles: {authenticationStore.currentUser?.roles?.join(", ") || "N/A"}
+              </Text>
+            </View>
+
+            <View style={themed($buttonContainer)}>
+              {canViewUsers && (
+                <Button
+                  text="Quản lý người dùng"
+                  style={themed($button)}
+                  preset="default"
+                  onPress={() => navigation.navigate("Users")}
+                />
+              )}
+
+              <Button
+                text="Thông tin phiên bản"
+                style={themed($button)}
+                preset="default"
+                onPress={() => Alert.alert("Phiên bản", "VTMS Mobile v1.0.0")}
+              />
+
+              <Button
+                text="Đăng xuất"
+                style={themed($logoutButton)}
+                preset="default"
+                onPress={handleLogout}
+              />
+            </View>
+          </View>
+        </View>
+      </Screen>
     )
-  }
-
-  const canViewUsers = hasPermission(authenticationStore.currentUser?.permissions, "user", "view")
-
-  return (
-    <Screen
-      preset="auto"
-      contentContainerStyle={themed($screenContentContainer)}
-      safeAreaEdges={["top", "bottom"]}
-    >
-      <View style={themed($container)}>
-        <View style={themed($header)}>
-          <Text style={themed($title)}>Menu</Text>
-          <Text style={themed($subtitle)}>
-            {authenticationStore.currentUser?.username || "User"}
-          </Text>
-        </View>
-
-        <View style={themed($content)}>
-          <View style={themed($infoCard)}>
-            <Text style={themed($infoTitle)}>Thông tin tài khoản</Text>
-            <Text style={themed($infoText)}>
-              Username: {authenticationStore.currentUser?.username || "N/A"}
-            </Text>
-            <Text style={themed($infoText)}>
-              Email: {authenticationStore.currentUser?.email || "N/A"}
-            </Text>
-            <Text style={themed($infoText)}>
-              Tenant: {authenticationStore.currentUser?.tenant_id || "N/A"}
-            </Text>
-            <Text style={themed($infoText)}>
-              Roles: {authenticationStore.currentUser?.roles?.join(", ") || "N/A"}
-            </Text>
-          </View>
-
-          <View style={themed($buttonContainer)}>
-            <Button
-              text="Cài đặt ứng dụng"
-              style={themed($button)}
-              preset="default"
-              onPress={() => Alert.alert("Thông báo", "Tính năng đang phát triển")}
-            />
-            
-            <Button
-              text="Thông tin phiên bản"
-              style={themed($button)}
-              preset="default"
-              onPress={() => Alert.alert("Phiên bản", "VTMS Mobile v1.0.0")}
-            />
-          {canViewUsers && (
-            <Button
-              text="Quản lý người dùng"
-              style={themed($button)}
-              preset="default"
-              onPress={() => navigation.navigate("Users")}
-            />
-          )}
-            
-            <Button
-              text="Xóa cache"
-              style={themed($button)}
-              preset="default"
-              onPress={handleClearCache}
-            />
-            
-            <Button
-              text="Đăng xuất"
-              style={themed($logoutButton)}
-              preset="default"
-              onPress={handleLogout}
-            />
-          </View>
-        </View>
-      </View>
-    </Screen>
-  )
-})
+  },
+)
 
 const $screenContentContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
   flexGrow: 1,
