@@ -25,6 +25,14 @@ export class RolesApi {
     return { kind: "unknown", temporary: true }
   }
 
+  async getRoleById(id: number): Promise<RoleResponse | GeneralApiProblem> {
+    const response = await this.apisauceInstance.get<Role>(`/api/rbac/roles/${id}`)
+    const problem = getGeneralApiProblem(response)
+    if (problem) return problem
+    if (response.data) return { kind: "ok", data: response.data }
+    return { kind: "unknown", temporary: true }
+  }
+
   async createRole(payload: RoleRequest): Promise<RoleResponse | GeneralApiProblem> {
     const response = await this.apisauceInstance.post<Role>(`/api/rbac/roles`, payload)
     const problem = getGeneralApiProblem(response)
