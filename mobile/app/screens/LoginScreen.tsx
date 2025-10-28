@@ -22,8 +22,8 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const passwordInputRef = useRef<TextInput>(null)
   const tenantInputRef = useRef<TextInput>(null)
 
-  const [password, setPassword] = useState("root123456")
-  const [tenantCode, setTenantCode] = useState("default")
+  const [password, setPassword] = useState("")
+  const [tenantCode, setTenantCode] = useState("")
   const [isPasswordHidden, setIsPasswordHidden] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -45,19 +45,13 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const { themed, theme } = useAppTheme()
 
   useEffect(() => {
-    // Pre-fill credentials for easy testing
-    setUsername("root")
-    setPassword("root123456")
-    setStorePassword("root123456")
-    setTenantCode("default")
-    setStoreTenantCode("default")
-
+    // Clear any existing data
     return () => {
       setPassword("")
       setTenantCode("")
       setErrorMessage("")
     }
-  }, [setUsername, setStorePassword, setStoreTenantCode])
+  }, [])
 
   const getErrorMessage = () => {
     if (errorMessage) return errorMessage
@@ -230,11 +224,6 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
             onPress={handleLogin}
             disabled={isLoading}
           />
-
-          {/* Info text */}
-          <Text style={themed($infoText)} size="sm">
-            Tài khoản mặc định: root / root123456 / default
-          </Text>
         </View>
       </View>
     </Screen>
