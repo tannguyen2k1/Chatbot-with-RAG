@@ -4,7 +4,7 @@ import { TextStyle, ViewStyle } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Icon } from "../components"
 import { DashboardScreen } from "../screens/DashboardScreen"
-import { ProfileScreen, SettingsScreen, ReportsScreen } from "../screens/DashboardTabScreens"
+import { DemoScreen } from "../screens/DemoScreen"
 import { MenuScreen } from "../screens/MenuScreen"
 import type { ThemedStyle } from "@/theme"
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
@@ -12,15 +12,10 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 export type DashboardTabParamList = {
   Home: undefined
-  Profile: undefined
-  Settings: undefined
-  Reports: undefined
+  Demo: undefined
   Menu: undefined
 }
 
-/**
- * Helper for automatically generating navigation prop types for each route.
- */
 export type DashboardTabScreenProps<T extends keyof DashboardTabParamList> = CompositeScreenProps<
   BottomTabScreenProps<DashboardTabParamList, T>,
   AppStackScreenProps<keyof AppStackParamList>
@@ -28,9 +23,6 @@ export type DashboardTabScreenProps<T extends keyof DashboardTabParamList> = Com
 
 const Tab = createBottomTabNavigator<DashboardTabParamList>()
 
-/**
- * Bottom Tab Navigator for Dashboard screens
- */
 export function DashboardTabNavigator() {
   const { bottom } = useSafeAreaInsets()
   const {
@@ -62,34 +54,12 @@ export function DashboardTabNavigator() {
       />
 
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen as any}
+        name="Demo"
+        component={DemoScreen as any}
         options={{
-          tabBarLabel: "Hồ sơ",
+          tabBarLabel: "Demo",
           tabBarIcon: ({ focused }) => (
             <Icon icon="community" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen as any}
-        options={{
-          tabBarLabel: "Cài đặt",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="settings" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Reports"
-        component={ReportsScreen as any}
-        options={{
-          tabBarLabel: "Báo cáo",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="heart" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
           ),
         }}
       />
