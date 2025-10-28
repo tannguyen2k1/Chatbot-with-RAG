@@ -26,6 +26,7 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [pageSize, setPageSize] = useState(10)
+  const [showPageSizeModal, setShowPageSizeModal] = useState(false)
 
   const pageSizeOptions = [10, 20, 50, 100]
 
@@ -222,9 +223,14 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             >
               <Text style={styles.paginationButtonText}>Trước</Text>
             </TouchableOpacity>
-            <Text style={styles.paginationText}>
-              Trang {page} / {Math.ceil(total / pageSize)}
-            </Text>
+            <View style={styles.paginationCenter}>
+              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={styles.pageSizeButton}>
+                <Text style={styles.pageSizeValue}>{pageSize}</Text>
+              </TouchableOpacity>
+              <Text style={styles.paginationText}>
+                Trang {page} / {Math.ceil(total / pageSize)}
+              </Text>
+            </View>
             <TouchableOpacity
               style={[styles.paginationButton, page * pageSize >= total && styles.paginationButtonDisabled]}
               onPress={() => setPage((p) => p + 1)}
@@ -317,6 +323,34 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Page Size Modal */}
+      <Modal visible={showPageSizeModal} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
+            {pageSizeOptions.map((size) => (
+              <TouchableOpacity
+                key={size}
+                style={[styles.pageSizeOption, pageSize === size && styles.pageSizeOptionSelected]}
+                onPress={() => {
+                  setPageSize(size)
+                  setPage(1)
+                  setShowPageSizeModal(false)
+                }}
+              >
+                <Text style={[styles.pageSizeOptionText, pageSize === size && styles.pageSizeOptionTextSelected]}>
+                  {size}
+                </Text>
+                {pageSize === size && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.modalButton} onPress={() => setShowPageSizeModal(false)}>
+              <Text style={styles.modalButtonText}>Đóng</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -438,6 +472,23 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#eee",
   },
+  paginationCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  pageSizeButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#6200ea",
+    borderRadius: 6,
+  },
+  pageSizeValue: {
+    fontSize: 14,
+    color: "#6200ea",
+    fontWeight: "600",
+  },
   paginationButton: {
     backgroundColor: "#6200ea",
     paddingHorizontal: 16,
@@ -505,6 +556,32 @@ const styles = StyleSheet.create({
   modalButtonTextPrimary: {
     color: "#fff",
     fontWeight: "600",
+  },
+  // reused from Demo pagination modal
+  pageSizeOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
+    marginVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
+  },
+  pageSizeOptionSelected: {
+    backgroundColor: "#e8d5ff",
+  },
+  pageSizeOptionText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  pageSizeOptionTextSelected: {
+    color: "#6200ea",
+    fontWeight: "600",
+  },
+  checkmark: {
+    fontSize: 18,
+    color: "#6200ea",
+    fontWeight: "bold",
   },
 })
 
