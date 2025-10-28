@@ -149,6 +149,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   const canCreate = hasPermission(userPermissions, "role", "create")
   const canUpdate = hasPermission(userPermissions, "role", "update")
   const canDelete = hasPermission(userPermissions, "role", "delete")
+  const canAssignPermissions = hasPermission(userPermissions, "permission", "assign")
 
   if (!canView) return null
 
@@ -159,18 +160,28 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
         {!!item.description && <Text style={styles.roleSub}>{item.description}</Text>}
       </View>
       <View style={styles.roleActions}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("RolePermissions", { roleId: item.id, roleName: item.name })}>
-          <Text style={styles.editButton}>🔐</Text>
-        </TouchableOpacity>
-        {canUpdate && (
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
-            <Text style={styles.editButton}>✏️</Text>
-          </TouchableOpacity>
-        )}
-        {canDelete && (
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-            <Text style={styles.deleteButton}>🗑️</Text>
-          </TouchableOpacity>
+        {item.name !== "root" ? (
+          <>
+            {canAssignPermissions && (
+              <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("RolePermissions", { roleId: item.id, roleName: item.name })}>
+                <Text style={styles.editButton}>🔐</Text>
+              </TouchableOpacity>
+            )}
+            {canUpdate && (
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
+                <Text style={styles.editButton}>✏️</Text>
+              </TouchableOpacity>
+            )}
+            {canDelete && (
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+                <Text style={styles.deleteButton}>🗑️</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : (
+          <View style={[styles.actionButton, { opacity: 0.4 }]}> 
+            <Text style={styles.editButton}></Text>
+          </View>
         )}
       </View>
     </View>
