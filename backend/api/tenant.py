@@ -33,26 +33,18 @@ async def create_tenant(
             detail="Tenant code already exists"
         )
     
-    # Kiểm tra domain/subdomain unique
-    if tenant_data.domain:
-        existing = await db.execute(
-            select(Tenant).where(Tenant.domain == tenant_data.domain)
+    # Ràng buộc: cho phép trùng domain hoặc subdomain đơn lẻ, nhưng KHÔNG được trùng cả cặp (domain, subdomain)
+    existing_same_pair = await db.execute(
+        select(Tenant).where(
+            Tenant.domain == tenant_data.domain,
+            Tenant.subdomain == tenant_data.subdomain,
         )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail="Domain already exists"
-            )
-    
-    if tenant_data.subdomain:
-        existing = await db.execute(
-            select(Tenant).where(Tenant.subdomain == tenant_data.subdomain)
+    )
+    if existing_same_pair.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="A tenant with the same domain and subdomain already exists",
         )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail="Subdomain already exists"
-            )
     
     # Tạo tenant
     tenant = Tenant(
@@ -196,32 +188,22 @@ async def update_tenant(
     # Cập nhật dữ liệu
     update_data = tenant_data.model_dump(exclude_unset=True)
     
-    # Kiểm tra domain/subdomain unique nếu có thay đổi
-    if "domain" in update_data and update_data["domain"]:
-        existing = await db.execute(
-            select(Tenant).where(
-                Tenant.domain == update_data["domain"],
-                Tenant.id != tenant_id
-            )
+    # Ràng buộc: cho phép trùng domain hoặc subdomain đơn lẻ, nhưng KHÔNG được trùng cả cặp (domain, subdomain)
+    # Tính cặp giá trị sau cập nhật
+    new_domain = update_data.get("domain", tenant.domain)
+    new_subdomain = update_data.get("subdomain", tenant.subdomain)
+    existing_same_pair = await db.execute(
+        select(Tenant).where(
+            Tenant.domain == new_domain,
+            Tenant.subdomain == new_subdomain,
+            Tenant.id != tenant_id,
         )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail="Domain already exists"
-            )
-    
-    if "subdomain" in update_data and update_data["subdomain"]:
-        existing = await db.execute(
-            select(Tenant).where(
-                Tenant.subdomain == update_data["subdomain"],
-                Tenant.id != tenant_id
-            )
+    )
+    if existing_same_pair.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="A tenant with the same domain and subdomain already exists",
         )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail="Subdomain already exists"
-            )
     
     # Thực hiện cập nhật
     await db.execute(
