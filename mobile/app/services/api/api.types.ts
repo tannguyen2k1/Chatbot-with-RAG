@@ -177,3 +177,23 @@ export interface TenantRequest {
   expiration_date?: string | null
   is_active?: boolean
 }
+
+// Audit Log types
+export interface AuditLogItem {
+  id: number
+  action: string
+  table_name: string
+  record_id: number
+  timestamp: string
+  old_value?: string | null
+  new_value?: string | null
+  description?: string | null
+  user?: { id: number; username?: string; full_name?: string } | null
+}
+
+export interface PaginatedAuditLogResponse {
+  data: AuditLogItem[]
+  total: number
+  page: number
+  page_size: number
+}
