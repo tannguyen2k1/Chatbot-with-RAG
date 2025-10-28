@@ -2,10 +2,10 @@ import { observer } from "mobx-react-lite"
 import { FC, useState, useEffect, useCallback } from "react"
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert, ActivityIndicator, TextInput } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Button } from "../components"
 import { AppStackScreenProps } from "../navigators"
 import { useStores } from "../models"
 import { demoApi } from "@/services/api"
+import { hasPermission } from "@/utils/permissions"
 import type { Demo } from "@/services/api/api.types"
 
 interface DemoScreenProps extends AppStackScreenProps<"Main"> {}
@@ -29,6 +29,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
 
   const pageSizeOptions = [10, 20, 50, 100]
+
+  // permission helper moved to shared util
 
   // Debounce search
   useEffect(() => {
@@ -148,9 +150,11 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
     setModalVisible(true)
   }
 
-  const canCreate = authenticationStore.currentUser?.permissions?.["demo"]?.includes("create") ?? true
-  const canUpdate = authenticationStore.currentUser?.permissions?.["demo"]?.includes("update") ?? true
-  const canDelete = authenticationStore.currentUser?.permissions?.["demo"]?.includes("delete") ?? true
+  const userPermissions = authenticationStore.currentUser?.permissions
+  const canCreate = hasPermission(userPermissions, "demo", "create")
+  const canUpdate = hasPermission(userPermissions, "demo", "update")
+  const canDelete = hasPermission(userPermissions, "demo", "delete")
+
 
   const renderDemoItem = ({ item }: { item: Demo }) => (
     <View style={styles.demoCard}>
@@ -182,11 +186,9 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Quản lý Demo</Text>
-          {canCreate && (
-            <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-              <Text style={styles.addButtonText}>+ Thêm</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.addButton} disabled={!canCreate} onPress={handleAdd}>
+            <Text style={styles.addButtonText}>+ Thêm</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
