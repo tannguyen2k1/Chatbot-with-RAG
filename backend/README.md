@@ -39,7 +39,7 @@ alembic upgrade head
 ## 6. Khởi động ứng dụng (DEV)
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## Sử dụng
