@@ -79,10 +79,14 @@ export function DashboardTabNavigator() {
         component={MenuStackNavigator as any}
         options={{
           tabBarLabel: "Menu",
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
             <Icon icon="menu" color={focused ? colors.palette.primary500 : colors.textDim} size={24} />
           ),
-        }}
+          // ensure returning to this tab shows Menu home by unmounting stack on blur
+        } as any}
+        listeners={({ navigation }) => ({
+          focus: () => (navigation as any).navigate("Menu", { screen: "MenuHome" }),
+        })}
       />
     </Tab.Navigator>
   )
