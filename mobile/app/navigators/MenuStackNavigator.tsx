@@ -4,6 +4,7 @@ import { MenuScreen } from "../screens/MenuScreen"
 import { UsersScreen } from "../screens/UsersScreen"
 import { RolesScreen } from "../screens/RolesScreen"
 import { TenantsScreen } from "../screens/TenantsScreen"
+import { AuditLogsScreen } from "../screens/AuditLogsScreen"
 import { RolePermissionsScreen } from "../screens/RolePermissionsScreen"
 
 export type MenuStackParamList = {
@@ -12,6 +13,7 @@ export type MenuStackParamList = {
   Roles: undefined
   RolePermissions: { roleId: number; roleName?: string }
   Tenants: undefined
+  AuditLogs: undefined
 }
 
 const Stack = createNativeStackNavigator<MenuStackParamList>()
@@ -24,6 +26,7 @@ export function MenuStackNavigator() {
       <Stack.Screen name="Roles" component={RolesScreen as any} />
       <Stack.Screen name="RolePermissions" component={RolePermissionsScreen as any} />
       <Stack.Screen name="Tenants" component={TenantsScreen as any} />
+      <Stack.Screen name="AuditLogs" component={AuditLogsScreen as any} />
     </Stack.Navigator>
   )
 }
