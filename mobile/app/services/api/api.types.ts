@@ -129,3 +129,24 @@ export interface DemoRequest {
   title: string
   description?: string
 }
+
+// Role types
+export interface Role {
+  id: number
+  name: string
+  description?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PaginatedRoleResponse {
+  data: Role[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface RoleRequest {
+  name: string
+  description?: string
+}
