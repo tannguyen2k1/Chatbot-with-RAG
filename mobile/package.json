@@ -13,8 +13,8 @@
     "test:maestro:ci": "maestro test -e MAESTRO_APP_ID=com.myapp -e IS_DEV=false .maestro/flows",
     "adb": "adb reverse tcp:9090 tcp:9090 && adb reverse tcp:3000 tcp:3000 && adb reverse tcp:9001 tcp:9001 && adb reverse tcp:8081 tcp:8081",
     
-    "build:android": "eas build -p android --profile production --local",
-    "build:ios": "eas build -p ios --profile production --local",
+    "build:android": "npx expo prebuild && cd android && ./gradlew assembleRelease",
+    "build:ios": "npx expo prebuild && open ios/MyApp.xcworkspace",
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
