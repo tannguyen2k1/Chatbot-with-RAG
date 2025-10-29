@@ -245,7 +245,11 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
         {total > 0 && (
           <View style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}>
             <TouchableOpacity
-              style={[styles.paginationButton, themed(({ colors }) => ({ backgroundColor: colors.tint })), page === 1 && styles.paginationButtonDisabled]}
+              style={[
+                styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
+                page === 1 && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+              ]}
               onPress={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
@@ -263,7 +267,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
               style={[
                 styles.paginationButton,
                 themed(({ colors }) => ({ backgroundColor: colors.tint })),
-                page * pageSize >= total && styles.paginationButtonDisabled,
+                page * pageSize >= total && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
               ]}
               onPress={() => setPage((p) => p + 1)}
               disabled={page * pageSize >= total}
