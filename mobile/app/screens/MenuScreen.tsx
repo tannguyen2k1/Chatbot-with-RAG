@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite"
-import { FC } from "react"
-import { ViewStyle, TextStyle, View, Alert } from "react-native"
+import { FC, useState } from "react"
+import { ViewStyle, TextStyle, View, Alert, Modal, TouchableOpacity } from "react-native"
 import { Button, Screen, Text } from "../components"
 import { useStores } from "../models"
 import { DashboardTabScreenProps } from "../navigators/DashboardTabNavigator"
@@ -16,19 +16,10 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
     const { authenticationStore } = useStores()
     const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
     const { themed, setThemeContextOverride, themeContext } = useAppTheme()
+    const [logoutModalVisible, setLogoutModalVisible] = useState(false)
 
     const handleLogout = () => {
-      Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Đăng xuất",
-          style: "destructive",
-          onPress: () => {
-            authenticationStore.logout()
-            // Navigation will automatically redirect to Login due to isAuthenticated check
-          },
-        },
-      ])
+      setLogoutModalVisible(true)
     }
 
     const canViewUsers = hasPermission(authenticationStore.currentUser?.permissions, "user", "view")
@@ -164,6 +155,29 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
             </View>
           </View>
         </View>
+        {/* Logout Confirmation Modal */}
+        <Modal visible={logoutModalVisible} transparent animationType="fade">
+          <View style={themed($modalOverlay)}>
+            <View style={themed($modalContent)}>
+              <Text style={themed($modalTitle)}>Đăng xuất</Text>
+              <Text style={themed($modalMessage)}>Bạn có chắc chắn muốn đăng xuất?</Text>
+              <View style={themed($modalActions)}>
+                <TouchableOpacity style={themed($modalButtonSecondary)} onPress={() => setLogoutModalVisible(false)}>
+                  <Text style={themed($modalButtonTextSecondary)}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={themed($modalButtonPrimary)}
+                  onPress={() => {
+                    setLogoutModalVisible(false)
+                    authenticationStore.logout()
+                  }}
+                >
+                  <Text style={$modalButtonTextPrimary as any}>Đăng xuất</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </Screen>
     )
   },
@@ -277,3 +291,73 @@ const $logoutButton: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
 const $textWhiteColor: ThemedStyle<TextStyle> = () => ({
   color: "#fff",
 })
+
+// Modal styles
+const $modalOverlay: ThemedStyle<ViewStyle> = () => ({
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  left: 0,
+  right: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 20,
+})
+
+const $modalContent: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.palette.neutral100,
+  borderRadius: 12,
+  padding: spacing.lg,
+  width: "90%",
+  maxWidth: 400,
+  borderWidth: 1,
+  borderColor: colors.border,
+})
+
+const $modalTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 20,
+  fontWeight: "600",
+  color: colors.text,
+  marginBottom: 8,
+})
+
+const $modalMessage: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 14,
+  color: colors.textDim,
+  marginBottom: 16,
+})
+
+const $modalActions: ThemedStyle<ViewStyle> = () => ({
+  flexDirection: "row",
+  justifyContent: "flex-end",
+  gap: 8,
+})
+
+const $modalButtonSecondary: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 8,
+  backgroundColor: colors.palette.neutral300,
+  borderColor: colors.border,
+  borderWidth: 0,
+})
+
+const $modalButtonTextSecondary: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.text,
+  fontWeight: "600",
+})
+
+const $modalButtonPrimary: ThemedStyle<ViewStyle> = () => ({
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 8,
+  backgroundColor: "#d32f2f",
+  borderColor: "#d32f2f",
+  borderWidth: 0,
+})
+
+const $modalButtonTextPrimary: TextStyle = {
+  color: "#fff",
+  fontWeight: "600",
+}

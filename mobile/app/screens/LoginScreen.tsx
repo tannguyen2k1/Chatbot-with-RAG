@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
-import { TextInput, TextStyle, ViewStyle, Alert, View, ActivityIndicator } from "react-native"
+import { TextInput, TextStyle, ViewStyle, View, ActivityIndicator } from "react-native"
 import {
   Button,
   PressableIcon,
@@ -15,6 +15,7 @@ import { AppStackScreenProps } from "../navigators"
 import type { ThemedStyle } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { authApi } from "@/services/api"
+import { useToast } from "@/components/ToastProvider"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -40,6 +41,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   } = useStores()
 
   const { themed, theme } = useAppTheme()
+  const { showSuccess } = useToast()
 
   useEffect(() => {
     // Clear any existing data
@@ -87,8 +89,8 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
         // Note: refresh_token is stored in HTTP-only cookie by backend
         setCurrentUser(response.data.user)
 
-        // Show success message
-        Alert.alert("Thành công", `Chào mừng ${response.data.user.username}!`, [{ text: "OK" }])
+        // Show success toast
+        showSuccess(`Chào mừng ${response.data.user.username}!`)
 
         // Navigate will happen automatically via isAuthenticated check in AppNavigator
       } else {

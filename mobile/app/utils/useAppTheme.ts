@@ -10,6 +10,7 @@ import {
   darkTheme,
 } from "@/theme"
 import * as SystemUI from "expo-system-ui"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type ThemeContextType = {
   themeScheme: ThemeContexts
@@ -34,9 +35,16 @@ const setImperativeTheming = (theme: Theme) => {
 export const useThemeProvider = (initialTheme: ThemeContexts = undefined) => {
   const colorScheme = useColorScheme()
   const [overrideTheme, setTheme] = useState<ThemeContexts>(initialTheme)
+  const THEME_STORAGE_KEY = "app.themeScheme"
 
   const setThemeContextOverride = useCallback((newTheme: ThemeContexts) => {
     setTheme(newTheme)
+    // persist
+    if (newTheme) {
+      AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme).catch(() => {})
+    } else {
+      AsyncStorage.removeItem(THEME_STORAGE_KEY).catch(() => {})
+    }
   }, [])
 
   const themeScheme = overrideTheme || colorScheme || "light"
@@ -45,6 +53,22 @@ export const useThemeProvider = (initialTheme: ThemeContexts = undefined) => {
   useEffect(() => {
     setImperativeTheming(themeContextToTheme(themeScheme))
   }, [themeScheme])
+
+  // Load persisted theme on mount
+  useEffect(() => {
+    let isMounted = true
+    AsyncStorage.getItem(THEME_STORAGE_KEY)
+      .then((value) => {
+        if (!isMounted) return
+        if (value === "light" || value === "dark") {
+          setTheme(value)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return {
     themeScheme,
