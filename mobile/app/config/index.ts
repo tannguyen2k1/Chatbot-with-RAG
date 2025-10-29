@@ -14,15 +14,11 @@
  * Read more here: https://reactnative.dev/docs/security#storing-sensitive-info
  */
 import BaseConfig from "./config.base"
-import ProdConfig from "./config.prod"
-import DevConfig from "./config.dev"
 
-let ExtraConfig = ProdConfig
-
-if (__DEV__) {
-  ExtraConfig = DevConfig
+// Single unified config. API_URL can be overridden at runtime via the Login hidden modal.
+const Config = {
+  ...BaseConfig,
+  API_URL: "http://192.168.1.189:8000",
 }
-
-const Config = { ...BaseConfig, ...ExtraConfig }
 
 export default Config
