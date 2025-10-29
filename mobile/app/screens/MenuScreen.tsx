@@ -207,6 +207,8 @@ const $infoCard: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
   padding: spacing.lg,
   borderRadius: 12,
   marginBottom: spacing.xl,
+  borderWidth: 1,
+  borderColor: colors.border,
 })
 
 const $infoTitle: ThemedStyle<TextStyle> = ({ typography, colors, spacing }) => ({
