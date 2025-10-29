@@ -7,11 +7,15 @@ import { useStores } from "../models"
 import { tenantsApi } from "@/services/api"
 import type { Tenant } from "@/services/api/api.types"
 import { hasPermission } from "@/utils/permissions"
+import { useAppTheme } from "@/utils/useAppTheme"
+import { useToast } from "@/components/ToastProvider"
 
 interface TenantsScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsScreen() {
   const { authenticationStore } = useStores()
+  const { themed, theme } = useAppTheme()
+  const { showSuccess, showError } = useToast()
 
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(false)
@@ -27,6 +31,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
   const [errorMessage, setErrorMessage] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null)
 
   const pageSizeOptions = [10, 20, 50, 100]
 
@@ -69,7 +75,7 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.tenant_code.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập Name và Tenant code")
+      showError("Vui lòng nhập Name và Tenant code")
       return
     }
 
@@ -90,7 +96,7 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
         setEditingTenant(null)
         setErrorMessage("")
         await loadTenants(page, debouncedSearch)
-        Alert.alert("Thành công", editingTenant ? "Cập nhật thành công" : "Thêm mới thành công")
+        showSuccess(editingTenant ? "Cập nhật thành công" : "Thêm mới thành công")
       } else {
         setErrorMessage("Không thể lưu tenant")
       }
@@ -116,34 +122,30 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
   }
 
   const handleDelete = (tenant: Tenant) => {
-    Alert.alert(
-      "Xác nhận xóa",
-      "Bạn có chắc chắn muốn xóa tenant này?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true)
-            try {
-              const response = await tenantsApi.deleteTenant(tenant.id)
-              if (response.kind === "ok") {
-                await loadTenants(page, debouncedSearch)
-                Alert.alert("Thành công", "Xóa tenant thành công")
-              } else {
-                Alert.alert("Lỗi", "Không thể xóa tenant")
-              }
-            } catch (error) {
-              console.error("Delete error:", error)
-              Alert.alert("Lỗi", "Không thể xóa tenant")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ]
-    )
+    setTenantToDelete(tenant)
+    setDeleteModalVisible(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!tenantToDelete) return
+    
+    setLoading(true)
+    try {
+      const response = await tenantsApi.deleteTenant(tenantToDelete.id)
+      if (response.kind === "ok") {
+        await loadTenants(page, debouncedSearch)
+        showSuccess("Xóa tenant thành công")
+      } else {
+        showError("Không thể xóa tenant")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      showError("Không thể xóa tenant")
+    } finally {
+      setLoading(false)
+      setDeleteModalVisible(false)
+      setTenantToDelete(null)
+    }
   }
 
   const userPermissions = authenticationStore.currentUser?.permissions
@@ -155,14 +157,14 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
   if (!canView) return null
 
   const renderTenantItem = ({ item }: { item: Tenant }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.name}</Text>
-        <Text style={styles.cardSub}>Code: {item.tenant_code}</Text>
-        {!!item.domain && <Text style={styles.cardMeta}>Domain: {item.domain}</Text>}
-        {!!item.subdomain && <Text style={styles.cardMeta}>Subdomain: {item.subdomain}</Text>}
-        {!!item.expiration_date && <Text style={styles.cardMeta}>Hết hạn: {new Date(item.expiration_date).toLocaleDateString("vi-VN")}</Text>}
-        <Text style={styles.cardMeta}>Trạng thái: {item.is_active ? "Active" : "Inactive"}</Text>
+        <Text style={[styles.cardTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.name}</Text>
+        <Text style={[styles.cardSub, themed(({ colors }) => ({ color: colors.textDim }))]}>Code: {item.tenant_code}</Text>
+        {!!item.domain && <Text style={[styles.cardMeta, themed(({ colors }) => ({ color: colors.textDim }))]}>Domain: {item.domain}</Text>}
+        {!!item.subdomain && <Text style={[styles.cardMeta, themed(({ colors }) => ({ color: colors.textDim }))]}>Subdomain: {item.subdomain}</Text>}
+        {!!item.expiration_date && <Text style={[styles.cardMeta, themed(({ colors }) => ({ color: colors.textDim }))]}>Hết hạn: {new Date(item.expiration_date).toLocaleDateString("vi-VN")}</Text>}
+        <Text style={[styles.cardMeta, themed(({ colors }) => ({ color: colors.textDim }))]}>Trạng thái: {item.is_active ? "Active" : "Inactive"}</Text>
       </View>
       <View style={styles.cardActions}>
         {canUpdate && (
@@ -172,7 +174,7 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
         )}
         {canDelete && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-            <Text style={styles.deleteButton}>🗑️</Text>
+            <Text style={[styles.deleteButton, themed(({ colors }) => ({ color: colors.error }))]}>🗑️</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -180,17 +182,18 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
   )
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Quản lý Tenant</Text>
-          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingTenant(null), setFormData({ name: "", tenant_code: "", domain: "", subdomain: "", expiration_date: "", is_active: true }), setModalVisible(true)) : Alert.alert("Không có quyền", "Bạn không có quyền tạo tenant") }>
+          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý Tenant</Text>
+          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingTenant(null), setFormData({ name: "", tenant_code: "", domain: "", subdomain: "", expiration_date: "", is_active: true }), setModalVisible(true)) : showError("Bạn không có quyền tạo tenant") }>
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
 
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+          placeholderTextColor={theme.colors.textDim}
           placeholder="Tìm kiếm..."
           value={search}
           onChangeText={setSearch}
@@ -221,24 +224,32 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
         )}
 
         {total > 0 && (
-          <View style={styles.pagination}>
+          <View style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}>
             <TouchableOpacity
-              style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]}
+              style={[
+                styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
+                page === 1 && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+              ]}
               onPress={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               <Text style={styles.paginationButtonText}>Trước</Text>
             </TouchableOpacity>
             <View style={styles.paginationCenter}>
-              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={styles.pageSizeButton}>
-                <Text style={styles.pageSizeValue}>{pageSize}</Text>
+              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={[styles.pageSizeButton, themed(({ colors }) => ({ borderColor: colors.tint }))]}>
+                <Text style={[styles.pageSizeValue, themed(({ colors }) => ({ color: colors.tint }))]}>{pageSize}</Text>
               </TouchableOpacity>
-              <Text style={styles.paginationText}>
+              <Text style={[styles.paginationText, themed(({ colors }) => ({ color: colors.textDim }))]}>
                 Trang {page} / {Math.ceil(total / pageSize)}
               </Text>
             </View>
             <TouchableOpacity
-              style={[styles.paginationButton, page * pageSize >= total && styles.paginationButtonDisabled]}
+              style={[
+                styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
+                page * pageSize >= total && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+              ]}
               onPress={() => setPage((p) => p + 1)}
               disabled={page * pageSize >= total}
             >
@@ -251,11 +262,12 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{editingTenant ? "Sửa Tenant" : "Thêm Tenant"}</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>{editingTenant ? "Sửa Tenant" : "Thêm Tenant"}</Text>
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.name}
               onChangeText={(text) => setFormData({ ...formData, name: text })}
               placeholder="Tên *"
@@ -264,7 +276,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
             />
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.tenant_code}
               onChangeText={(text) => setFormData({ ...formData, tenant_code: text })}
               placeholder="Tenant code *"
@@ -273,7 +286,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
             />
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.domain}
               onChangeText={(text) => setFormData({ ...formData, domain: text })}
               placeholder="Domain"
@@ -282,7 +296,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
             />
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.subdomain}
               onChangeText={(text) => setFormData({ ...formData, subdomain: text })}
               placeholder="Subdomain"
@@ -291,7 +306,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
             />
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.expiration_date}
               onChangeText={(text) => setFormData({ ...formData, expiration_date: text })}
               placeholder="Ngày hết hạn (YYYY-MM-DD)"
@@ -303,7 +319,7 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalButton}
+                style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ name: "", tenant_code: "", domain: "", subdomain: "", expiration_date: "", is_active: true })
@@ -311,10 +327,10 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
                   setErrorMessage("")
                 }}
               >
-                <Text style={styles.modalButtonText}>Hủy</Text>
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
@@ -332,8 +348,8 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
       {/* Page Size Modal */}
       <Modal visible={showPageSizeModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Chọn số dòng mỗi trang</Text>
             {[10, 20, 50, 100].map((size) => (
               <TouchableOpacity
                 key={size}
@@ -350,9 +366,40 @@ export const TenantsScreen: FC<TenantsScreenProps> = observer(function TenantsSc
                 {pageSize === size && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.modalButton} onPress={() => setShowPageSizeModal(false)}>
-              <Text style={styles.modalButtonText}>Đóng</Text>
+            <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setShowPageSizeModal(false)}>
+              <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Đóng</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
+            <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
+              Bạn có chắc chắn muốn xóa tenant "{tenantToDelete?.name}"?
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderWidth: 0 }))]}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f", borderWidth: 0 }]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -370,7 +417,7 @@ const styles = StyleSheet.create({
   searchInput: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 12, marginBottom: 16, backgroundColor: "#fff" },
   errorText: { color: "#d32f2f", fontSize: 14, marginBottom: 8 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 8, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 8, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: "#ddd", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
   cardContent: { flex: 1, marginRight: 12 },
   cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
   cardSub: { fontSize: 14, color: "#666", marginBottom: 4 },
@@ -391,7 +438,7 @@ const styles = StyleSheet.create({
   pageSizeButton: { paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: "#6200ea", borderRadius: 6 },
   pageSizeValue: { fontSize: 14, color: "#6200ea", fontWeight: "600" },
   modalContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.5)" },
-  modalContent: { backgroundColor: "#fff", borderRadius: 12, padding: 20, width: "90%", maxWidth: 400 },
+  modalContent: { backgroundColor: "#fff", borderRadius: 12, padding: 20, width: "90%", maxWidth: 400, borderWidth: 1, borderColor: "#ddd" },
   modalTitle: { fontSize: 20, fontWeight: "600", marginBottom: 16 },
   formInput: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: "#fff" },
   modalActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, gap: 8 },
@@ -404,6 +451,9 @@ const styles = StyleSheet.create({
   pageSizeOptionText: { fontSize: 16, color: "#333" },
   pageSizeOptionTextSelected: { color: "#6200ea", fontWeight: "600" },
   checkmark: { fontSize: 18, color: "#6200ea", fontWeight: "bold" },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)", justifyContent: "center", alignItems: "center" },
+  modalMessage: { fontSize: 16, marginBottom: 24, textAlign: "center" },
+  modalButtonSecondary: { backgroundColor: "#f5f5f5" },
 })
 
 
