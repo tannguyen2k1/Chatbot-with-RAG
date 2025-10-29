@@ -16,6 +16,7 @@ import { DashboardTabNavigator } from "./DashboardTabNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
 import { AuthService } from "@/services/authService"
+import { ToastProvider } from "@/components/ToastProvider"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -155,7 +156,9 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
     <ThemeProvider value={{ themeScheme, setThemeContextOverride }}>
       <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
         <Screens.ErrorBoundary catchErrors={Config.catchErrors}>
-          <AppStack />
+          <ToastProvider>
+            <AppStack />
+          </ToastProvider>
         </Screens.ErrorBoundary>
       </NavigationContainer>
     </ThemeProvider>
