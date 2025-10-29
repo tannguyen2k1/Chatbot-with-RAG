@@ -6,6 +6,7 @@ import { useRoute } from "@react-navigation/native"
 import { rbacPermissionsApi, rolesApi } from "@/services/api"
 import { useStores } from "../models"
 import { hasPermission } from "@/utils/permissions"
+import { useAppTheme } from "@/utils/useAppTheme"
 
 interface RouteParams { roleId: number; roleName?: string }
 
@@ -13,6 +14,7 @@ export const RolePermissionsScreen: FC = observer(function RolePermissionsScreen
   const route = useRoute() as any
   const { roleId, roleName } = (route.params || {}) as RouteParams
   const { authenticationStore } = useStores()
+  const { themed } = useAppTheme()
 
   const [loading, setLoading] = useState(true)
   const [perms, setPerms] = useState<{ id: number; name: string; module_id?: number | null }[]>([])
@@ -99,20 +101,51 @@ export const RolePermissionsScreen: FC = observer(function RolePermissionsScreen
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Quyền của vai trò: {roleName || roleId}</Text>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+    <SafeAreaView style={themed(({ colors }) => ({ flex: 1, backgroundColor: colors.background }))}>
+      <ScrollView contentContainerStyle={themed(({ spacing }) => ({ padding: 16 }))}>
+        <Text style={themed(({ colors }) => ({ fontSize: 18, fontWeight: "700", marginBottom: 12, color: colors.text }))}>Quyền của vai trò: {roleName || roleId}</Text>
+        {error ? <Text style={themed(({ colors }) => ({ color: colors.error, marginBottom: 8 }))}>{error}</Text> : null}
         {Object.keys(grouped).map((mod) => (
-          <View key={mod} style={styles.group}>
-            <View style={styles.groupHeader}>
-              <Text style={styles.groupTitle}>{mod}</Text>
-              <Text style={styles.groupCount}>{grouped[mod].length}</Text>
+          <View key={mod} style={themed(({ colors }) => ({ marginBottom: 12, backgroundColor: colors.palette.neutral100, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: colors.border }))}>
+            <View style={themed(({ colors }) => ({ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }))}>
+              <Text style={themed(({ colors }) => ({ fontSize: 16, fontWeight: "700", color: colors.text }))}>{mod}</Text>
+              <Text style={themed(({ colors }) => ({ fontSize: 12, color: colors.textDim, backgroundColor: colors.palette.neutral200, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }))}>{grouped[mod].length}</Text>
             </View>
             <FlatList
               data={grouped[mod]}
               keyExtractor={(i) => String(i.id)}
-              renderItem={renderPerm}
+              renderItem={({ item }) => {
+                const active = rolePermIds.has(item.id)
+                return (
+                  <TouchableOpacity
+                    style={[
+                      themed(({ colors }) => ({ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border })),
+                      active && themed(({ colors }) => ({ backgroundColor: colors.palette.neutral200 })),
+                    ]}
+                    onPress={() => toggle(item)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={themed(({ colors }) => ({ fontSize: 14, color: colors.text }))}>{item.name}</Text>
+                    </View>
+                    <View
+                      style={[
+                        themed(({ colors }) => ({ minWidth: 64, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.palette.neutral200, alignItems: "center" })),
+                        active && themed(({ colors }) => ({ backgroundColor: colors.tint + "22" })),
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          themed(({ colors }) => ({ fontSize: 12, color: colors.textDim })),
+                          active && themed(({ colors }) => ({ color: colors.tint, fontWeight: "700" })),
+                        ]}
+                      >
+                        {active ? "Bật" : "Tắt"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              }}
               scrollEnabled={false}
             />
           </View>
