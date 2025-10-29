@@ -1,17 +1,21 @@
 import { observer } from "mobx-react-lite"
 import { FC, useCallback, useEffect, useState } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput } from "react-native"
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Modal } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { AppStackScreenProps } from "../navigators"
 import { useStores } from "../models"
 import { auditLogsApi } from "@/services/api"
 import type { AuditLogItem } from "@/services/api/api.types"
 import { hasPermission } from "@/utils/permissions"
+import { useAppTheme } from "@/utils/useAppTheme"
+import { useToast } from "@/components/ToastProvider"
 
 interface AuditLogsScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const AuditLogsScreen: FC<AuditLogsScreenProps> = observer(function AuditLogsScreen() {
   const { authenticationStore } = useStores()
+  const { themed, theme } = useAppTheme()
+  const { showSuccess, showError } = useToast()
 
   const [logs, setLogs] = useState<AuditLogItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -60,28 +64,29 @@ export const AuditLogsScreen: FC<AuditLogsScreenProps> = observer(function Audit
   if (!canView) return null
 
   const renderItem = ({ item }: { item: AuditLogItem }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
       <View style={styles.cardLeft}>
-        <Text style={styles.action}>{item.action}</Text>
-        <Text style={styles.table}>{item.table_name} (#{item.record_id})</Text>
-        {!!item.description && <Text style={styles.desc}>{item.description}</Text>}
+        <Text style={[styles.action, themed(({ colors }) => ({ color: colors.text }))]}>{item.action}</Text>
+        <Text style={[styles.table, themed(({ colors }) => ({ color: colors.textDim }))]}>{item.table_name} (#{item.record_id})</Text>
+        {!!item.description && <Text style={[styles.desc, themed(({ colors }) => ({ color: colors.textDim }))]}>{item.description}</Text>}
       </View>
       <View style={styles.cardRight}>
-        <Text style={styles.time}>{new Date(item.timestamp).toLocaleString("vi-VN")}</Text>
-        {!!item.user && <Text style={styles.user}>{item.user?.full_name || item.user?.username || item.user?.id}</Text>}
+        <Text style={[styles.time, themed(({ colors }) => ({ color: colors.textDim }))]}>{new Date(item.timestamp).toLocaleString("vi-VN")}</Text>
+        {!!item.user && <Text style={[styles.user, themed(({ colors }) => ({ color: colors.textDim }))]}>{item.user?.full_name || item.user?.username || item.user?.id}</Text>}
       </View>
     </View>
   )
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Nhật ký hệ thống</Text>
+          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Nhật ký hệ thống</Text>
         </View>
 
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+          placeholderTextColor={theme.colors.textDim}
           placeholder="Tìm theo bảng, hành động, mô tả..."
           value={search}
           onChangeText={setSearch}
@@ -106,17 +111,33 @@ export const AuditLogsScreen: FC<AuditLogsScreenProps> = observer(function Audit
         )}
 
         {total > 0 && (
-          <View style={styles.pagination}>
-            <TouchableOpacity style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]} onPress={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+          <View style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}>
+            <TouchableOpacity
+              style={[
+                styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
+                page === 1 && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+              ]}
+              onPress={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
               <Text style={styles.paginationButtonText}>Trước</Text>
             </TouchableOpacity>
             <View style={styles.paginationCenter}>
-              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={styles.pageSizeButton}>
-                <Text style={styles.pageSizeValue}>{pageSize}</Text>
+              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={[styles.pageSizeButton, themed(({ colors }) => ({ borderColor: colors.tint }))]}>
+                <Text style={[styles.pageSizeValue, themed(({ colors }) => ({ color: colors.tint }))]}>{pageSize}</Text>
               </TouchableOpacity>
-              <Text style={styles.paginationText}>Trang {page} / {Math.ceil(total / pageSize)}</Text>
+              <Text style={[styles.paginationText, themed(({ colors }) => ({ color: colors.textDim }))]}>Trang {page} / {Math.ceil(total / pageSize)}</Text>
             </View>
-            <TouchableOpacity style={[styles.paginationButton, page * pageSize >= total && styles.paginationButtonDisabled]} onPress={() => setPage((p) => p + 1)} disabled={page * pageSize >= total}>
+            <TouchableOpacity
+              style={[
+                styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
+                page * pageSize >= total && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+              ]}
+              onPress={() => setPage((p) => p + 1)}
+              disabled={page * pageSize >= total}
+            >
               <Text style={styles.paginationButtonText}>Sau</Text>
             </TouchableOpacity>
           </View>
@@ -124,22 +145,22 @@ export const AuditLogsScreen: FC<AuditLogsScreenProps> = observer(function Audit
       </View>
 
       {/* Page Size Modal */}
-      {showPageSizeModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
+      <Modal visible={showPageSizeModal} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Chọn số dòng mỗi trang</Text>
             {pageSizeOptions.map((size) => (
               <TouchableOpacity key={size} style={[styles.pageSizeOption, pageSize === size && styles.pageSizeOptionSelected]} onPress={() => { setPageSize(size); setPage(1); setShowPageSizeModal(false) }}>
                 <Text style={[styles.pageSizeOptionText, pageSize === size && styles.pageSizeOptionTextSelected]}>{size}</Text>
                 {pageSize === size && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.modalButton} onPress={() => setShowPageSizeModal(false)}>
-              <Text style={styles.modalButtonText}>Đóng</Text>
+            <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setShowPageSizeModal(false)}>
+              <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Đóng</Text>
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      </Modal>
     </SafeAreaView>
   )
 })
@@ -151,7 +172,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "bold" },
   searchInput: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 12, marginBottom: 16, backgroundColor: "#fff" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 8, padding: 12, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 1 },
+  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 8, padding: 12, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 1, borderWidth: 1, borderColor: "#ddd" },
   cardLeft: { flex: 1 },
   action: { fontSize: 14, fontWeight: "700", marginBottom: 2, color: "#333" },
   table: { fontSize: 12, color: "#666", marginBottom: 2 },
@@ -170,8 +191,8 @@ const styles = StyleSheet.create({
   paginationButtonDisabled: { backgroundColor: "#ccc" },
   paginationButtonText: { color: "#fff", fontWeight: "600" },
   paginationText: { fontSize: 14, color: "#666" },
-  modalOverlay: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", borderRadius: 12, padding: 20, width: "90%", maxWidth: 400 },
+  modalContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.5)" },
+  modalContent: { backgroundColor: "#fff", borderRadius: 12, padding: 20, width: "90%", maxWidth: 400, borderWidth: 1, borderColor: "#ddd" },
   modalTitle: { fontSize: 20, fontWeight: "600", marginBottom: 16 },
   modalButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: "#ddd", marginTop: 8 },
   modalButtonText: { color: "#666", fontWeight: "600" },
