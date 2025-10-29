@@ -10,12 +10,14 @@ import { useStores } from "../models"
 import { rolesApi } from "@/services/api"
 import type { Role } from "@/services/api/api.types"
 import { hasPermission } from "@/utils/permissions"
+import { useAppTheme } from "@/utils/useAppTheme"
 
 interface RolesScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen() {
   const { authenticationStore } = useStores()
   const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
+  const { themed, theme } = useAppTheme()
 
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(false)
@@ -148,10 +150,12 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   if (!canView) return null
 
   const renderRoleItem = ({ item }: { item: Role }) => (
-    <View style={styles.roleCard}>
+    <View style={[styles.roleCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
       <View style={styles.roleContent}>
-        <Text style={styles.roleTitle}>{item.name}</Text>
-        {!!item.description && <Text style={styles.roleSub}>{item.description}</Text>}
+        <Text style={[styles.roleTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.name}</Text>
+        {!!item.description && (
+          <Text style={[styles.roleSub, themed(({ colors }) => ({ color: colors.textDim }))]}> {item.description}</Text>
+        )}
       </View>
       <View style={styles.roleActions}>
         {item.name !== "root" ? (
@@ -168,7 +172,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
             )}
             {canDelete && (
               <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-                <Text style={styles.deleteButton}>🗑️</Text>
+                <Text style={[styles.deleteButton, themed(({ colors }) => ({ color: colors.error }))]}>🗑️</Text>
               </TouchableOpacity>
             )}
           </>
@@ -182,17 +186,18 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   )
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Quản lý vai trò</Text>
-          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingRole(null), setFormData({ name: "", description: "" }), setModalVisible(true)) : Alert.alert("Không có quyền", "Bạn không có quyền tạo vai trò") }>
+          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý vai trò</Text>
+          <TouchableOpacity style={[styles.addButton, { backgroundColor: "#6200ea" }, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingRole(null), setFormData({ name: "", description: "" }), setModalVisible(true)) : Alert.alert("Không có quyền", "Bạn không có quyền tạo vai trò") }>
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
 
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+          placeholderTextColor={theme.colors.textDim}
           placeholder="Tìm kiếm..."
           value={search}
           onChangeText={setSearch}
@@ -200,11 +205,13 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
           autoCorrect={false}
         />
 
-        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+        ) : null}
 
         {loading && roles.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6200ea" />
+            <ActivityIndicator size="large" color={themed(({ colors }) => colors.tint) as any} />
           </View>
         ) : (
           <FlatList
@@ -215,7 +222,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
             onRefresh={onRefresh}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Không có vai trò</Text>
+                <Text style={[styles.emptyText, themed(({ colors }) => ({ color: colors.textDim }))]}>Không có vai trò</Text>
               </View>
             }
             contentContainerStyle={roles.length === 0 ? styles.emptyList : undefined}
@@ -227,11 +234,12 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
             <Text style={styles.modalTitle}>{editingRole ? "Sửa vai trò" : "Thêm vai trò"}</Text>
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.name}
               onChangeText={(text) => setFormData({ ...formData, name: text })}
               placeholder="Tên vai trò *"
@@ -240,7 +248,8 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
             />
 
             <TextInput
-              style={[styles.formInput]}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.description}
               onChangeText={(text) => setFormData({ ...formData, description: text })}
               placeholder="Mô tả"
@@ -248,11 +257,13 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
               autoCorrect={false}
             />
 
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            {errorMessage ? (
+              <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+            ) : null}
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalButton}
+                style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ name: "", description: "" })
@@ -263,7 +274,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
                 <Text style={styles.modalButtonText}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[styles.modalButton, styles.modalButtonPrimary, themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint }))]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
@@ -302,7 +313,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   addButton: {
-    backgroundColor: "#6200ea",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

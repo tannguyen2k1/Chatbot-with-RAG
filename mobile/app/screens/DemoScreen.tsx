@@ -8,12 +8,14 @@ import { demoApi } from "@/services/api"
 import { hasPermission } from "@/utils/permissions"
 import type { Demo } from "@/services/api/api.types"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useToast } from "@/components/ToastProvider"
 
 interface DemoScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   const { authenticationStore } = useStores()
   const { themed, theme } = useAppTheme()
+  const { showSuccess, showError } = useToast()
 
   const [demos, setDemos] = useState<Demo[]>([])
   const [loading, setLoading] = useState(false)
@@ -29,6 +31,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   const [errorMessage, setErrorMessage] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [demoToDelete, setDemoToDelete] = useState<Demo | null>(null)
 
   const pageSizeOptions = [10, 20, 50, 100]
 
@@ -75,7 +79,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
 
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập tiêu đề")
+      showError("Vui lòng nhập tiêu đề")
       return
     }
 
@@ -96,7 +100,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
         setEditingDemo(null)
         setErrorMessage("")
         await loadDemos(page, debouncedSearch)
-        Alert.alert("Thành công", editingDemo ? "Cập nhật thành công" : "Thêm mới thành công")
+        showSuccess(editingDemo ? "Cập nhật thành công" : "Thêm mới thành công")
       } else {
         setErrorMessage("Không thể lưu demo")
       }
@@ -115,34 +119,30 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   }
 
   const handleDelete = (demo: Demo) => {
-    Alert.alert(
-      "Xác nhận xóa",
-      "Bạn có chắc chắn muốn xóa demo này?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true)
-            try {
-              const response = await demoApi.deleteDemo(demo.id)
-              if (response.kind === "ok") {
-                await loadDemos(page, debouncedSearch)
-                Alert.alert("Thành công", "Xóa demo thành công")
-              } else {
-                Alert.alert("Lỗi", "Không thể xóa demo")
-              }
-            } catch (error) {
-              console.error("Delete error:", error)
-              Alert.alert("Lỗi", "Không thể xóa demo")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ]
-    )
+    setDemoToDelete(demo)
+    setDeleteModalVisible(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!demoToDelete) return
+    
+    setLoading(true)
+    try {
+      const response = await demoApi.deleteDemo(demoToDelete.id)
+      if (response.kind === "ok") {
+        await loadDemos(page, debouncedSearch)
+        showSuccess("Xóa demo thành công")
+      } else {
+        showError("Không thể xóa demo")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      showError("Không thể xóa demo")
+    } finally {
+      setLoading(false)
+      setDeleteModalVisible(false)
+      setDemoToDelete(null)
+    }
   }
 
   const handleAdd = () => {
@@ -375,10 +375,41 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </SafeAreaView>
-  )
-})
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={deleteModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setDeleteModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
+              <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
+              <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
+                Bạn có chắc chắn muốn xóa demo "{demoToDelete?.title}"?
+              </Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300 }))]}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f" }]}
+                  onPress={confirmDelete}
+                >
+                  <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    )
+  })
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -607,5 +638,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#6200ea",
     fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalButtonSecondary: {
+    backgroundColor: "#f5f5f5",
   },
 })
