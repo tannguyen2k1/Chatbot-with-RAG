@@ -160,7 +160,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
 
 
   const renderDemoItem = ({ item }: { item: Demo }) => (
-    <View style={[styles.demoCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
+    <View style={[styles.demoCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
       <View style={styles.demoContent}>
         <Text style={[styles.demoTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.title}</Text>
         {item.description && (
@@ -281,8 +281,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>
               {editingDemo ? "Sửa Demo" : "Thêm Demo"}
             </Text>
 
@@ -314,7 +314,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
+                style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ title: "", description: "" })
@@ -322,13 +322,13 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
                   setErrorMessage("")
                 }}
               >
-                <Text style={styles.modalButtonText}>Hủy</Text>
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.modalButton,
                   styles.modalButtonPrimary,
-                  themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint })),
+                  { backgroundColor: "#6200ea", borderColor: "#6200ea" },
                 ]}
                 onPress={handleSubmit}
                 disabled={submitting}
@@ -347,8 +347,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
       {/* Page Size Modal */}
       <Modal visible={showPageSizeModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Chọn số dòng mỗi trang</Text>
             {pageSizeOptions.map((size) => (
               <TouchableOpacity
                 key={size}
@@ -368,10 +368,10 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
+              style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
               onPress={() => setShowPageSizeModal(false)}
             >
-              <Text style={styles.modalButtonText}>Đóng</Text>
+              <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Đóng</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -385,7 +385,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
           onRequestClose={() => setDeleteModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
+            <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
               <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
               <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
                 Bạn có chắc chắn muốn xóa demo "{demoToDelete?.title}"?
@@ -465,6 +465,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -571,6 +573,8 @@ const styles = StyleSheet.create({
     padding: 20,
     width: "90%",
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
   modalTitle: {
     fontSize: 20,
@@ -607,7 +611,6 @@ const styles = StyleSheet.create({
     borderColor: "#6200ea",
   },
   modalButtonText: {
-    color: "#666",
     fontWeight: "600",
   },
   modalButtonTextPrimary: {
@@ -628,7 +631,6 @@ const styles = StyleSheet.create({
   },
   pageSizeOptionText: {
     fontSize: 16,
-    color: "#333",
   },
   pageSizeOptionTextSelected: {
     color: "#6200ea",
