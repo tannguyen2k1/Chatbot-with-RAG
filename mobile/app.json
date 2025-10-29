@@ -20,6 +20,10 @@
     "android": {
       "icon": "./assets/images/app-icon-android-legacy.png",
       "package": "com.myapp",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
         "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
@@ -45,6 +49,14 @@
           "imageWidth": 300,
           "resizeMode": "contain",
           "backgroundColor": "#191015"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
       ]
     ],
