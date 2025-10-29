@@ -11,6 +11,7 @@ import { rolesApi } from "@/services/api"
 import type { Role } from "@/services/api/api.types"
 import { hasPermission } from "@/utils/permissions"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useToast } from "@/components/ToastProvider"
 
 interface RolesScreenProps extends AppStackScreenProps<"Main"> {}
 
@@ -18,6 +19,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   const { authenticationStore } = useStores()
   const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
   const { themed, theme } = useAppTheme()
+  const { showSuccess, showError } = useToast()
 
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(false)
@@ -30,6 +32,8 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
   // pageSize unused for roles (no pagination)
 
   useEffect(() => {
@@ -71,7 +75,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên vai trò")
+      showError("Vui lòng nhập tên vai trò")
       return
     }
 
@@ -91,7 +95,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
         setEditingRole(null)
         setErrorMessage("")
         await loadRoles(1, debouncedSearch)
-        Alert.alert("Thành công", editingRole ? "Cập nhật vai trò thành công" : "Thêm vai trò thành công")
+        showSuccess(editingRole ? "Cập nhật vai trò thành công" : "Thêm vai trò thành công")
       } else {
         setErrorMessage("Không thể lưu vai trò")
       }
@@ -110,34 +114,30 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   }
 
   const handleDelete = (role: Role) => {
-    Alert.alert(
-      "Xác nhận xóa",
-      "Bạn có chắc chắn muốn xóa vai trò này?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true)
-            try {
-              const response = await rolesApi.deleteRole(role.id)
-              if (response.kind === "ok") {
-                await loadRoles(1, debouncedSearch)
-                Alert.alert("Thành công", "Xóa vai trò thành công")
-              } else {
-                Alert.alert("Lỗi", "Không thể xóa vai trò")
-              }
-            } catch (error) {
-              console.error("Delete error:", error)
-              Alert.alert("Lỗi", "Không thể xóa vai trò")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ]
-    )
+    setRoleToDelete(role)
+    setDeleteModalVisible(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!roleToDelete) return
+    
+    setLoading(true)
+    try {
+      const response = await rolesApi.deleteRole(roleToDelete.id)
+      if (response.kind === "ok") {
+        await loadRoles(1, debouncedSearch)
+        showSuccess("Xóa vai trò thành công")
+      } else {
+        showError("Không thể xóa vai trò")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      showError("Không thể xóa vai trò")
+    } finally {
+      setLoading(false)
+      setDeleteModalVisible(false)
+      setRoleToDelete(null)
+    }
   }
 
   const userPermissions = authenticationStore.currentUser?.permissions
@@ -150,7 +150,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
   if (!canView) return null
 
   const renderRoleItem = ({ item }: { item: Role }) => (
-    <View style={[styles.roleCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
+    <View style={[styles.roleCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
       <View style={styles.roleContent}>
         <Text style={[styles.roleTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.name}</Text>
         {!!item.description && (
@@ -190,7 +190,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý vai trò</Text>
-          <TouchableOpacity style={[styles.addButton, { backgroundColor: "#6200ea" }, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingRole(null), setFormData({ name: "", description: "" }), setModalVisible(true)) : Alert.alert("Không có quyền", "Bạn không có quyền tạo vai trò") }>
+          <TouchableOpacity style={[styles.addButton, { backgroundColor: "#6200ea" }, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingRole(null), setFormData({ name: "", description: "" }), setModalVisible(true)) : showError("Bạn không có quyền tạo vai trò") }>
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
@@ -234,8 +234,8 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>{editingRole ? "Sửa vai trò" : "Thêm vai trò"}</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>{editingRole ? "Sửa vai trò" : "Thêm vai trò"}</Text>
 
             <TextInput
               style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
@@ -263,7 +263,7 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
+                style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ name: "", description: "" })
@@ -271,10 +271,10 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
                   setErrorMessage("")
                 }}
               >
-                <Text style={styles.modalButtonText}>Hủy</Text>
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint }))]}
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
@@ -283,6 +283,37 @@ export const RolesScreen: FC<RolesScreenProps> = observer(function RolesScreen()
                 ) : (
                   <Text style={styles.modalButtonTextPrimary}>Lưu</Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
+            <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
+              Bạn có chắc chắn muốn xóa vai trò "{roleToDelete?.name}"?
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderWidth: 0 }))]}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f" }]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -345,6 +376,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -430,6 +463,8 @@ const styles = StyleSheet.create({
     padding: 20,
     width: "90%",
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
   modalTitle: {
     fontSize: 20,
@@ -462,12 +497,25 @@ const styles = StyleSheet.create({
     borderColor: "#6200ea",
   },
   modalButtonText: {
-    color: "#666",
     fontWeight: "600",
   },
   modalButtonTextPrimary: {
     color: "#fff",
     fontWeight: "600",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalButtonSecondary: {
+    backgroundColor: "#f5f5f5",
   },
 })
 
