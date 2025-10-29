@@ -97,6 +97,40 @@ export class AuthApi {
 
     return { kind: "unknown", temporary: true }
   }
+
+  /**
+   * Update current user profile
+   */
+  async updateProfile(profileData: { full_name?: string; email?: string; phone?: string }): Promise<{ kind: "ok"; data: User } | GeneralApiProblem> {
+    const response = await this.apisauceInstance.put<User>(`/api/users/me`, profileData)
+
+    // Check for API problems
+    const problem = getGeneralApiProblem(response)
+    if (problem) {
+      return problem
+    }
+
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    }
+
+    return { kind: "unknown", temporary: true }
+  }
+
+  /**
+   * Change password
+   */
+  async changePassword(passwordData: { current_password: string; new_password: string }): Promise<{ kind: "ok" } | GeneralApiProblem> {
+    const response = await this.apisauceInstance.put(`/api/auth/change-password`, passwordData)
+
+    // Check for API problems
+    const problem = getGeneralApiProblem(response)
+    if (problem) {
+      return problem
+    }
+
+    return { kind: "ok" }
+  }
 }
 
 // Export createAuthApi factory function
