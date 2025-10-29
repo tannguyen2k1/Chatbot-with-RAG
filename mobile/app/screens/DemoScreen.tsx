@@ -392,7 +392,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
               </Text>
               <View style={styles.modalActions}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300 }))]}
+                  style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderWidth: 0 }))]}
                   onPress={() => setDeleteModalVisible(false)}
                 >
                   <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
