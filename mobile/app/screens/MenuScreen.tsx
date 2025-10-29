@@ -15,7 +15,7 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
   function MenuScreen(_props) {
     const { authenticationStore } = useStores()
     const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
-    const { themed } = useAppTheme()
+    const { themed, setThemeContextOverride, themeContext } = useAppTheme()
 
     const handleLogout = () => {
       Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
@@ -35,6 +35,12 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
     const canViewRoles = hasPermission(authenticationStore.currentUser?.permissions, "role", "view")
     const canViewTenants = hasPermission(authenticationStore.currentUser?.permissions, "tenant", "view")
     const canViewAudit = hasPermission(authenticationStore.currentUser?.permissions, "audit_log", "view")
+
+    const toggleTheme = () => {
+      const newTheme = themeContext === "dark" ? "light" : "dark"
+      setThemeContextOverride(newTheme)
+      Alert.alert("Thành công", `Đã chuyển sang ${newTheme === "dark" ? "chế độ tối" : "chế độ sáng"}`)
+    }
 
     return (
       <Screen
@@ -135,6 +141,12 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
 
               <View style={themed($sectionContainer)}>
                 <Text style={themed($sectionTitle)}>Khác</Text>
+                <Button
+                  text={`${themeContext === "dark" ? "🌙" : "☀️"} ${themeContext === "dark" ? "Chế độ sáng" : "Chế độ tối"}`}
+                  style={themed($button)}
+                  preset="default"
+                  onPress={toggleTheme}
+                />
                 <Button
                   text="Thông tin phiên bản"
                   style={themed($button)}
