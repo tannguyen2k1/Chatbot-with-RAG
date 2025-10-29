@@ -7,11 +7,13 @@ import { useStores } from "../models"
 import { demoApi } from "@/services/api"
 import { hasPermission } from "@/utils/permissions"
 import type { Demo } from "@/services/api/api.types"
+import { useAppTheme } from "@/utils/useAppTheme"
 
 interface DemoScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   const { authenticationStore } = useStores()
+  const { themed, theme } = useAppTheme()
 
   const [demos, setDemos] = useState<Demo[]>([])
   const [loading, setLoading] = useState(false)
@@ -158,11 +160,15 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
 
 
   const renderDemoItem = ({ item }: { item: Demo }) => (
-    <View style={styles.demoCard}>
+    <View style={[styles.demoCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
       <View style={styles.demoContent}>
-        <Text style={styles.demoTitle}>{item.title}</Text>
-        {item.description && <Text style={styles.demoDescription}>{item.description}</Text>}
-        <Text style={styles.demoDate}>
+        <Text style={[styles.demoTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.title}</Text>
+        {item.description && (
+          <Text style={[styles.demoDescription, themed(({ colors }) => ({ color: colors.textDim }))]}>
+            {item.description}
+          </Text>
+        )}
+        <Text style={[styles.demoDate, themed(({ colors }) => ({ color: colors.textDim }))]}>
           {new Date(item.created_at).toLocaleDateString("vi-VN")}
         </Text>
       </View>
@@ -174,7 +180,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
         )}
         {canDelete && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-            <Text style={styles.deleteButton}>🗑️</Text>
+            <Text style={[styles.deleteButton, themed(({ colors }) => ({ color: colors.error }))]}>🗑️</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -184,19 +190,24 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
   if (!canView) return null
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Quản lý Demo</Text>
-          <TouchableOpacity style={styles.addButton} disabled={!canCreate} onPress={handleAdd}>
+          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý Demo</Text>
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: "#6200ea" }]}
+            disabled={!canCreate}
+            onPress={handleAdd}
+          >
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
 
         {/* Search */}
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+          placeholderTextColor={theme.colors.textDim}
           placeholder="Tìm kiếm..."
           value={search}
           onChangeText={setSearch}
@@ -205,12 +216,14 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
         />
 
         {/* Error Message */}
-        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+        ) : null}
 
         {/* Demo List */}
         {loading && demos.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6200ea" />
+            <ActivityIndicator size="large" color={themed(({ colors }) => colors.tint) as any} />
           </View>
         ) : (
           <FlatList
@@ -221,7 +234,7 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
             onRefresh={onRefresh}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Không có demo nào</Text>
+                <Text style={[styles.emptyText, themed(({ colors }) => ({ color: colors.textDim }))]}>Không có demo nào</Text>
               </View>
             }
             contentContainerStyle={demos.length === 0 ? styles.emptyList : undefined}
@@ -230,25 +243,26 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
 
         {/* Pagination */}
         {total > 0 && (
-          <View style={styles.pagination}>
+          <View style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}>
             <TouchableOpacity
-              style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]}
+              style={[styles.paginationButton, themed(({ colors }) => ({ backgroundColor: colors.tint })), page === 1 && styles.paginationButtonDisabled]}
               onPress={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               <Text style={styles.paginationButtonText}>Trước</Text>
             </TouchableOpacity>
             <View style={styles.paginationCenter}>
-              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={styles.pageSizeButton}>
-                <Text style={styles.pageSizeValue}>{pageSize}</Text>
+              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={[styles.pageSizeButton, themed(({ colors }) => ({ borderColor: colors.tint }))]}>
+                <Text style={[styles.pageSizeValue, themed(({ colors }) => ({ color: colors.tint }))]}>{pageSize}</Text>
               </TouchableOpacity>
-              <Text style={styles.paginationText}>
+              <Text style={[styles.paginationText, themed(({ colors }) => ({ color: colors.textDim }))]}>
                 Trang {page} / {Math.ceil(total / pageSize)}
               </Text>
             </View>
             <TouchableOpacity
               style={[
                 styles.paginationButton,
+                themed(({ colors }) => ({ backgroundColor: colors.tint })),
                 page * pageSize >= total && styles.paginationButtonDisabled,
               ]}
               onPress={() => setPage((p) => p + 1)}
@@ -263,13 +277,14 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
             <Text style={styles.modalTitle}>
               {editingDemo ? "Sửa Demo" : "Thêm Demo"}
             </Text>
 
             <TextInput
-              style={styles.formInput}
+              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.title}
               onChangeText={(text) => setFormData({ ...formData, title: text })}
               placeholder="Tiêu đề *"
@@ -278,7 +293,8 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
             />
 
             <TextInput
-              style={[styles.formInput, styles.formInputMultiline]}
+              style={[styles.formInput, styles.formInputMultiline, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              placeholderTextColor={theme.colors.textDim}
               value={formData.description}
               onChangeText={(text) => setFormData({ ...formData, description: text })}
               placeholder="Mô tả"
@@ -288,11 +304,13 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
               numberOfLines={4}
             />
 
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            {errorMessage ? (
+              <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+            ) : null}
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalButton}
+                style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ title: "", description: "" })
@@ -303,12 +321,16 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
                 <Text style={styles.modalButtonText}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonPrimary,
+                  themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint })),
+                ]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
                 {submitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={"#fff"} />
                 ) : (
                   <Text style={styles.modalButtonTextPrimary}>Lưu</Text>
                 )}
@@ -321,15 +343,12 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
       {/* Page Size Modal */}
       <Modal visible={showPageSizeModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
             <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
             {pageSizeOptions.map((size) => (
               <TouchableOpacity
                 key={size}
-                style={[
-                  styles.pageSizeOption,
-                  pageSize === size && styles.pageSizeOptionSelected,
-                ]}
+                style={[styles.pageSizeOption, themed(({ colors }) => ({ backgroundColor: colors.background })), pageSize === size && styles.pageSizeOptionSelected]}
                 onPress={() => {
                   setPageSize(size)
                   setPage(1) // Reset to page 1 when changing page size
@@ -337,18 +356,15 @@ export const DemoScreen: FC<DemoScreenProps> = observer(function DemoScreen() {
                 }}
               >
                 <Text
-                  style={[
-                    styles.pageSizeOptionText,
-                    pageSize === size && styles.pageSizeOptionTextSelected,
-                  ]}
+                  style={[styles.pageSizeOptionText, themed(({ colors }) => ({ color: colors.text })), pageSize === size && styles.pageSizeOptionTextSelected]}
                 >
                   {size}
                 </Text>
-                {pageSize === size && <Text style={styles.checkmark}>✓</Text>}
+                {pageSize === size && <Text style={[styles.checkmark, themed(({ colors }) => ({ color: colors.tint }))]}>✓</Text>}
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={styles.modalButton}
+              style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
               onPress={() => setShowPageSizeModal(false)}
             >
               <Text style={styles.modalButtonText}>Đóng</Text>
