@@ -39,7 +39,6 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
     const toggleTheme = () => {
       const newTheme = themeContext === "dark" ? "light" : "dark"
       setThemeContextOverride(newTheme)
-      Alert.alert("Thành công", `Đã chuyển sang ${newTheme === "dark" ? "chế độ tối" : "chế độ sáng"}`)
     }
 
     return (
