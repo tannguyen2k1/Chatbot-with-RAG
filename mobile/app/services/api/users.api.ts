@@ -1,6 +1,7 @@
 import type { ApisauceInstance } from "apisauce"
 import { getGeneralApiProblem } from "./apiProblem"
-import type { GeneralApiProblem, User, PaginatedUserResponse, UserRequest } from "./api.types"
+import type { GeneralApiProblem } from "./apiProblem"
+import type { User, PaginatedUserResponse, UserRequest } from "./api.types"
 
 export interface UsersResponse {
   kind: "ok"
@@ -43,6 +44,15 @@ export class UsersApi {
 
   async deleteUser(id: number): Promise<GeneralApiProblem | { kind: "ok" }> {
     const response = await this.apisauceInstance.delete(`/api/users/${id}`)
+    const problem = getGeneralApiProblem(response)
+    if (problem) return problem
+    return { kind: "ok" }
+  }
+
+  async resetPassword(id: number, newPassword: string): Promise<GeneralApiProblem | { kind: "ok" }> {
+    const response = await this.apisauceInstance.post(`/api/users/${id}/reset-password`, {
+      new_password: newPassword
+    })
     const problem = getGeneralApiProblem(response)
     if (problem) return problem
     return { kind: "ok" }

@@ -27,6 +27,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   const [errorMessage, setErrorMessage] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
+  const [resetPasswordModal, setResetPasswordModal] = useState(false)
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null)
 
   const pageSizeOptions = [10, 20, 50, 100]
 
@@ -143,11 +145,33 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
     )
   }
 
+  const handleResetPassword = async () => {
+    if (!resetPasswordUser) return
+    
+    setSubmitting(true)
+    try {
+      const response = await usersApi.resetPassword(resetPasswordUser.id, "user123456")
+      if (response.kind === "ok") {
+        setResetPasswordModal(false)
+        setResetPasswordUser(null)
+        Alert.alert("Thành công", "Reset mật khẩu thành công\nMật khẩu mới: user123456")
+      } else {
+        Alert.alert("Lỗi", "Không thể reset mật khẩu")
+      }
+    } catch (error) {
+      console.error("Reset password error:", error)
+      Alert.alert("Lỗi", "Không thể reset mật khẩu")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const userPermissions = authenticationStore.currentUser?.permissions
   const canView = hasPermission(userPermissions, "user", "view")
   const canCreate = hasPermission(userPermissions, "user", "create")
   const canUpdate = hasPermission(userPermissions, "user", "update")
   const canDelete = hasPermission(userPermissions, "user", "delete")
+  const canResetPassword = hasPermission(userPermissions, "user", "reset-password")
 
   if (!canView) return null
 
@@ -159,12 +183,20 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
         <Text style={styles.userMeta}>Vai trò: {item.roles?.join(", ") || "-"}</Text>
       </View>
       <View style={styles.userActions}>
-        {canUpdate && (
+        {canUpdate && !item.roles?.includes("root") && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
             <Text style={styles.editButton}>✏️</Text>
           </TouchableOpacity>
         )}
-        {canDelete && (
+        {canResetPassword && !item.roles?.includes("root") && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => {
+            setResetPasswordUser(item)
+            setResetPasswordModal(true)
+          }}>
+            <Text style={styles.resetButton}>🔑</Text>
+          </TouchableOpacity>
+        )}
+        {canDelete && !item.roles?.includes("root") && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
             <Text style={styles.deleteButton}>🗑️</Text>
           </TouchableOpacity>
@@ -354,6 +386,37 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
           </View>
         </View>
       </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal visible={resetPasswordModal} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reset mật khẩu</Text>
+            <Text style={styles.modalText}>
+              Bạn có chắc chắn muốn reset mật khẩu cho user "{resetPasswordUser?.username}"?
+            </Text>
+            <Text style={styles.modalSubText}>
+              Mật khẩu mới sẽ là: <Text style={styles.boldText}>user123456</Text>
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setResetPasswordModal(false)}>
+                <Text style={styles.modalButtonText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleResetPassword}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonTextPrimary}>Reset</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 })
@@ -450,6 +513,10 @@ const styles = StyleSheet.create({
   deleteButton: {
     fontSize: 20,
     color: "#d32f2f",
+  },
+  resetButton: {
+    fontSize: 20,
+    color: "#ff8800",
   },
   emptyContainer: {
     flex: 1,
@@ -582,6 +649,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#6200ea",
     fontWeight: "bold",
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 16,
+  },
+  modalSubText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+  },
+  boldText: {
+    fontWeight: "bold",
+    color: "#333",
   },
 })
 
