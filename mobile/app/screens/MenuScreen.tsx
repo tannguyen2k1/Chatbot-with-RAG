@@ -17,6 +17,7 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
     const navigation = useNavigation<NativeStackNavigationProp<MenuStackParamList>>()
     const { themed, setThemeContextOverride, themeContext } = useAppTheme()
     const [logoutModalVisible, setLogoutModalVisible] = useState(false)
+    const [versionModalVisible, setVersionModalVisible] = useState(false)
 
     const handleLogout = () => {
       setLogoutModalVisible(true)
@@ -141,7 +142,7 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
                   text="Thông tin phiên bản"
                   style={themed($button)}
                   preset="default"
-                  onPress={() => Alert.alert("Phiên bản", "VTMS Mobile v1.0.0")}
+                  onPress={() => setVersionModalVisible(true)}
                 />
 
                 <Button
@@ -173,6 +174,21 @@ export const MenuScreen: FC<DashboardTabScreenProps<"Menu">> = observer(
                   }}
                 >
                   <Text style={$modalButtonTextPrimary as any}>Đăng xuất</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Version Info Modal */}
+        <Modal visible={versionModalVisible} transparent animationType="fade">
+          <View style={themed($modalOverlay)}>
+            <View style={themed($modalContent)}>
+              <Text style={themed($modalTitle)}>Thông tin phiên bản</Text>
+              <Text style={themed($modalMessage)}>VTMS Mobile v1.0.0</Text>
+              <View style={themed($modalActions)}>
+                <TouchableOpacity style={themed($modalButtonSecondary)} onPress={() => setVersionModalVisible(false)}>
+                  <Text style={themed($modalButtonTextSecondary)}>Đóng</Text>
                 </TouchableOpacity>
               </View>
             </View>

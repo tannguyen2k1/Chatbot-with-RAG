@@ -83,3 +83,13 @@ export const api = new Api()
 
 // Export apisauce instance for use in other API modules
 export const apisauce = api.apisauce
+
+// Allow runtime override of API base URL (persisted elsewhere)
+export function setApiBaseUrl(newUrl?: string) {
+  const url = newUrl && newUrl.trim().length > 0 ? newUrl.trim() : Config.API_URL
+  api.apisauce.setBaseURL(url)
+}
+
+export function getDefaultApiUrl() {
+  return Config.API_URL
+}

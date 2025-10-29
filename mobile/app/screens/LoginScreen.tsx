@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 // eslint-disable-next-line no-restricted-imports
-import { TextInput, TextStyle, ViewStyle, View, ActivityIndicator } from "react-native"
+import { TextInput, TextStyle, ViewStyle, View, ActivityIndicator, Modal, TouchableOpacity } from "react-native"
 import {
   Button,
   PressableIcon,
@@ -15,6 +15,8 @@ import { AppStackScreenProps } from "../navigators"
 import type { ThemedStyle } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { authApi } from "@/services/api"
+import { setApiBaseUrl, getDefaultApiUrl } from "@/services/api/api"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useToast } from "@/components/ToastProvider"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
@@ -29,6 +31,9 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const [isPasswordHidden, setIsPasswordHidden] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [apiModalVisible, setApiModalVisible] = useState(false)
+  const [apiUrl, setApiUrl] = useState("")
+  const API_URL_STORAGE_KEY = "app.apiBaseUrl"
 
   const {
     authenticationStore: {
@@ -41,7 +46,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   } = useStores()
 
   const { themed, theme } = useAppTheme()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
 
   useEffect(() => {
     // Clear any existing data
@@ -118,6 +123,47 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
       setErrorMessage("Đã xảy ra lỗi không mong muốn")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const openApiModal = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(API_URL_STORAGE_KEY)
+      setApiUrl(saved ?? "")
+    } catch {}
+    setApiModalVisible(true)
+  }
+
+  const saveApiUrl = async () => {
+    try {
+      const trimmed = apiUrl.trim()
+      if (trimmed.length > 0) {
+        await AsyncStorage.setItem(API_URL_STORAGE_KEY, trimmed)
+        setApiBaseUrl(trimmed)
+        showSuccess("Đã lưu API URL")
+      } else {
+        await AsyncStorage.removeItem(API_URL_STORAGE_KEY)
+        setApiBaseUrl(getDefaultApiUrl())
+        showSuccess("Đã đặt API URL về mặc định")
+      }
+      setApiModalVisible(false)
+    } catch {}
+  }
+
+  const testApiUrl = async () => {
+    const target = (apiUrl && apiUrl.trim().length > 0 ? apiUrl.trim() : getDefaultApiUrl()).replace(/\/$/, "")
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(target, { method: "GET", signal: controller.signal })
+      clearTimeout(timeout)
+      if (res.ok) {
+        showSuccess("Kết nối API thành công")
+      } else {
+        showError(`Kết nối thất bại (HTTP ${res.status})`)
+      }
+    } catch (e) {
+      showError("Không thể kết nối đến API URL")
     }
   }
 
@@ -228,10 +274,40 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
             style={themed($loginButton)}
             preset="default"
             onPress={handleLogin}
+            onLongPress={openApiModal}
+            delayLongPress={5000}
             disabled={isLoading}
           />
         </View>
       </View>
+      {/* API URL Modal */}
+      <Modal visible={apiModalVisible} transparent animationType="fade">
+        <View style={themed($modalOverlay)}>
+          <View style={themed($modalContent)}>
+            <Text style={themed($modalTitle)}>Cấu hình API URL</Text>
+            <TextField
+              value={apiUrl}
+              onChangeText={setApiUrl}
+              containerStyle={themed($textField)}
+              autoCapitalize="none"
+              autoCorrect={false}
+              label="API URL"
+              placeholder={getDefaultApiUrl()}
+            />
+            <View style={themed($modalActions)}>
+              <TouchableOpacity style={themed($modalButtonSecondary)} onPress={testApiUrl}>
+                <Text style={themed($modalButtonTextSecondary)}>Kiểm tra</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={themed($modalButtonSecondary)} onPress={() => setApiModalVisible(false)}>
+                <Text style={themed($modalButtonTextSecondary)}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={themed($modalButtonPrimary)} onPress={saveApiUrl}>
+                <Text style={$modalButtonTextPrimary as any}>Lưu</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 })
@@ -297,3 +373,67 @@ const $infoText: ThemedStyle<TextStyle> = ({ spacing, colors }) => ({
   marginTop: spacing.xl,
   color: colors.textDim,
 })
+
+// Modal styles for API URL config
+const $modalOverlay: ThemedStyle<ViewStyle> = () => ({
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  left: 0,
+  right: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 20,
+})
+
+const $modalContent: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.palette.neutral100,
+  borderRadius: 12,
+  padding: spacing.lg,
+  width: "90%",
+  maxWidth: 420,
+  borderWidth: 1,
+  borderColor: colors.border,
+})
+
+const $modalTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 20,
+  fontWeight: "700",
+  color: colors.text,
+  marginBottom: 12,
+})
+
+const $modalActions: ThemedStyle<ViewStyle> = () => ({
+  flexDirection: "row",
+  justifyContent: "flex-end",
+  gap: 8,
+})
+
+const $modalButtonSecondary: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 8,
+  backgroundColor: colors.palette.neutral300,
+  borderColor: colors.border,
+  borderWidth: 0,
+})
+
+const $modalButtonTextSecondary: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.text,
+  fontWeight: "600",
+})
+
+const $modalButtonPrimary: ThemedStyle<ViewStyle> = () => ({
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 8,
+  backgroundColor: "#6200ea",
+  borderColor: "#6200ea",
+  borderWidth: 0,
+})
+
+const $modalButtonTextPrimary: TextStyle = {
+  color: "#fff",
+  fontWeight: "600",
+}
