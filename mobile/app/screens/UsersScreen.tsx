@@ -458,12 +458,12 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
                 >
                   <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f" }]}
-                  onPress={confirmDelete}
-                >
-                  <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f", borderWidth: 0 }]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
+              </TouchableOpacity>
               </View>
             </View>
           </View>
