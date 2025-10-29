@@ -8,12 +8,14 @@ import { usersApi } from "@/services/api"
 import type { User } from "@/services/api/api.types"
 import { hasPermission } from "@/utils/permissions"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useToast } from "@/components/ToastProvider"
 
 interface UsersScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen() {
   const { authenticationStore } = useStores()
   const { themed, theme } = useAppTheme()
+  const { showSuccess, showError } = useToast()
 
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
@@ -31,6 +33,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
   const [resetPasswordModal, setResetPasswordModal] = useState(false)
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
 
   const pageSizeOptions = [10, 20, 50, 100]
 
@@ -73,11 +77,11 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
 
   const handleSubmit = async () => {
     if (!formData.username.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập username")
+      showError("Vui lòng nhập username")
       return
     }
     if (!editingUser && !formData.password.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập mật khẩu")
+      showError("Vui lòng nhập mật khẩu")
       return
     }
 
@@ -98,7 +102,7 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
         setEditingUser(null)
         setErrorMessage("")
         await loadUsers(page, debouncedSearch)
-        Alert.alert("Thành công", editingUser ? "Cập nhật thành công" : "Thêm mới thành công")
+        showSuccess(editingUser ? "Cập nhật thành công" : "Thêm mới thành công")
       } else {
         setErrorMessage("Không thể lưu người dùng")
       }
@@ -117,34 +121,30 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   }
 
   const handleDelete = (user: User) => {
-    Alert.alert(
-      "Xác nhận xóa",
-      "Bạn có chắc chắn muốn xóa người dùng này?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true)
-            try {
-              const response = await usersApi.deleteUser(user.id)
-              if (response.kind === "ok") {
-                await loadUsers(page, debouncedSearch)
-                Alert.alert("Thành công", "Xóa người dùng thành công")
-              } else {
-                Alert.alert("Lỗi", "Không thể xóa người dùng")
-              }
-            } catch (error) {
-              console.error("Delete error:", error)
-              Alert.alert("Lỗi", "Không thể xóa người dùng")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ]
-    )
+    setUserToDelete(user)
+    setDeleteModalVisible(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return
+    
+    setLoading(true)
+    try {
+      const response = await usersApi.deleteUser(userToDelete.id)
+      if (response.kind === "ok") {
+        await loadUsers(page, debouncedSearch)
+        showSuccess("Xóa người dùng thành công")
+      } else {
+        showError("Không thể xóa người dùng")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      showError("Không thể xóa người dùng")
+    } finally {
+      setLoading(false)
+      setDeleteModalVisible(false)
+      setUserToDelete(null)
+    }
   }
 
   const handleResetPassword = async () => {
@@ -156,13 +156,13 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       if (response.kind === "ok") {
         setResetPasswordModal(false)
         setResetPasswordUser(null)
-        Alert.alert("Thành công", "Reset mật khẩu thành công\nMật khẩu mới: user123456")
+        showSuccess("Reset mật khẩu thành công\nMật khẩu mới: user123456")
       } else {
-        Alert.alert("Lỗi", "Không thể reset mật khẩu")
+        showError("Không thể reset mật khẩu")
       }
     } catch (error) {
       console.error("Reset password error:", error)
-      Alert.alert("Lỗi", "Không thể reset mật khẩu")
+      showError("Không thể reset mật khẩu")
     } finally {
       setSubmitting(false)
     }
@@ -178,7 +178,7 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   if (!canView) return null
 
   const renderUserItem = ({ item }: { item: User }) => (
-    <View style={[styles.userCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
+    <View style={[styles.userCard, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
       <View style={styles.userContent}>
         <Text style={[styles.userTitle, themed(({ colors }) => ({ color: colors.text }))]}>{item.full_name || item.username}</Text>
         <Text style={[styles.userSub, themed(({ colors }) => ({ color: colors.textDim }))]}>{item.email || "Không có email"}</Text>
@@ -212,7 +212,7 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý người dùng</Text>
-          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingUser(null), setFormData({ username: "", email: "", full_name: "", phone: "", password: "" }), setModalVisible(true)) : Alert.alert("Không có quyền", "Bạn không có quyền tạo người dùng") }>
+          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingUser(null), setFormData({ username: "", email: "", full_name: "", phone: "", password: "" }), setModalVisible(true)) : showError("Bạn không có quyền tạo người dùng") }>
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
@@ -289,8 +289,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>{editingUser ? "Sửa người dùng" : "Thêm người dùng"}</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>{editingUser ? "Sửa người dùng" : "Thêm người dùng"}</Text>
 
             <TextInput
               style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
@@ -353,7 +353,7 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]}
+                style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ username: "", email: "", full_name: "", phone: "", password: "" })
@@ -361,10 +361,10 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
                   setErrorMessage("")
                 }}
               >
-                <Text style={styles.modalButtonText}>Hủy</Text>
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint }))]}
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
@@ -382,8 +382,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       {/* Page Size Modal */}
       <Modal visible={showPageSizeModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>Chọn số dòng mỗi trang</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Chọn số dòng mỗi trang</Text>
             {pageSizeOptions.map((size) => (
               <TouchableOpacity
                 key={size}
@@ -400,8 +400,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
                 {pageSize === size && <Text style={[styles.checkmark, themed(({ colors }) => ({ color: colors.tint }))]}>✓</Text>}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]} onPress={() => setShowPageSizeModal(false)}>
-              <Text style={styles.modalButtonText}>Đóng</Text>
+            <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setShowPageSizeModal(false)}>
+              <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Đóng</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -410,8 +410,8 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       {/* Reset Password Modal */}
       <Modal visible={resetPasswordModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100 }))]}>
-            <Text style={styles.modalTitle}>Reset mật khẩu</Text>
+          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Reset mật khẩu</Text>
             <Text style={[styles.modalText, themed(({ colors }) => ({ color: colors.text }))]}>
               Bạn có chắc chắn muốn reset mật khẩu cho user "{resetPasswordUser?.username}"?
             </Text>
@@ -419,11 +419,11 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
               Mật khẩu mới sẽ là: <Text style={styles.boldText}>user123456</Text>
             </Text>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ borderColor: colors.border }))]} onPress={() => setResetPasswordModal(false)}>
-                <Text style={styles.modalButtonText}>Hủy</Text>
+              <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setResetPasswordModal(false)}>
+                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, themed(({ colors }) => ({ backgroundColor: colors.tint, borderColor: colors.tint }))]}
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
                 onPress={handleResetPassword}
                 disabled={submitting}
               >
@@ -436,10 +436,41 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             </View>
           </View>
         </View>
-      </Modal>
-    </SafeAreaView>
-  )
-})
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={deleteModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setDeleteModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
+              <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
+              <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
+                Bạn có chắc chắn muốn xóa người dùng "{userToDelete?.username}"?
+              </Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderWidth: 0 }))]}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f" }]}
+                  onPress={confirmDelete}
+                >
+                  <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    )
+  })
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -495,6 +526,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -605,6 +638,8 @@ const styles = StyleSheet.create({
     padding: 20,
     width: "90%",
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
   modalTitle: {
     fontSize: 20,
@@ -637,7 +672,6 @@ const styles = StyleSheet.create({
     borderColor: "#6200ea",
   },
   modalButtonText: {
-    color: "#666",
     fontWeight: "600",
   },
   modalButtonTextPrimary: {
@@ -659,7 +693,6 @@ const styles = StyleSheet.create({
   },
   pageSizeOptionText: {
     fontSize: 16,
-    color: "#333",
   },
   pageSizeOptionTextSelected: {
     color: "#6200ea",
@@ -683,6 +716,20 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: "bold",
     color: "#333",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalButtonSecondary: {
+    backgroundColor: "#f5f5f5",
   },
 })
 
