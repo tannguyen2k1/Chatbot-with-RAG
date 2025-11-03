@@ -208,17 +208,37 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
   )
 
   return (
-    <SafeAreaView style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}>
+    <SafeAreaView
+      style={[styles.safeArea, themed(({ colors }) => ({ backgroundColor: colors.background }))]}
+    >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>Quản lý người dùng</Text>
-          <TouchableOpacity style={[styles.addButton, !canCreate && { opacity: 0.5 }]} onPress={() => canCreate ? (setEditingUser(null), setFormData({ username: "", email: "", full_name: "", phone: "", password: "" }), setModalVisible(true)) : showError("Bạn không có quyền tạo người dùng") }>
+          <Text style={[styles.title, themed(({ colors }) => ({ color: colors.text }))]}>
+            Quản lý người dùng
+          </Text>
+          <TouchableOpacity
+            style={[styles.addButton, !canCreate && { opacity: 0.5 }]}
+            onPress={() =>
+              canCreate
+                ? (setEditingUser(null),
+                  setFormData({ username: "", email: "", full_name: "", phone: "", password: "" }),
+                  setModalVisible(true))
+                : showError("Bạn không có quyền tạo người dùng")
+            }
+          >
             <Text style={styles.addButtonText}>+ Thêm</Text>
           </TouchableOpacity>
         </View>
 
         <TextInput
-          style={[styles.searchInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+          style={[
+            styles.searchInput,
+            themed(({ colors }) => ({
+              borderColor: colors.border,
+              backgroundColor: colors.palette.neutral100,
+              color: colors.text,
+            })),
+          ]}
           placeholderTextColor={theme.colors.textDim}
           placeholder="Tìm kiếm..."
           value={search}
@@ -228,7 +248,9 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
         />
 
         {errorMessage ? (
-          <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+          <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>
+            {errorMessage}
+          </Text>
         ) : null}
 
         {loading && users.length === 0 ? (
@@ -244,7 +266,11 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             onRefresh={onRefresh}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, themed(({ colors }) => ({ color: colors.textDim }))]}>Không có người dùng</Text>
+                <Text
+                  style={[styles.emptyText, themed(({ colors }) => ({ color: colors.textDim }))]}
+                >
+                  Không có người dùng
+                </Text>
               </View>
             }
             contentContainerStyle={users.length === 0 ? styles.emptyList : undefined}
@@ -252,12 +278,17 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
         )}
 
         {total > 0 && (
-          <View style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}>
+          <View
+            style={[styles.pagination, themed(({ colors }) => ({ borderTopColor: colors.border }))]}
+          >
             <TouchableOpacity
               style={[
                 styles.paginationButton,
                 themed(({ colors }) => ({ backgroundColor: colors.tint })),
-                page === 1 && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+                page === 1 &&
+                  themed(({ colors, isDark }) => ({
+                    backgroundColor: isDark ? colors.palette.neutral600 : "#ccc",
+                  })),
               ]}
               onPress={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
@@ -265,10 +296,22 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
               <Text style={styles.paginationButtonText}>Trước</Text>
             </TouchableOpacity>
             <View style={styles.paginationCenter}>
-              <TouchableOpacity onPress={() => setShowPageSizeModal(true)} style={[styles.pageSizeButton, themed(({ colors }) => ({ borderColor: colors.tint }))]}>
-                <Text style={[styles.pageSizeValue, themed(({ colors }) => ({ color: colors.tint }))]}>{pageSize}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPageSizeModal(true)}
+                style={[
+                  styles.pageSizeButton,
+                  themed(({ colors }) => ({ borderColor: colors.tint })),
+                ]}
+              >
+                <Text
+                  style={[styles.pageSizeValue, themed(({ colors }) => ({ color: colors.tint }))]}
+                >
+                  {pageSize}
+                </Text>
               </TouchableOpacity>
-              <Text style={[styles.paginationText, themed(({ colors }) => ({ color: colors.textDim }))]}>
+              <Text
+                style={[styles.paginationText, themed(({ colors }) => ({ color: colors.textDim }))]}
+              >
                 Trang {page} / {Math.ceil(total / pageSize)}
               </Text>
             </View>
@@ -276,7 +319,10 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
               style={[
                 styles.paginationButton,
                 themed(({ colors }) => ({ backgroundColor: colors.tint })),
-                page * pageSize >= total && themed(({ colors, isDark }) => ({ backgroundColor: isDark ? colors.palette.neutral600 : "#ccc" })),
+                page * pageSize >= total &&
+                  themed(({ colors, isDark }) => ({
+                    backgroundColor: isDark ? colors.palette.neutral600 : "#ccc",
+                  })),
               ]}
               onPress={() => setPage((p) => p + 1)}
               disabled={page * pageSize >= total}
@@ -289,11 +335,28 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
-            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>{editingUser ? "Sửa người dùng" : "Thêm người dùng"}</Text>
+          <View
+            style={[
+              styles.modalContent,
+              themed(({ colors }) => ({
+                backgroundColor: colors.palette.neutral100,
+                borderColor: colors.border,
+              })),
+            ]}
+          >
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>
+              {editingUser ? "Sửa người dùng" : "Thêm người dùng"}
+            </Text>
 
             <TextInput
-              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              style={[
+                styles.formInput,
+                themed(({ colors }) => ({
+                  borderColor: colors.border,
+                  backgroundColor: colors.palette.neutral100,
+                  color: colors.text,
+                })),
+              ]}
               placeholderTextColor={theme.colors.textDim}
               value={formData.username}
               onChangeText={(text) => setFormData({ ...formData, username: text })}
@@ -304,7 +367,14 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
 
             {!editingUser && (
               <TextInput
-                style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+                style={[
+                  styles.formInput,
+                  themed(({ colors }) => ({
+                    borderColor: colors.border,
+                    backgroundColor: colors.palette.neutral100,
+                    color: colors.text,
+                  })),
+                ]}
                 placeholderTextColor={theme.colors.textDim}
                 value={formData.password}
                 onChangeText={(text) => setFormData({ ...formData, password: text })}
@@ -316,7 +386,14 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             )}
 
             <TextInput
-              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              style={[
+                styles.formInput,
+                themed(({ colors }) => ({
+                  borderColor: colors.border,
+                  backgroundColor: colors.palette.neutral100,
+                  color: colors.text,
+                })),
+              ]}
               placeholderTextColor={theme.colors.textDim}
               value={formData.full_name}
               onChangeText={(text) => setFormData({ ...formData, full_name: text })}
@@ -326,7 +403,14 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             />
 
             <TextInput
-              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              style={[
+                styles.formInput,
+                themed(({ colors }) => ({
+                  borderColor: colors.border,
+                  backgroundColor: colors.palette.neutral100,
+                  color: colors.text,
+                })),
+              ]}
               placeholderTextColor={theme.colors.textDim}
               value={formData.email}
               onChangeText={(text) => setFormData({ ...formData, email: text })}
@@ -337,7 +421,14 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             />
 
             <TextInput
-              style={[styles.formInput, themed(({ colors }) => ({ borderColor: colors.border, backgroundColor: colors.palette.neutral100, color: colors.text }))]}
+              style={[
+                styles.formInput,
+                themed(({ colors }) => ({
+                  borderColor: colors.border,
+                  backgroundColor: colors.palette.neutral100,
+                  color: colors.text,
+                })),
+              ]}
               placeholderTextColor={theme.colors.textDim}
               value={formData.phone}
               onChangeText={(text) => setFormData({ ...formData, phone: text })}
@@ -348,12 +439,20 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             />
 
             {errorMessage ? (
-              <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>{errorMessage}</Text>
+              <Text style={[styles.errorText, themed(({ colors }) => ({ color: colors.error }))]}>
+                {errorMessage}
+              </Text>
             ) : null}
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]}
+                style={[
+                  styles.modalButton,
+                  themed(({ colors }) => ({
+                    backgroundColor: colors.palette.neutral300,
+                    borderColor: colors.border,
+                  })),
+                ]}
                 onPress={() => {
                   setModalVisible(false)
                   setFormData({ username: "", email: "", full_name: "", phone: "", password: "" })
@@ -361,10 +460,18 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
                   setErrorMessage("")
                 }}
               >
-                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+                <Text
+                  style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}
+                >
+                  Hủy
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonPrimary,
+                  { backgroundColor: "#6200ea", borderColor: "#6200ea" },
+                ]}
                 onPress={handleSubmit}
                 disabled={submitting}
               >
@@ -382,26 +489,65 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       {/* Page Size Modal */}
       <Modal visible={showPageSizeModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
-            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Chọn số dòng mỗi trang</Text>
+          <View
+            style={[
+              styles.modalContent,
+              themed(({ colors }) => ({
+                backgroundColor: colors.palette.neutral100,
+                borderColor: colors.border,
+              })),
+            ]}
+          >
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>
+              Chọn số dòng mỗi trang
+            </Text>
             {pageSizeOptions.map((size) => (
               <TouchableOpacity
                 key={size}
-                style={[styles.pageSizeOption, themed(({ colors }) => ({ backgroundColor: colors.background })), pageSize === size && styles.pageSizeOptionSelected]}
+                style={[
+                  styles.pageSizeOption,
+                  themed(({ colors }) => ({ backgroundColor: colors.background })),
+                  pageSize === size && styles.pageSizeOptionSelected,
+                ]}
                 onPress={() => {
                   setPageSize(size)
                   setPage(1)
                   setShowPageSizeModal(false)
                 }}
               >
-                <Text style={[styles.pageSizeOptionText, themed(({ colors }) => ({ color: colors.text })), pageSize === size && styles.pageSizeOptionTextSelected]}>
+                <Text
+                  style={[
+                    styles.pageSizeOptionText,
+                    themed(({ colors }) => ({ color: colors.text })),
+                    pageSize === size && styles.pageSizeOptionTextSelected,
+                  ]}
+                >
                   {size}
                 </Text>
-                {pageSize === size && <Text style={[styles.checkmark, themed(({ colors }) => ({ color: colors.tint }))]}>✓</Text>}
+                {pageSize === size && (
+                  <Text
+                    style={[styles.checkmark, themed(({ colors }) => ({ color: colors.tint }))]}
+                  >
+                    ✓
+                  </Text>
+                )}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setShowPageSizeModal(false)}>
-              <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Đóng</Text>
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                themed(({ colors }) => ({
+                  backgroundColor: colors.palette.neutral300,
+                  borderColor: colors.border,
+                })),
+              ]}
+              onPress={() => setShowPageSizeModal(false)}
+            >
+              <Text
+                style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}
+              >
+                Đóng
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -410,20 +556,52 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
       {/* Reset Password Modal */}
       <Modal visible={resetPasswordModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
-            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Reset mật khẩu</Text>
+          <View
+            style={[
+              styles.modalContent,
+              themed(({ colors }) => ({
+                backgroundColor: colors.palette.neutral100,
+                borderColor: colors.border,
+              })),
+            ]}
+          >
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>
+              Reset mật khẩu
+            </Text>
             <Text style={[styles.modalText, themed(({ colors }) => ({ color: colors.text }))]}>
               Bạn có chắc chắn muốn reset mật khẩu cho user "{resetPasswordUser?.username}"?
             </Text>
-            <Text style={[styles.modalSubText, themed(({ colors }) => ({ color: colors.textDim }))]}>
-              Mật khẩu mới sẽ là: <Text style={styles.boldText}>user123456</Text>
+            <Text
+              style={[styles.modalSubText, themed(({ colors }) => ({ color: colors.textDim }))]}
+            >
+              Mật khẩu mới sẽ là:{" "}
+              <Text style={[styles.boldText, themed(({ colors }) => ({ color: colors.text }))]}>
+                user123456
+              </Text>
             </Text>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalButton, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderColor: colors.border }))]} onPress={() => setResetPasswordModal(false)}>
-                <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  themed(({ colors }) => ({
+                    backgroundColor: colors.palette.neutral300,
+                    borderColor: colors.border,
+                  })),
+                ]}
+                onPress={() => setResetPasswordModal(false)}
+              >
+                <Text
+                  style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}
+                >
+                  Hủy
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#6200ea", borderColor: "#6200ea" }]}
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonPrimary,
+                  { backgroundColor: "#6200ea", borderColor: "#6200ea" },
+                ]}
                 onPress={handleResetPassword}
                 disabled={submitting}
               >
@@ -436,40 +614,67 @@ export const UsersScreen: FC<UsersScreenProps> = observer(function UsersScreen()
             </View>
           </View>
         </View>
-        </Modal>
+      </Modal>
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          visible={deleteModalVisible}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setDeleteModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral100, borderColor: colors.border }))]}>
-              <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>Xác nhận xóa</Text>
-              <Text style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}>
-                Bạn có chắc chắn muốn xóa người dùng "{userToDelete?.username}"?
-              </Text>
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonSecondary, themed(({ colors }) => ({ backgroundColor: colors.palette.neutral300, borderWidth: 0 }))]}
-                  onPress={() => setDeleteModalVisible(false)}
-                >
-                  <Text style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}>Hủy</Text>
-                </TouchableOpacity>
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              themed(({ colors }) => ({
+                backgroundColor: colors.palette.neutral100,
+                borderColor: colors.border,
+              })),
+            ]}
+          >
+            <Text style={[styles.modalTitle, themed(({ colors }) => ({ color: colors.text }))]}>
+              Xác nhận xóa
+            </Text>
+            <Text
+              style={[styles.modalMessage, themed(({ colors }) => ({ color: colors.textDim }))]}
+            >
+              Bạn có chắc chắn muốn xóa người dùng "{userToDelete?.username}"?
+            </Text>
+            <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: "#d32f2f", borderWidth: 0 }]}
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonSecondary,
+                  themed(({ colors }) => ({
+                    backgroundColor: colors.palette.neutral300,
+                    borderWidth: 0,
+                  })),
+                ]}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text
+                  style={[styles.modalButtonText, themed(({ colors }) => ({ color: colors.text }))]}
+                >
+                  Hủy
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonPrimary,
+                  { backgroundColor: "#d32f2f", borderWidth: 0 },
+                ]}
                 onPress={confirmDelete}
               >
                 <Text style={styles.modalButtonTextPrimary}>Xóa</Text>
               </TouchableOpacity>
-              </View>
             </View>
           </View>
-        </Modal>
-      </SafeAreaView>
-    )
+        </View>
+      </Modal>
+    </SafeAreaView>
+  )
   })
 
 const styles = StyleSheet.create({
