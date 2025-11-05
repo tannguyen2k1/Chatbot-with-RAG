@@ -3,7 +3,6 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database.models import User, UserRole, Role, Tenant
-from services.rbac import RBACService
 from config.settings import settings
 from passlib.context import CryptContext
 

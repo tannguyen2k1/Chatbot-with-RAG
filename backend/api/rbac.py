@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from schemas import RoleCreate, RoleUpdate, RoleOut, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole
-from dependencies import get_db, get_current_user
+from dependencies import get_current_user
 from dependencies.database import get_global_db
 from services import RBACService
 

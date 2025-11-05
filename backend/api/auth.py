@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from datetime import timedelta
-from typing import Optional
 from database.models import User
 from dependencies import get_db, get_current_user
 from dependencies.database import get_global_db
