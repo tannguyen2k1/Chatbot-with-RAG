@@ -3,7 +3,6 @@ from sqlalchemy import select
 from database.models import Demo
 from schemas import DemoCreate, DemoUpdate, PaginatedDemoResponse, DemoResponse
 from typing import Optional
-from services import RBACService
 from .rbac_helper import ensure_permission_global
 
 

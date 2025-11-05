@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from schemas import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
 from dependencies import get_db, get_current_user
 from services import DemoService, PermissionError

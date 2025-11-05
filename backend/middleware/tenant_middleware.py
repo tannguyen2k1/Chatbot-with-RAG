@@ -1,5 +1,4 @@
 from fastapi import Request
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 from database.models import Tenant
@@ -44,7 +43,7 @@ class TenantMiddleware:
         async for db in get_async_db():
             try:
                 result = await db.execute(
-                    select(Tenant).filter(Tenant.id == tenant_id, Tenant.is_active == True)
+                    select(Tenant).filter(Tenant.id == tenant_id, Tenant.is_active)
                 )
                 return result.scalar_one_or_none()
             finally:
@@ -56,7 +55,7 @@ class TenantMiddleware:
         async for db in get_async_db():
             try:
                 result = await db.execute(
-                    select(Tenant).filter(Tenant.subdomain == subdomain, Tenant.is_active == True)
+                    select(Tenant).filter(Tenant.subdomain == subdomain, Tenant.is_active)
                 )
                 return result.scalar_one_or_none()
             finally:
@@ -68,7 +67,7 @@ class TenantMiddleware:
         async for db in get_async_db():
             try:
                 result = await db.execute(
-                    select(Tenant).filter(Tenant.domain == domain, Tenant.is_active == True)
+                    select(Tenant).filter(Tenant.domain == domain, Tenant.is_active)
                 )
                 return result.scalar_one_or_none()
             finally:

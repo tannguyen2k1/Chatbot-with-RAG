@@ -4,7 +4,6 @@ from sqlalchemy.orm import selectinload
 from database.models.audit_log import AuditLog
 from schemas.audit_log import PaginatedAuditLogResponse, AuditLogOut
 from typing import Optional
-from services import RBACService
 from .rbac_helper import ensure_permission_global
 
 class AuditLogService:
