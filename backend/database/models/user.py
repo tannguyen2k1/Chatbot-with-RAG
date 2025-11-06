@@ -1,6 +1,6 @@
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, DateTime
 from database.models import BaseModel, UserRole
 from typing import Optional, List
 
@@ -12,6 +12,7 @@ class User(BaseModel):
     full_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     is_active: Mapped[int] = mapped_column(Integer, default=1)
+    password_changed_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user")

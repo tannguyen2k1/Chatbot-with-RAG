@@ -156,7 +156,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      showSnackbar("Đổi mật khẩu thành công!", "success");
+      showSnackbar("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "success");
+      
+      // Logout và redirect về màn hình đăng nhập vì token đã bị invalidate
+      setTimeout(() => {
+        logout(false); // false = không show message vì đã show ở trên
+      }, 1500); // Delay 1.5s để user thấy thông báo thành công
+      
       return data;
     } catch (error) {
       console.error("Change password error:", error);

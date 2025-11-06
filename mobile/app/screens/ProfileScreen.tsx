@@ -107,7 +107,13 @@ export const ProfileScreen: FC<ProfileScreenProps> = observer(function ProfileSc
       if (response.kind === "ok") {
         setChangePasswordModal(false)
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
-        showSuccess("Đổi mật khẩu thành công")
+        showSuccess("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.")
+        
+        // Logout và redirect về màn hình đăng nhập vì token đã bị invalidate
+        setTimeout(() => {
+          authenticationStore.logout()
+          // Navigator sẽ tự động redirect về Login screen vì isAuthenticated = false
+        }, 1500) // Delay 1.5s để user thấy thông báo thành công
       } else {
         setErrorMessage("Không thể đổi mật khẩu")
       }
