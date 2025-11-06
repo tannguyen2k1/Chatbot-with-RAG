@@ -74,11 +74,13 @@ class AuthService:
         # Ngược lại sử dụng tenant_id của user
         current_tenant_id = tenant.id if tenant else user.tenant_id
         
-        expire = datetime.now(timezone.utc) + expires_delta
+        now = datetime.now(timezone.utc)
+        expire = now + expires_delta
         payload = {
             "sub": str(user.id),
             "role": primary_role,
             "tenant_id": str(current_tenant_id) if current_tenant_id else None,
+            "iat": int(now.timestamp()),  # Issued at - thời gian token được tạo
             "exp": int(expire.timestamp())  # exp phải là integer, không phải string!
         }
         return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
@@ -103,11 +105,13 @@ class AuthService:
         # Ngược lại sử dụng tenant_id của user
         current_tenant_id = tenant.id if tenant else user.tenant_id
         
-        expire = datetime.now(timezone.utc) + expires_delta
+        now = datetime.now(timezone.utc)
+        expire = now + expires_delta
         payload = {
             "sub": str(user.id),
             "role": primary_role,
             "tenant_id": str(current_tenant_id) if current_tenant_id else None,
+            "iat": int(now.timestamp()),  # Issued at - thời gian token được tạo
             "exp": int(expire.timestamp())  # exp phải là integer, không phải string!
         }
         return jwt.encode(payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
@@ -121,14 +125,24 @@ class AuthService:
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
-        # Use async update
+        # Use async update - query lại user từ database để đảm bảo an toàn
+        # Query theo primary key (user.id) - unique trong toàn bộ database, không thể trùng
         stmt = select(User).filter(User.id == user.id)
         result = await self.db.execute(stmt)
         user_to_update = result.scalar_one_or_none()
-        if user_to_update:
-            user_to_update.hashed_password = hashed_new_password
-            await self.db.commit()
-            await self.db.refresh(user_to_update)
+        
+        if not user_to_update:
+            raise ValueError("User not found in database")
+        
+        # Double check: verify user ID khớp (thêm layer bảo mật)
+        if user_to_update.id != user.id:
+            raise ValueError("User ID mismatch - security check failed")
+        
+        # Update password và set password_changed_at để invalidate các token cũ
+        user_to_update.hashed_password = hashed_new_password
+        user_to_update.password_changed_at = datetime.now(timezone.utc)
+        await self.db.commit()
+        await self.db.refresh(user_to_update)
         return True
     
     
@@ -171,12 +185,13 @@ class AuthService:
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
-        # Update password in database
+        # Update password in database và set password_changed_at để invalidate các token cũ
         stmt = select(User).filter(User.id == user.id)
         result = await self.db.execute(stmt)
         user_to_update = result.scalar_one_or_none()
         if user_to_update:
             user_to_update.hashed_password = hashed_new_password
+            user_to_update.password_changed_at = datetime.now(timezone.utc)
             await self.db.commit()
             await self.db.refresh(user_to_update)
         
@@ -188,6 +203,7 @@ class AuthService:
             payload = jwt.decode(refresh_token, settings.JWT_REFRESH_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
             user_id = payload.get("sub")
             tenant_id = payload.get("tenant_id")
+            token_iat = payload.get("iat")  # Issued at time của token
             if user_id is None:
                 raise ValueError("Invalid token payload")
         except JWTError:
@@ -197,6 +213,17 @@ class AuthService:
         user = result.scalar_one_or_none()
         if not user:
             raise ValueError("User not found")
+        
+        # Kiểm tra refresh token có bị invalidate do đổi mật khẩu không
+        # Nếu user đã đổi mật khẩu sau khi token được tạo, token này không còn hợp lệ
+        if user.password_changed_at:
+            # Nếu token không có iat (token cũ), invalidate luôn nếu password đã đổi
+            if not token_iat:
+                raise ValueError("Refresh token has been invalidated due to password change. Please login again.")
+            # Nếu token có iat, kiểm tra xem password đổi sau khi token được tạo
+            token_issued_at = datetime.fromtimestamp(token_iat, tz=timezone.utc)
+            if user.password_changed_at > token_issued_at:
+                raise ValueError("Refresh token has been invalidated due to password change. Please login again.")
 
         # Lấy tenant từ tenant_id trong token
         tenant = None
@@ -267,12 +294,13 @@ class AuthService:
         # Hash new password
         hashed_new_password = pwd_context.hash(new_password)
         
-        # Update password in database
+        # Update password in database và set password_changed_at để invalidate các token cũ
         stmt = select(User).filter(User.id == user.id)
         result = await self.db.execute(stmt)
         user_to_update = result.scalar_one_or_none()
         if user_to_update:
             user_to_update.hashed_password = hashed_new_password
+            user_to_update.password_changed_at = datetime.now(timezone.utc)
             await self.db.commit()
             await self.db.refresh(user_to_update)
         

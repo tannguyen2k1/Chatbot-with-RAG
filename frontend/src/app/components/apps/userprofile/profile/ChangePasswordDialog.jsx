@@ -91,11 +91,8 @@ const ChangePasswordDialog = ({ open, onClose }) => {
         confirmPassword: "",
       });
       
-      // Close dialog after 2 seconds
-      setTimeout(() => {
-        onClose();
-        setSuccess(false);
-      }, 2000);
+      // Không cần đóng dialog vì logout sẽ redirect về login page
+      // Dialog sẽ tự động đóng khi redirect
     } catch (err) {
       setError(err.response?.data?.detail || "Có lỗi xảy ra khi đổi mật khẩu");
     } finally {
@@ -154,7 +151,7 @@ const ChangePasswordDialog = ({ open, onClose }) => {
         
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Đổi mật khẩu thành công!
+            Đổi mật khẩu thành công! Bạn sẽ được chuyển đến trang đăng nhập...
           </Alert>
         )}
 

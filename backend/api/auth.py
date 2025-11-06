@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from database.models import User
-from dependencies import get_db, get_current_user
+from dependencies import get_current_user, get_db
 from dependencies.database import get_global_db
 from services.auth import AuthService
 from config.settings import settings
@@ -109,10 +109,11 @@ async def refresh_access_token(
 async def change_password(
     change_data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_global_db)
 ):
     """
     Đổi mật khẩu cho user hiện tại
+    Sử dụng get_global_db để tránh tenant filtering khi update password (đặc biệt cho root user)
     """
     auth_service = AuthService(db)
     try:
