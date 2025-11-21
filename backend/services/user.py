@@ -86,7 +86,7 @@ class UserService:
             # Xóa hết user_roles cũ
             await self.db.execute(delete(UserRole).filter_by(user_id=user_id))
             # Tìm role id mới theo tenant_id
-            result = await self.db.execute(select(Role).filter_by(name=update_data.role, tenant_id=user.tenant_id))
+            result = await self.db.execute(select(Role).filter_by(name=update_data.role))
             role_obj = result.scalar_one_or_none()
             if role_obj:
                 new_user_role = UserRole(user_id=user_id, role_id=role_obj.id, tenant_id=user.tenant_id)
