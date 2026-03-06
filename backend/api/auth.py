@@ -15,6 +15,23 @@ from schemas import (TokenResponse,
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+REMEMBER_ME_COOKIE_NAME = "remember_me"
+
+
+def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool) -> None:
+    cookie_kwargs = dict(
+        key=settings.REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.REFRESH_COOKIE_SECURE,
+        samesite=settings.REFRESH_COOKIE_SAMESITE,
+        path=settings.REFRESH_COOKIE_PATH,
+        domain=settings.REFRESH_COOKIE_DOMAIN,
+    )
+    if remember_me:
+        cookie_kwargs["max_age"] = settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60
+
+    response.set_cookie(**cookie_kwargs)
 
 # Endpoint: Simple login with JSON body
 @router.post("/login", response_model=TokenResponse)
@@ -47,15 +64,19 @@ async def login(
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     )
 
-    # Set refresh token as httpOnly cookie
+    # Set refresh token cookie theo remember_me:
+    # - remember_me=True  -> persistent cookie
+    # - remember_me=False -> session cookie (mất khi đóng browser)
+    set_refresh_cookie(response, refresh_token, login_data.remember_me)
     response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
+        key=REMEMBER_ME_COOKIE_NAME,
+        value="1" if login_data.remember_me else "0",
         httponly=True,
-        secure=False, # Set to False for development (HTTP)
-        samesite="lax",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
-        path="/"
+        secure=settings.REFRESH_COOKIE_SECURE,
+        samesite=settings.REFRESH_COOKIE_SAMESITE,
+        path=settings.REFRESH_COOKIE_PATH,
+        domain=settings.REFRESH_COOKIE_DOMAIN,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60 if login_data.remember_me else None,
     )
 
     # Get user info with roles and permissions (dùng service)
@@ -84,16 +105,8 @@ async def refresh_access_token(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    # Update refresh token cookie
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        secure=False,  # Set to False for development (HTTP)
-        samesite="lax",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        path="/"
-    )
+    remember_me = request.cookies.get(REMEMBER_ME_COOKIE_NAME) == "1"
+    set_refresh_cookie(response, new_refresh_token, remember_me)
 
     # Lấy user từ refresh token
     user = await auth_service.get_user_from_refresh_token(refresh_token)
@@ -134,8 +147,14 @@ async def logout(response: Response):
     Đăng xuất và clear refresh token cookie
     """
     response.delete_cookie(
-        key="refresh_token",
-        path="/"
+        key=settings.REFRESH_COOKIE_NAME,
+        path=settings.REFRESH_COOKIE_PATH,
+        domain=settings.REFRESH_COOKIE_DOMAIN,
+    )
+    response.delete_cookie(
+        key=REMEMBER_ME_COOKIE_NAME,
+        path=settings.REFRESH_COOKIE_PATH,
+        domain=settings.REFRESH_COOKIE_DOMAIN,
     )
     return MessageResponse(message="Logged out successfully")
 

@@ -19,6 +19,7 @@ import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLab
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const router = useRouter();
@@ -27,7 +28,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(username, password); // AuthContext sẽ tự hiện snackbar
+      await login(username, password, rememberDevice); // AuthContext sẽ tự hiện snackbar
       router.push("/");
     } catch {
       // Không cần xử lý error ở đây vì snackbar đã hiện trong AuthContext
@@ -47,7 +48,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       <Stack>
         <Box>
-          <CustomFormLabel htmlFor="username">Username</CustomFormLabel>
+          <CustomFormLabel htmlFor="username">Tên tài khoản</CustomFormLabel>
           <CustomTextField
             id="username"
             variant="outlined"
@@ -59,7 +60,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           />
         </Box>
         <Box>
-          <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
+          <CustomFormLabel htmlFor="password">Mật khẩu</CustomFormLabel>
           <CustomTextField
             id="password"
             type="password"
@@ -79,8 +80,14 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         >
           <FormGroup>
             <FormControlLabel
-              control={<CustomCheckbox defaultChecked disabled={loading} />}
-              label="Remember this Device"
+              control={
+                <CustomCheckbox
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                  disabled={loading}
+                />
+              }
+              label="Nhớ thiết bị này"
             />
           </FormGroup>
           <Typography
