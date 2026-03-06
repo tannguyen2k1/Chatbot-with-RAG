@@ -7,6 +7,7 @@ class LoginRequest(BaseModel):
     username: str
     password: str
     tenant_code: str  # Ví dụ: "root", "admin", "company1"
+    remember_me: bool = True
 
 class TokenResponse(BaseModel):
     access_token: str

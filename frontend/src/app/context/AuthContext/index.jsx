@@ -58,14 +58,19 @@ export const AuthProvider = ({ children }) => {
     setSnackbarOpen(true);
   };
 
-  const login = async (username, password) => {
+  const login = async (username, password, rememberMe = true) => {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, tenant_code: tenantCode }),
+        body: JSON.stringify({
+          username,
+          password,
+          tenant_code: tenantCode,
+          remember_me: rememberMe,
+        }),
         credentials: "include",
       });
 
@@ -137,14 +142,13 @@ export const AuthProvider = ({ children }) => {
     if (user) setUser(user);
   };
 
-
   const changePassword = async (passwordData) => {
     try {
       const response = await fetch("/api/auth/change-password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(passwordData),
         credentials: "include",
@@ -156,13 +160,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      showSnackbar("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "success");
-      
+      showSnackbar(
+        "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.",
+        "success",
+      );
+
       // Logout và redirect về màn hình đăng nhập vì token đã bị invalidate
       setTimeout(() => {
         logout(false); // false = không show message vì đã show ở trên
       }, 1500); // Delay 1.5s để user thấy thông báo thành công
-      
+
       return data;
     } catch (error) {
       console.error("Change password error:", error);
@@ -177,7 +184,7 @@ export const AuthProvider = ({ children }) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(profileData),
         credentials: "include",
