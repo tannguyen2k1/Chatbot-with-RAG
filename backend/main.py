@@ -13,18 +13,25 @@ async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
+    # Thiết lập Row Level Security cho multi-tenancy
+    from database.rls import setup_rls
+
+    await setup_rls(engine)
+
     # Đăng ký audit event listener cho tất cả các bảng
     register_audit_events()
-    
+
     # Auto seed RBAC (roles, modules, permissions)
     async with AsyncSessionLocal() as db:
         try:
             from database.seeds.auto_seed_data import auto_seed_all
+
             await auto_seed_all(db)
         except Exception as e:
             print(f"Error during seeding: {e}")
     yield
+
 
 app = FastAPI(
     title="FastAPI User Management Base Project",
@@ -74,7 +81,7 @@ app = FastAPI(
     - Xem tại: `/api/audit-logs`
     """,
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 
@@ -82,6 +89,7 @@ app = FastAPI(
 @app.get("/")
 async def root():
     return {"message": "Welcome to the API"}
+
 
 # --- API Router with prefix /api ---
 api_router = APIRouter(prefix="/api")
