@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, AsyncSessionLocal
 from database.models.base import Base
-from api import auth, rbac, demo, user, audit_log, tenant
+from api import auth, rbac, demo, user, audit_log, tenant, vector
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
@@ -30,30 +30,51 @@ async def lifespan(app: FastAPI):
             await auto_seed_all(db)
         except Exception as e:
             print(f"Error during seeding: {e}")
+
+    # Kiểm tra kết nối Qdrant
+    try:
+        from database.qdrant import async_qdrant_client
+        from services.vector import VectorService
+        qdrant_service = VectorService(async_qdrant_client)
+        health = await qdrant_service.health_check()
+        if health["status"] == "healthy":
+            print(f"[Qdrant] Connected! Collections: {health['collections']}")
+        else:
+            print(f"[WARN] Qdrant unhealthy: {health.get('error', 'unknown')}")
+    except Exception as e:
+        print(f"[WARN] Qdrant not available: {e}")
+
     yield
+
+    # Shutdown: đóng Qdrant client
+    try:
+        await async_qdrant_client.close()
+        print("[Qdrant] Client closed.")
+    except Exception:
+        pass
 
 
 app = FastAPI(
     title="FastAPI User Management Base Project",
     description="""
-    🚀 **FastAPI Base Project với JWT Authentication & RBAC**
+    [>] **FastAPI Base Project với JWT Authentication & RBAC**
     
-    ## 🔐 Cách sử dụng:
+    ## [>] Cách sử dụng:
     1. **Login:** POST `/api/auth/login` (cần tenant_id)
     2. **Copy token** từ response 
     3. **Authorize:** Click nút "Authorize" và nhập: `Bearer YOUR_TOKEN`
     
-    ## 👤 Tài khoản mặc định:
+    ## [>] Tài khoản mặc định:
     - Username: `root`  
     - Password: `root123456`
     - Tenant Code: `default` (tenant mặc định)
     
-    ## 🏢 Hệ thống Multi-Tenant:
+    ## [>] Hệ thống Multi-Tenant:
     - Mỗi user thuộc về một tenant
     - API calls tự động filter theo tenant context
     - Admin có thể quản lý tất cả tenants
     
-    ## 🎯 Hệ thống phân quyền RBAC:
+    ## [>] Hệ thống phân quyền RBAC:
     **Cấu trúc:** User → Role → Permission → Module
     
     **Các loại quyền:** `view`, `create`, `update`, `delete`
@@ -76,7 +97,7 @@ app = FastAPI(
     }
     ```
     
-    ## 📊 Audit Logging:
+    ## [>] Audit Logging:
     - Tự động log tất cả thay đổi CRUD
     - Xem tại: `/api/audit-logs`
     """,
@@ -101,6 +122,7 @@ api_router.include_router(demo.router)
 api_router.include_router(rbac.router)
 api_router.include_router(audit_log.router)
 api_router.include_router(tenant.router)
+api_router.include_router(vector.router)
 app.include_router(api_router)
 
 

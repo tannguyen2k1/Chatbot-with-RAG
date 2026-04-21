@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     REFRESH_COOKIE_PATH: str = "/"
     REFRESH_COOKIE_DOMAIN: Optional[str] = None
 
+    # Qdrant Vector Database
+    QDRANT_HOST: str = "localhost"
+    QDRANT_PORT: int = 6333
+    QDRANT_GRPC_PORT: int = 6334
+
+    # Embedding Model (Qwen3)
+    EMBEDDING_MODEL_NAME: str = "Qwen/Qwen3-Embedding-0.6B"
+    EMBEDDING_USE_FLASH_ATTENTION: bool = False
+
     @property
     def cors_allow_origins_list(self) -> list[str]:
         return [x.strip() for x in self.CORS_ALLOW_ORIGINS.split(",") if x.strip()]
