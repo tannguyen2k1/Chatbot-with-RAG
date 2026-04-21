@@ -51,7 +51,7 @@ async def update_demo(
         raise HTTPException(status_code=403, detail=str(e))
 
 
-@router.delete("/{demo_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{demo_id}", status_code=status.HTTP_200_OK)
 async def delete_demo(
     demo_id: int,
     db: AsyncSession = Depends(get_db),
@@ -60,7 +60,8 @@ async def delete_demo(
     """Xóa demo"""
     demo_service = DemoService(db)
     try:
-        return await demo_service.delete_demo_for(current_user.id, demo_id)
+        await demo_service.delete_demo_for(current_user.id, demo_id)
+        return {"message": f"Demo {demo_id} deleted successfully"}
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 

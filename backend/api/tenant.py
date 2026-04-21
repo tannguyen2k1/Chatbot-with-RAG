@@ -219,7 +219,7 @@ async def update_tenant(
     )
     return result.scalar_one()
 
-@router.delete("/{tenant_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{tenant_id}", status_code=status.HTTP_200_OK)
 async def delete_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_global_db),
@@ -275,4 +275,4 @@ async def delete_tenant(
             detail=f"Không thể xóa tenant: {str(e)}"
         )
     
-    return None
+    return {"message": f"Tenant {tenant_id} deleted successfully"}

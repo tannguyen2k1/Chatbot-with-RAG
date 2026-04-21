@@ -65,7 +65,7 @@ async def setup_rls(engine: AsyncEngine):
     Bước 2: Grant quyền cho role này trên tất cả bảng
     Bước 3: Enable RLS + tạo policy trên từng bảng
     """
-    print("🔒 Đang thiết lập Row Level Security...")
+    print("[RLS] Dang thiet lap Row Level Security...")
 
     async with engine.begin() as conn:
         # ===== BƯỚC 1: Tạo role không phải superuser =====
@@ -78,11 +78,11 @@ async def setup_rls(engine: AsyncEngine):
 
             if not role_exists:
                 await conn.execute(text(f"CREATE ROLE {APP_ROLE} NOSUPERUSER NOLOGIN"))
-                print(f"  ✅ Tạo role: {APP_ROLE}")
+                print(f"  [OK] Tao role: {APP_ROLE}")
             else:
-                print(f"  ✅ Role đã tồn tại: {APP_ROLE}")
+                print(f"  [OK] Role da ton tai: {APP_ROLE}")
         except Exception as e:
-            print(f"  ⚠️  Lỗi tạo role: {e}")
+            print(f"  [WARN] Loi tao role: {e}")
 
         # ===== BƯỚC 2: Grant quyền =====
         try:
@@ -109,9 +109,9 @@ async def setup_rls(engine: AsyncEngine):
                     f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {APP_ROLE}"
                 )
             )
-            print(f"  ✅ Đã grant quyền cho {APP_ROLE}")
+            print(f"  [OK] Da grant quyen cho {APP_ROLE}")
         except Exception as e:
-            print(f"  ⚠️  Lỗi grant quyền: {e}")
+            print(f"  [WARN] Loi grant quyen: {e}")
 
         # ===== BƯỚC 3: Enable RLS + tạo policy =====
         rls_tables = get_rls_tables()
@@ -151,8 +151,8 @@ async def setup_rls(engine: AsyncEngine):
                 """)
                 )
 
-                print(f"  ✅ RLS enabled: {table}")
+                print(f"  [OK] RLS enabled: {table}")
             except Exception as e:
-                print(f"  ⚠️  RLS failed for {table}: {e}")
+                print(f"  [WARN] RLS failed for {table}: {e}")
 
-    print("🔒 Row Level Security setup hoàn tất!")
+    print("[RLS] Row Level Security setup hoan tat!")
