@@ -111,6 +111,13 @@ class VectorService:
             points_selector=point_ids,
         )
 
+    async def clear_collection(self, collection_name: str) -> None:
+        """Xoá sạch tất cả points trong một collection (giữ lại cấu hình)"""
+        await self.client.delete(
+            collection_name=collection_name,
+            points_selector=Filter(),
+        )
+
     async def get_point(
         self, collection_name: str, point_id: str | int
     ) -> Optional[dict]:

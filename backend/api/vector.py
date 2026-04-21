@@ -230,6 +230,19 @@ async def delete_points(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.delete("/collections/{collection_name}/clear", status_code=status.HTTP_200_OK)
+async def clear_collection(
+    collection_name: str,
+    service: VectorService = Depends(get_vector_service)
+):
+    """Xóa sạch tất cả points trong collection (giữ lại cấu hình collection)"""
+    try:
+        await service.clear_collection(collection_name)
+        return {"message": f"All points in collection '{collection_name}' have been cleared"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ==================== Search ====================
 
 @router.post(
