@@ -35,7 +35,7 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                 )
                 user = await user_service.create_user(user_create, tenant_id=tenant.id)
             except Exception as e:
-                print(f"❌ Error creating user {username}: {str(e)}")
+                print(f"[ERROR] Error creating user {username}: {str(e)}")
                 continue
 
         # Gán role vào bảng user_roles nếu chưa có (roles giờ là global)
@@ -50,4 +50,4 @@ async def seed_default_accounts(db: AsyncSession, tenant: Tenant) -> None:
                 user_role = UserRole(user_id=user.id, role_id=role_obj.id, tenant_id=tenant.id)
                 db.add(user_role)
                 await db.commit()
-                print(f"✅ Assigned role {role} to user {username}")
+                print(f"[OK] Assigned role {role} to user {username}")

@@ -31,9 +31,9 @@ async def seed_root_user(db: AsyncSession) -> None:
         db.add(root_user)
         await db.commit()
         await db.refresh(root_user)
-        print("✅ Created root user with global access")
+        print("[OK] Created root user with global access")
     else:
-        print("ℹ️ Root user already exists")
+        print("[INFO] Root user already exists")
     
     # Gán role root cho user root
     result = await db.execute(select(Role).filter_by(name="root"))
@@ -57,8 +57,8 @@ async def seed_root_user(db: AsyncSession) -> None:
             )
             db.add(user_role)
             await db.commit()
-            print("✅ Assigned root role to root user")
+            print("[OK] Assigned root role to root user")
         else:
-            print("ℹ️ Root user already has root role")
+            print("[INFO] Root user already has root role")
     
     return root_user

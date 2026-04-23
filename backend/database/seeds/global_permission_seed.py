@@ -61,9 +61,9 @@ async def seed_global_modules_and_permissions(db: AsyncSession) -> None:
             module = Module(name=name, description=desc)
             db.add(module)
             await db.commit()
-            print(f"✅ Created global module: {name}")
+            print(f"[OK] Created global module: {name}")
         else:
-            print(f"ℹ️ Global module {name} already exists")
+            print(f"[INFO] Global module {name} already exists")
     
     # Seed permissions
     for name, desc in GLOBAL_PERMISSIONS:
@@ -73,6 +73,6 @@ async def seed_global_modules_and_permissions(db: AsyncSession) -> None:
             permission = Permission(name=name, description=desc)
             db.add(permission)
             await db.commit()
-            print(f"✅ Created global permission: {name}")
+            print(f"[OK] Created global permission: {name}")
         else:
-            print(f"ℹ️ Global permission {name} already exists")
+            print(f"[INFO] Global permission {name} already exists")

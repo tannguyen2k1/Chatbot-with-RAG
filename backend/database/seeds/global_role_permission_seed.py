@@ -9,7 +9,7 @@ async def seed_global_role_permissions(db: AsyncSession) -> None:
     result = await db.execute(select(Role).filter_by(name="root"))
     root_role = result.scalar_one_or_none()
     if not root_role:
-        print("❌ Root role not found")
+        print("[ERROR] Root role not found")
         return
     
     # Lấy tất cả permissions và modules
@@ -42,9 +42,9 @@ async def seed_global_role_permissions(db: AsyncSession) -> None:
     
     if count > 0:
         await db.commit()
-        print(f"✅ Assigned {count} permissions to root role")
+        print(f"[OK] Assigned {count} permissions to root role")
     else:
-        print("ℹ️ Root role already has all permissions")
+        print("[INFO] Root role already has all permissions")
 
 async def seed_admin_role_permissions(db: AsyncSession) -> None:
     """Gán permissions cho role admin (trừ tenant permissions)"""
@@ -53,7 +53,7 @@ async def seed_admin_role_permissions(db: AsyncSession) -> None:
     result = await db.execute(select(Role).filter_by(name="admin"))
     admin_role = result.scalar_one_or_none()
     if not admin_role:
-        print("❌ Admin role not found")
+        print("[ERROR] Admin role not found")
         return
     
     # Lấy tất cả permissions (trừ tenant permissions)
@@ -86,6 +86,6 @@ async def seed_admin_role_permissions(db: AsyncSession) -> None:
     
     if count > 0:
         await db.commit()
-        print(f"✅ Assigned {count} permissions to admin role")
+        print(f"[OK] Assigned {count} permissions to admin role")
     else:
-        print("ℹ️ Admin role already has all non-tenant permissions")
+        print("[INFO] Admin role already has all non-tenant permissions")

@@ -22,34 +22,34 @@ async def auto_seed_all(db: AsyncSession) -> None:
         print("🌱 Starting seeding process...")
         
         # 1. Seed global data first (roles, permissions, modules không thuộc tenant nào)
-        print("📝 Seeding global roles...")
+        print("[SEED] Seeding global roles...")
         await seed_global_roles(db)
         
-        print("📝 Seeding global modules and permissions...")
+        print("[SEED] Seeding global modules and permissions...")
         await seed_global_modules_and_permissions(db)
         
-        print("📝 Seeding global role permissions...")
+        print("[SEED] Seeding global role permissions...")
         await seed_global_role_permissions(db)
         await seed_admin_role_permissions(db)
         
-        print("📝 Seeding root user...")
+        print("[SEED] Seeding root user...")
         await seed_root_user(db)
         
         # 2. Seed tenant-specific data
-        print("📝 Seeding default tenant...")
+        print("[SEED] Seeding default tenant...")
         default_tenant = await seed_default_tenant(db)
         
         # Set tenant context cho seeding
         current_tenant_id.set(str(default_tenant.id))
         
-        print("📝 Seeding tenant-specific data...")
+        print("[SEED] Seeding tenant-specific data...")
         await seed_default_roles(db, default_tenant)
         await seed_default_accounts(db, default_tenant)
         await seed_default_demos(db, default_tenant)
         
-        print("✅ Seeding completed successfully!")
+        print("[OK] Seeding completed successfully!")
         
     except Exception as e:
-        print(f"❌ Critical error during seeding: {str(e)}")
+        print(f"[ERROR] Critical error during seeding: {str(e)}")
         raise
 
