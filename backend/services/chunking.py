@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Any
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -14,6 +15,30 @@ class ChunkingService:
             separators=["\n\n", "\n", ".", " ", ""]
         )
 
+    def is_garbage_text(self, text: str) -> bool:
+        """Bộ lọc nhiễu tổng hợp (Heuristic Filtering)"""
+        # 1. Rule-based: Quá ngắn hoặc chỉ chứa số (thường là số trang)
+        if len(text) < 3:
+            return True
+        if text.isdigit():
+            return True
+            
+        # 3. Ratio Filtering: Chống lỗi giãn chữ "n o i t a v r e s n o C"
+        # Nếu dòng dài hơn 10 ký tự mà khoảng trắng chiếm > 40% thì coi là rác
+        if len(text) > 10:
+            space_count = text.count(' ')
+            if space_count / len(text) > 0.4:
+                return True
+                
+        return False
+
+    def clean_text(self, text: str) -> str:
+        """Lọc nhiễu bằng Regex"""
+        
+        # Xóa các ký tự đặc biệt lặp lại nhiều lần
+        text = re.sub(r'[-_=\.*~]{4,}', '', text)
+        return text.strip()
+
     def group_and_chunk(self, parsed_elements: List[Dict[str, Any]], base_metadata: dict) -> List[Dict[str, Any]]:
         """
         - Bước 1: Gom nhóm nội dung theo Title (Heading).
@@ -25,7 +50,24 @@ class ChunkingService:
         current_content = []
         
         for el in parsed_elements:
-            if el["type"] == "Title":
+            raw_text = el["text"].strip()
+            if not raw_text:
+                continue
+                
+            # Tiền xử lý văn bản
+            text = self.clean_text(raw_text)
+            
+            # Loại bỏ các dòng rác
+            if not text or self.is_garbage_text(text):
+                continue
+                
+            is_title = el["type"] == "Title"
+            
+            # Lọc nhiễu Heading: Không cho phép Heading quá ngắn (ví dụ "A.") hoặc quá dài (nhầm với đoạn văn)
+            if is_title and (len(text) < 4 or len(text) > 150):
+                is_title = False
+                
+            if is_title:
                 # Đóng gói section cũ trước khi chuyển sang heading mới
                 if current_content:
                     sections.append({
@@ -33,10 +75,9 @@ class ChunkingService:
                         "content": "\n".join(current_content)
                     })
                     current_content = []
-                current_heading = el["text"]
+                current_heading = text
             else:
-                if el["text"].strip():
-                    current_content.append(el["text"])
+                current_content.append(text)
                     
         # Đóng gói section cuối cùng
         if current_content:
