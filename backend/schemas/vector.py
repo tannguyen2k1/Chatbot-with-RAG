@@ -45,31 +45,7 @@ class PointsBatchUpsert(BaseModel):
     points: list[PointUpsert] = Field(..., description="Danh sách points")
 
 
-# --- Text-based Point (auto embedding) ---
-class TextPointUpsert(BaseModel):
-    """Thêm point bằng text - tự động embed thành vector, ID tự sinh"""
-    text: str = Field(..., description="Nội dung text sẽ được auto embed thành vector")
-    payload: dict[str, Any] = Field(default_factory=dict, description="Metadata đi kèm vector")
 
-    @field_validator("text", mode="before")
-    @classmethod
-    def sanitize_text(cls, v: str) -> str:
-        """Tự động làm sạch text từ PDF: bỏ ký tự control, chuẩn hóa khoảng trắng"""
-        import re
-        # Thay control characters (trừ \n \t) bằng space
-        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', ' ', v)
-        # Chuẩn hóa nhiều khoảng trắng liên tiếp
-        v = re.sub(r' +', ' ', v)
-        return v.strip()
-
-
-class TextPointsBatchUpsert(BaseModel):
-    """Thêm nhiều text points cùng lúc - tự động embed"""
-    points: list[TextPointUpsert] = Field(..., description="Danh sách text points")
-    is_query: bool = Field(
-        default=False,
-        description="True nếu text là query (thêm prompt prefix), False nếu là document",
-    )
 
 
 # --- Search ---

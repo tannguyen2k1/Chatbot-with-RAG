@@ -19,7 +19,7 @@ async def auto_seed_all(db: AsyncSession) -> None:
     """Seed tất cả dữ liệu cần thiết cho hệ thống"""
     
     try:
-        print("🌱 Starting seeding process...")
+        print("Starting seeding process...")
         
         # 1. Seed global data first (roles, permissions, modules không thuộc tenant nào)
         print("[SEED] Seeding global roles...")

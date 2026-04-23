@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, AsyncSessionLocal
 from database.models.base import Base
-from api import auth, rbac, demo, user, audit_log, tenant, vector
+from api import auth, rbac, demo, user, audit_log, tenant, vector, ingestion
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
@@ -123,6 +123,7 @@ api_router.include_router(rbac.router)
 api_router.include_router(audit_log.router)
 api_router.include_router(tenant.router)
 api_router.include_router(vector.router)
+api_router.include_router(ingestion.router)
 app.include_router(api_router)
 
 
