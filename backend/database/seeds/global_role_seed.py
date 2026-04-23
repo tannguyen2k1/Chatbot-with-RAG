@@ -18,6 +18,6 @@ async def seed_global_roles(db: AsyncSession) -> None:
             role = Role(name=name, description=desc)
             db.add(role)
             await db.commit()
-            print(f"✅ Created global role: {name}")
+            print(f"[OK] Created global role: {name}")
         else:
-            print(f"ℹ️ Global role {name} already exists")
+            print(f"[INFO] Global role {name} already exists")

@@ -17,6 +17,6 @@ async def seed_default_roles(db: AsyncSession, tenant: Tenant) -> None:
             # Tạo global role (không có tenant_id)
             db.add(Role(name=name, description=desc))
             await db.commit()
-            print(f"✅ Created global role: {name}")
+            print(f"[OK] Created global role: {name}")
         else:
-            print(f"ℹ️ Role {name} already exists")
+            print(f"[INFO] Role {name} already exists")
