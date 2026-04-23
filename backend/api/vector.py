@@ -15,8 +15,6 @@ from schemas.vector import (
     CollectionInfo,
     PointUpsert,
     PointsBatchUpsert,
-    TextPointUpsert,
-    TextPointsBatchUpsert,
     TextSearchRequest,
     VectorSearchRequest,
     VectorSearchResponse,
@@ -98,103 +96,7 @@ async def upsert_points(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/collections/{collection_name}/points/single", status_code=status.HTTP_201_CREATED)
-async def upsert_single_point(
-    collection_name: str,
-    point: PointUpsert,
-    service: VectorService = Depends(get_vector_service),
-):
-    """Thêm/cập nhật một point (truyền vector trực tiếp)"""
-    try:
-        await service.upsert_points(collection_name, [point])
-        return {"message": f"Upserted point {point.id}"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
-
-# ==================== Text-based Upsert (Auto Embedding) ====================
-
-import json as json_lib
-
-
-def _parse_raw_json(raw: bytes) -> dict:
-    """Parse JSON từ raw body, chấp nhận control characters.
-    strict=False cho phép \\n, \\t, \\r... bên trong chuỗi JSON."""
-    text = raw.decode("utf-8", errors="replace")
-    return json_lib.loads(text, strict=False)
-
-
-@router.post("/collections/{collection_name}/points/text", status_code=status.HTTP_201_CREATED)
-async def upsert_text_points(
-    collection_name: str,
-    request: Request,
-    service: VectorService = Depends(get_vector_service),
-    embedding: EmbeddingService = Depends(get_embedding_service),
-):
-    """
-    Thêm/cập nhật points bằng TEXT - tự động embed thành vector qua Qwen3.
-    
-    Hỗ trợ text copy từ PDF (tự động xử lý ký tự đặc biệt).
-    """
-    try:
-        raw_body = await request.body()
-        body = _parse_raw_json(raw_body)
-        data = TextPointsBatchUpsert(**body)
-
-        # Embed tất cả texts cùng lúc (batch)
-        texts = [p.text for p in data.points]
-        vectors = embedding.encode_texts(texts, is_query=data.is_query)
-
-        # Chuyển thành PointUpsert với vector đã embed + UUID tự sinh
-        point_upserts = []
-        for point, vector in zip(data.points, vectors):
-            point_id = str(uuid.uuid4())
-            payload = {**point.payload, "_text": point.text}
-            point_upserts.append(
-                PointUpsert(id=point_id, vector=vector, payload=payload)
-            )
-
-        await service.upsert_points(collection_name, point_upserts)
-        return {
-            "message": f"Embedded and upserted {len(data.points)} points",
-            "vector_dimension": len(vectors[0]) if vectors else 0,
-        }
-    except json_lib.JSONDecodeError as e:
-        raise HTTPException(status_code=422, detail=f"Invalid JSON: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/collections/{collection_name}/points/text/single", status_code=status.HTTP_201_CREATED)
-async def upsert_single_text_point(
-    collection_name: str,
-    request: Request,
-    service: VectorService = Depends(get_vector_service),
-    embedding: EmbeddingService = Depends(get_embedding_service),
-):
-    """
-    Thêm/cập nhật 1 point bằng TEXT - tự động embed qua Qwen3.
-    
-    Hỗ trợ text copy từ PDF (tự động xử lý ký tự đặc biệt).
-    """
-    try:
-        raw_body = await request.body()
-        body = _parse_raw_json(raw_body)
-        point = TextPointUpsert(**body)
-
-        vector = embedding.encode_single(point.text)
-        point_id = str(uuid.uuid4())
-        payload = {**point.payload, "_text": point.text}
-        point_upsert = PointUpsert(id=point_id, vector=vector, payload=payload)
-        await service.upsert_points(collection_name, [point_upsert])
-        return {
-            "message": f"Embedded and upserted point {point_id}",
-            "vector_dimension": len(vector),
-        }
-    except json_lib.JSONDecodeError as e:
-        raise HTTPException(status_code=422, detail=f"Invalid JSON: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/collections/{collection_name}/points/{point_id}")
