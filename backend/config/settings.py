@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     # Embedding Model (Qwen3)
     EMBEDDING_MODEL_NAME: str = "Qwen/Qwen3-Embedding-0.6B"
     EMBEDDING_USE_FLASH_ATTENTION: bool = False
+    
+    # Reranker Model
+    RERANKER_MODEL_NAME: str = "Qwen/Qwen3-Reranker-0.6B"
+    RERANKER_MIN_TOKENS: int = 20
+    RERANKER_MIN_CANDIDATES: int = 3
+    CHUNK_MIN_TOKENS_TO_MERGE: int = 40
 
     @property
     def cors_allow_origins_list(self) -> list[str]:

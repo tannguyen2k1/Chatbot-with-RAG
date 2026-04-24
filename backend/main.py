@@ -44,6 +44,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] Qdrant not available: {e}")
 
+    # Khởi tạo (Pre-load) các model AI
+    try:
+        from services.embedding import get_embedding_service
+        from services.rerank import get_rerank_service
+        print("[AI Models] Đang tải các mô hình ngôn ngữ (Embedding & Reranker)...")
+        get_embedding_service()._load_model()
+        get_rerank_service()._load_model()
+        print("[AI Models] Khởi tạo thành công!")
+    except Exception as e:
+        print(f"[WARN] Lỗi tải AI Models: {e}")
+
     yield
 
     # Shutdown: đóng Qdrant client

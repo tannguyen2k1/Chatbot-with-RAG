@@ -4,16 +4,15 @@ Vector Database API Endpoints
 Quản lý collections, points và similarity search trên Qdrant.
 """
 
-import uuid
-from fastapi import APIRouter, HTTPException, Request, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 from database.qdrant import get_async_qdrant_client
 from qdrant_client import AsyncQdrantClient
 from services.vector import VectorService
 from services.embedding import EmbeddingService, get_embedding_service
+from services.rerank import RerankService, get_rerank_service
 from schemas.vector import (
     CollectionCreate,
     CollectionInfo,
-    PointUpsert,
     PointsBatchUpsert,
     TextSearchRequest,
     VectorSearchRequest,
@@ -29,15 +28,11 @@ def get_vector_service(
     return VectorService(client)
 
 
-# ==================== Health ====================
-
 @router.get("/health")
 async def vector_health(service: VectorService = Depends(get_vector_service)):
     """Kiểm tra kết nối Qdrant"""
     return await service.health_check()
 
-
-# ==================== Collections ====================
 
 @router.get("/collections", response_model=list[str])
 async def list_collections(service: VectorService = Depends(get_vector_service)):
@@ -53,7 +48,9 @@ async def get_collection(
     try:
         return await service.get_collection_info(name)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Collection '{name}' not found: {e}")
+        raise HTTPException(
+            status_code=404, detail=f"Collection '{name}' not found: {e}"
+        )
 
 
 @router.post("/collections", status_code=status.HTTP_201_CREATED)
@@ -80,9 +77,9 @@ async def delete_collection(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-# ==================== Points ====================
-
-@router.post("/collections/{collection_name}/points", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/collections/{collection_name}/points", status_code=status.HTTP_201_CREATED
+)
 async def upsert_points(
     collection_name: str,
     data: PointsBatchUpsert,
@@ -96,9 +93,6 @@ async def upsert_points(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-
-
-
 @router.get("/collections/{collection_name}/points/{point_id}")
 async def get_point(
     collection_name: str,
@@ -106,7 +100,6 @@ async def get_point(
     service: VectorService = Depends(get_vector_service),
 ):
     """Lấy point theo ID"""
-    # Thử parse sang int nếu có thể
     try:
         pid = int(point_id)
     except ValueError:
@@ -134,18 +127,17 @@ async def delete_points(
 
 @router.delete("/collections/{collection_name}/clear", status_code=status.HTTP_200_OK)
 async def clear_collection(
-    collection_name: str,
-    service: VectorService = Depends(get_vector_service)
+    collection_name: str, service: VectorService = Depends(get_vector_service)
 ):
     """Xóa sạch tất cả points trong collection (giữ lại cấu hình collection)"""
     try:
         await service.clear_collection(collection_name)
-        return {"message": f"All points in collection '{collection_name}' have been cleared"}
+        return {
+            "message": f"All points in collection '{collection_name}' have been cleared"
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# ==================== Search ====================
 
 @router.post(
     "/collections/{collection_name}/search",
@@ -169,6 +161,7 @@ async def search_vectors(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post(
     "/collections/{collection_name}/search/text",
     response_model=VectorSearchResponse,
@@ -178,23 +171,34 @@ async def search_by_text(
     search_req: TextSearchRequest,
     service: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
+    reranker: RerankService = Depends(get_rerank_service),
 ):
     """
     Tìm kiếm bằng TEXT - gửi câu hỏi, backend tự embed rồi tìm.
-    
-    Ví dụ: {"query": "FastAPI là gì?", "limit": 5}
+    Có thể bật Reranker để kết quả chính xác hơn.
     """
     try:
-        # Embed query text thành vector (is_query=True để dùng prompt prefix)
         query_vector = embedding.encode_single(search_req.query, is_query=True)
+        fetch_limit = (
+            search_req.rerank_top_k if search_req.use_reranker else search_req.limit
+        )
 
         results = await service.search(
             collection_name=collection_name,
             vector=query_vector,
-            limit=search_req.limit,
-            score_threshold=search_req.score_threshold,
+            limit=fetch_limit,
+            score_threshold=None if search_req.use_reranker else search_req.score_threshold,
             filter_conditions=search_req.filter,
         )
+
+        if search_req.use_reranker and results:
+            results = reranker.rerank_results(
+                query=search_req.query,
+                results=results,
+                top_k=search_req.limit,
+                score_threshold=search_req.score_threshold,
+            )
+
         return VectorSearchResponse(results=results, count=len(results))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -60,9 +60,9 @@ class VectorService:
         
         return CollectionInfo(
             name=name,
-            vectors_count=info.vectors_count or 0,
-            points_count=info.points_count or 0,
-            status=str(info.status),
+            vectors_count=getattr(info, "vectors_count", 0) or 0,
+            points_count=getattr(info, "points_count", 0) or 0,
+            status=str(getattr(info, "status", "")),
             vector_size=vector_size,
             distance=distance,
         )

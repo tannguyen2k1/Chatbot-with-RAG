@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from database.models import Demo
 from schemas import DemoCreate, DemoUpdate, PaginatedDemoResponse, DemoResponse
 from typing import Optional
@@ -10,29 +10,47 @@ class DemoService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all_demos(self, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
+    async def get_all_demos(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        search: Optional[str] = None
+    ) -> PaginatedDemoResponse:
         """Lấy tất cả demos với phân trang và tìm kiếm"""
-        query = select(Demo)
+        base_query = select(Demo)
+
         if search:
             like = f"%{search}%"
-            query = query.filter(
+            base_query = base_query.filter(
                 (Demo.title.ilike(like)) | (Demo.description.ilike(like))
             )
-        # Get total count
-        result = await self.db.execute(query)
-        total = len(result.scalars().all())
-        
-        # Get paginated results
-        query = query.order_by(Demo.id.asc()).offset((page - 1) * page_size).limit(page_size)
+
+        # COUNT
+        count_query = select(func.count()).select_from(Demo)
+        if search:
+            count_query = count_query.filter(
+                (Demo.title.ilike(like)) | (Demo.description.ilike(like))
+            )
+
+        total = (await self.db.execute(count_query)).scalar_one()
+
+        # DATA
+        query = (
+            base_query
+            .order_by(Demo.id.asc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+
         result = await self.db.execute(query)
         demos = result.scalars().all()
-        
+
         return PaginatedDemoResponse(
             data=[DemoResponse.model_validate(demo) for demo in demos],
             total=total,
             page=page,
             page_size=page_size
-        )   
+        )
 
     async def get_demo_by_id(self, demo_id: int) -> Optional[Demo]:
         """Lấy demo theo ID"""
