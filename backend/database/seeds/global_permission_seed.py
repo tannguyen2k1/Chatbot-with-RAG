@@ -10,6 +10,8 @@ GLOBAL_MODULES = [
     ("tenant", "Tenant management"),
     ("audit_log", "Audit log management"),
     ("demo", "Demo data management"),
+    ("vector", "Vector database management"),
+    ("ingestion", "Data ingestion management"),
 ]
 
 GLOBAL_PERMISSIONS = [
@@ -48,6 +50,16 @@ GLOBAL_PERMISSIONS = [
     ("demo.create", "Create demo data"),
     ("demo.update", "Update demo data"),
     ("demo.delete", "Delete demo data"),
+    # Vector
+    ("vector.view", "View vector data"),
+    ("vector.create", "Create vector data"),
+    ("vector.update", "Update vector data"),
+    ("vector.delete", "Delete vector data"),
+    # Ingestion
+    ("ingestion.view", "View ingestion data"),
+    ("ingestion.create", "Create ingestion data"),
+    ("ingestion.update", "Update ingestion data"),
+    ("ingestion.delete", "Delete ingestion data"),
 ]
 
 async def seed_global_modules_and_permissions(db: AsyncSession) -> None:
