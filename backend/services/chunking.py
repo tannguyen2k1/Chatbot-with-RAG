@@ -2,7 +2,8 @@ import hashlib
 import re
 import unicodedata
 from collections import Counter
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import List, Dict, Any, Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rapidfuzz import fuzz, process
 from config.settings import settings
@@ -199,11 +200,21 @@ class ChunkingService:
             return False
         return self._looks_like_heading_text(text)
 
+    def _fallback_entity_name(self, base_metadata: dict) -> str:
+        filename = (base_metadata.get("filename") or "").strip()
+        if not filename:
+            return ""
+
+        stem = Path(filename).stem
+        stem = re.sub(r"[_\\-.]+", " ", stem)
+        return re.sub(r"\s+", " ", stem).strip()
+
     def group_and_chunk(
         self,
         parsed_elements: List[Dict[str, Any]],
         base_metadata: dict,
         min_tokens_to_merge: int = settings.CHUNK_MIN_TOKENS_TO_MERGE,
+        entity_name: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         vocabulary = self._build_document_vocabulary(parsed_elements)
         sections = []
@@ -247,7 +258,18 @@ class ChunkingService:
                     continue
                 seen.add(content_hash)
 
-                embed_text = f"[{heading}]\n{chunk_text}" if heading else chunk_text
+                # Sử dụng entity_name truyền vào, hoặc fallback về filename
+                actual_entity = (entity_name or self._fallback_entity_name(base_metadata)).strip()
+                
+                # Text dùng để embed — có ngữ cảnh Entity và heading
+                prefix_parts = []
+                if actual_entity:
+                    prefix_parts.append(actual_entity)
+                if heading:
+                    prefix_parts.append(heading)
+                    
+                prefix = " - ".join(prefix_parts)
+                embed_text = f"[{prefix}]\n{chunk_text}" if prefix else chunk_text
 
                 final_chunks.append({
                     "text": chunk_text,

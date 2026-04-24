@@ -27,3 +27,5 @@ langchain-text-splitters
 unstructured-inference
 pdf2image
 pdfminer.six
+mistralai<2.0.0
+sentencepiece
