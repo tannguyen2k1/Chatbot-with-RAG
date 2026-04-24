@@ -55,7 +55,7 @@ class VectorSearchRequest(BaseModel):
     limit: int = Field(default=10, ge=1, le=100, description="Số kết quả trả về")
     score_threshold: Optional[float] = Field(
         default=None,
-        description="Ngưỡng score tối thiểu (0.0 - 1.0)"
+        description="Ngưỡng score tối thiểu"
     )
     filter: Optional[dict[str, Any]] = Field(
         default=None,
@@ -66,15 +66,17 @@ class VectorSearchRequest(BaseModel):
 class TextSearchRequest(BaseModel):
     """Tìm kiếm bằng TEXT - tự embed rồi search"""
     query: str = Field(..., description="Câu hỏi / nội dung cần tìm")
-    limit: int = Field(default=10, ge=1, le=100, description="Số kết quả trả về")
+    limit: int = Field(default=7, ge=1, le=100, description="Số kết quả trả về")
     score_threshold: Optional[float] = Field(
         default=None,
-        description="Ngưỡng score tối thiểu (0.0 - 1.0)"
+        description="Ngưỡng score tối thiểu"
     )
     filter: Optional[dict[str, Any]] = Field(
         default=None,
         description="Qdrant filter conditions"
     )
+    use_reranker: bool = Field(default=True, description="Sử dụng Reranker để sắp xếp lại chính xác hơn")
+    rerank_top_k: int = Field(default=50, description="Số lượng kết quả lấy từ Qdrant để đưa vào Reranker")
 
 
 class SearchResult(BaseModel):

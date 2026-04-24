@@ -14,7 +14,7 @@ router = APIRouter(prefix="/ingestion", tags=["Data Ingestion & Parsing"])
 @router.post("/file", response_model=IngestResponse, summary="Ingest & Parse tài liệu từ file")
 async def ingest_file(
     file: UploadFile = File(...),
-    collection_name: str | None = Query(None, description="Tên collection Qdrant để lưu. Bỏ trống nếu chỉ muốn xem kết quả parse."),
+    collection_name: str = Query(..., description="Tên collection Qdrant để lưu."),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service)
 ):
@@ -22,7 +22,7 @@ async def ingest_file(
     Tải lên tài liệu (PDF, DOCX, HTML) để trích xuất nội dung.
     Hệ thống sẽ tự động nhận diện cấu trúc (heading, section, paragraph),
     chia nhỏ văn bản (chunking) và đính kèm metadata tương ứng.
-    Nếu cung cấp collection_name, hệ thống sẽ tự động embed chunks và lưu vào Qdrant.
+    Hệ thống sẽ tự động embed chunks và lưu vào Qdrant dựa theo collection_name.
     """
     allowed_extensions = [".pdf", ".docx", ".doc", ".html", ".htm"]
     ext = os.path.splitext(file.filename)[1].lower()
@@ -34,11 +34,11 @@ async def ingest_file(
         parsed_elements, metadata = await ingestion_service.ingest_file(file)
         chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
         
-        if collection_name and chunks:
+        if chunks:
             batch_size = 500
             for i in range(0, len(chunks), batch_size):
                 batch_chunks = chunks[i:i + batch_size]
-                texts = [chunk["text"] for chunk in batch_chunks]
+                texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
                 vectors = embedding_service.encode_texts(texts, is_query=False)
                 
                 points = []
@@ -50,7 +50,7 @@ async def ingest_file(
                 await vector_service.upsert_points(collection_name, points)
         
         return IngestResponse(
-            message="Ingest, Parse và Vectorize file thành công" if collection_name else "Ingest và Parse file thành công",
+            message="Ingest, Parse và Vectorize file thành công",
             document_id=str(uuid.uuid4()),
             chunks_count=len(chunks),
             chunks=chunks,
@@ -69,7 +69,7 @@ async def ingest_db(
     """
     Nhận dữ liệu văn bản từ Database record để trích xuất nội dung.
     Hệ thống sẽ tự động phân tích cấu trúc, chia nhỏ thành các chunk và lưu trữ kèm metadata.
-    Nếu cung cấp collection_name trong request, hệ thống sẽ tự động embed chunks và lưu vào Qdrant.
+    Hệ thống sẽ tự động embed chunks và lưu vào Qdrant theo collection_name trong request.
     """
     try:
         source_metadata = {
@@ -81,11 +81,11 @@ async def ingest_db(
         parsed_elements, metadata = await ingestion_service.ingest_db_record(request.content, source_metadata)
         chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
         
-        if request.collection_name and chunks:
+        if chunks:
             batch_size = 500
             for i in range(0, len(chunks), batch_size):
                 batch_chunks = chunks[i:i + batch_size]
-                texts = [chunk["text"] for chunk in batch_chunks]
+                texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
                 vectors = embedding_service.encode_texts(texts, is_query=False)
                 
                 points = []
@@ -97,7 +97,7 @@ async def ingest_db(
                 await vector_service.upsert_points(request.collection_name, points)
         
         return IngestResponse(
-            message="Ingest, Parse và Vectorize DB record thành công" if request.collection_name else "Ingest DB record thành công",
+            message="Ingest, Parse và Vectorize DB record thành công",
             document_id=f"db_{request.source_table}_{request.record_id}",
             chunks_count=len(chunks),
             chunks=chunks,

@@ -13,4 +13,4 @@ class IngestDBRequest(BaseModel):
     record_id: str = Field(..., description="ID của bản ghi")
     content: str = Field(..., description="Nội dung cần ingest")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadata bổ sung")
-    collection_name: Optional[str] = Field(None, description="Tên collection Qdrant để lưu. Bỏ trống nếu chỉ muốn xem kết quả parse.")
+    collection_name: str = Field(..., description="Tên collection Qdrant để lưu.")

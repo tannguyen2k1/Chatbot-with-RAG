@@ -39,7 +39,7 @@ class IngestionService:
             # Unstructured Parser
             # Sử dụng strategy="fast" để bỏ qua OCR và nhận diện hình ảnh,
             # giúp đọc text trực tiếp cực nhanh và tránh lỗi thiếu module unstructured_inference
-            elements = partition(filename=temp_file_path, strategy="fast")
+            elements = partition(filename=temp_file_path, strategy="fast", languages=["vie", "eng"])
             
             base_metadata = {
                 "filename": file.filename,

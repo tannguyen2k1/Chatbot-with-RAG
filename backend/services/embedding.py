@@ -54,7 +54,7 @@ class EmbeddingService:
             )
             logger.info(
                 f"Embedding model loaded. "
-                f"Dimension: {self._model.get_sentence_embedding_dimension()}"
+                f"Dimension: {self._model.get_embedding_dimension()}"
             )
 
         return self._model
@@ -66,7 +66,7 @@ class EmbeddingService:
     @property
     def vector_dimension(self) -> int:
         """Trả về kích thước vector của model"""
-        return self.model.get_sentence_embedding_dimension()
+        return self.model.get_embedding_dimension()
 
     def encode_texts(
         self,
@@ -85,6 +85,9 @@ class EmbeddingService:
         kwargs = {"normalize_embeddings": normalize}
         if is_query:
             kwargs["prompt_name"] = "query"
+        else:
+            # Vô hiệu hóa default prompt khi encode document
+            kwargs["prompt_name"] = "document"
 
         embeddings = self.model.encode(texts, **kwargs)
         return embeddings.tolist()
