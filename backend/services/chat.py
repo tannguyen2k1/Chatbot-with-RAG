@@ -23,21 +23,40 @@ class ChatService:
             text = res.payload.get("_text", "")
             filename = res.payload.get("filename", "Tai lieu")
 
-            context_text += f"[Tai lieu {i+1} | Nguon: {filename} | Phan: {heading}]\n"
+            context_text += (
+                f"[Tai lieu {i + 1} | Nguon: {filename} | Phan: {heading}]\n"
+            )
             context_text += f"{text}\n"
             context_text += "-" * 50 + "\n\n"
 
         return context_text.strip()
 
     def generate_prompt_preview(self, query: str, context: str) -> str:
-        return f"""Ban la mot tro ly AI thong minh cua cong ty VIETCIS.
-            Dua vao cac TAI LIEU CUNG CAP duoi day, hay tra loi CAU HOI cua nguoi dung mot cach chinh xac.
-            Neu tai lieu khong chua thong tin de tra loi, hay noi thang la "Toi khong co thong tin", TUYET DOI KHONG duoc tu bia ra cau tra loi.
-            [TAI LIEU CUNG CAP]:
+        return f"""Bạn là một trợ lý AI thông minh của công ty VIETCIS.
+            Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng mộ   t cách chính xác.
+            Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
+            [TÀI LIỆU CUNG CẤP]:
             {context}
-            [CAU HOI CUA NGUOI DUNG]:
+            [CÂU HỎI CỦA NGƯỜI DÙNG]:
             {query}
-            Cau tra loi cua ban:"""
+            Câu trả lời của bạn:"""
+
+    def _build_greeting_response(self, query: str) -> str:
+        q = query.strip().lower()
+        if any(w in q for w in ["tạm biệt", "bye", "goodbye", "hẹn gặp"]):
+            return "Tạm biệt bạn! Rất vui được trò chuyện cùng bạn. Nếu cần hỏi gì, cứ quay lại nhé."
+        if any(w in q for w in ["cảm ơn", "cám ơn", "thank", "thks"]):
+            return "Không có gì ạ! Mình luôn sẵn sàng hỗ trợ bạn. Nếu cần hỏi thêm điều gì, cứ thoải mái nhé."
+        return (
+            "Xin chào! Mình là trợ lý AI của VIETCIS. Bạn cần mình hỗ trợ gì hôm nay?"
+        )
+
+    async def generate_simple_answer(self, query: str) -> str:
+        return self._build_greeting_response(query)
+
+    async def stream_simple_answer(self, query: str) -> AsyncIterator[str]:
+        response = self._build_greeting_response(query)
+        yield response
 
     async def generate_answer(self, query: str, context: str) -> str:
         client = self._build_client()

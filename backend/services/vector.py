@@ -8,6 +8,7 @@ Cung cấp các thao tác:
 """
 
 from typing import Optional, Any
+from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
     Distance,
@@ -22,7 +23,13 @@ from schemas.vector import (
     CollectionInfo,
     PointUpsert,
     SearchResult,
+    VectorSearchRequest,
+    VectorSearchResponse,
+    TextSearchRequest,
 )
+from services.embedding import EmbeddingService, get_embedding_service
+from services.rerank import RerankService, get_rerank_service
+from .rbac_helper import ensure_permission_global
 
 
 DISTANCE_MAP = {
@@ -192,3 +199,107 @@ class VectorService:
                 "status": "unhealthy",
                 "error": str(e),
             }
+
+    # ==================== "For" methods with permission checks ====================
+
+    async def health_check_for(self, current_user_id: int) -> dict:
+        """Kiểm tra kết nối Qdrant với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        return await self.health_check()
+
+    async def list_collections_for(self, current_user_id: int) -> list[str]:
+        """Lấy danh sách collections với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        return await self.list_collections()
+
+    async def get_collection_info_for(self, current_user_id: int, name: str) -> CollectionInfo:
+        """Lấy thông tin collection với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        return await self.get_collection_info(name)
+
+    async def create_collection_for(self, current_user_id: int, data: CollectionCreate) -> dict:
+        """Tạo collection với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "create")
+        await self.create_collection(data)
+        return {"message": f"Collection '{data.name}' created successfully"}
+
+    async def delete_collection_for(self, current_user_id: int, name: str) -> dict:
+        """Xóa collection với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "delete")
+        await self.delete_collection(name)
+        return {"message": f"Collection '{name}' deleted successfully"}
+
+    async def upsert_points_for(self, current_user_id: int, collection_name: str, points: list[PointUpsert]) -> dict:
+        """Upsert points với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "create")
+        await self.upsert_points(collection_name, points)
+        return {"message": f"Upserted {len(points)} points"}
+
+    async def get_point_for(self, current_user_id: int, collection_name: str, point_id: str | int) -> dict:
+        """Lấy point với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        result = await self.get_point(collection_name, point_id)
+        if not result:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Point '{point_id}' not found")
+        return result
+
+    async def delete_points_for(self, current_user_id: int, collection_name: str, point_ids: list[str | int]) -> dict:
+        """Xóa points với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "delete")
+        await self.delete_points(collection_name, point_ids)
+        return {"message": f"Deleted {len(point_ids)} points"}
+
+    async def clear_collection_for(self, current_user_id: int, collection_name: str) -> dict:
+        """Xóa sạch collection với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "delete")
+        await self.clear_collection(collection_name)
+        return {"message": f"All points in collection '{collection_name}' have been cleared"}
+
+    async def search_vectors_for(
+        self,
+        current_user_id: int,
+        collection_name: str,
+        request: VectorSearchRequest,
+    ) -> VectorSearchResponse:
+        """Tìm kiếm vectors với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        results = await self.search(
+            collection_name=collection_name,
+            vector=request.vector,
+            limit=request.limit,
+            score_threshold=request.score_threshold,
+            filter_conditions=request.filter,
+        )
+        return VectorSearchResponse(results=results, count=len(results))
+
+    async def search_by_text_for(
+        self,
+        current_user_id: int,
+        collection_name: str,
+        search_req: TextSearchRequest,
+        embedding: EmbeddingService,
+        reranker: RerankService,
+    ) -> VectorSearchResponse:
+        """Tìm kiếm bằng text với permission check"""
+        await ensure_permission_global(current_user_id, "vector", "view")
+        query_vector = embedding.encode_single(search_req.query, is_query=True)
+        fetch_limit = search_req.rerank_top_k if search_req.use_reranker else search_req.limit
+
+        results = await self.search(
+            collection_name=collection_name,
+            vector=query_vector,
+            limit=fetch_limit,
+            score_threshold=None if search_req.use_reranker else search_req.score_threshold,
+            filter_conditions=search_req.filter,
+        )
+
+        if search_req.use_reranker and results:
+            results = reranker.rerank_results(
+                query=search_req.query,
+                results=results,
+                top_k=search_req.limit,
+                score_threshold=search_req.score_threshold,
+            )
+
+        return VectorSearchResponse(results=results, count=len(results))

@@ -58,7 +58,8 @@ export const AuthProvider = ({ children }) => {
     setSnackbarOpen(true);
   };
 
-  const login = async (username, password, rememberMe = true) => {
+  const login = async (username, password, rememberMe = true, tenantOverride = null) => {
+    const effectiveTenant = tenantOverride || tenantCode;
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({
           username,
           password,
-          tenant_code: tenantCode,
+          tenant_code: effectiveTenant,
           remember_me: rememberMe,
         }),
         credentials: "include",
@@ -82,7 +83,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Login response is not valid JSON");
       }
 
-      if (!response.ok) throw new Error(data.detail || "Login failed");
+      if (!response.ok) throw new Error(data.detail || data.error || "Login failed");
       if (!data.access_token) throw new Error("No access_token in response");
 
       setAccessToken(data.access_token);

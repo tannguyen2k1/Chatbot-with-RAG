@@ -8,8 +8,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { TenantProvider } from "./context/TenantContext";
 
 export const metadata = {
-  title: "Modernize Nextjs",
-  description: "Modernize Nextjs",
+  title: "AI Assistant",
+  description: "Trợ lý AI thông minh",
 };
 
 export default function RootLayout({ children }) {

@@ -4,3 +4,4 @@ from schemas.auth import *
 from schemas.rbac import *
 from schemas.audit_log import *
 from schemas.vector import *
+from schemas.config import *

@@ -78,6 +78,8 @@ const Sidebar = () => {
             <Box
               sx={{
                 height: "100%",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
               {/* ------------------------------------------- */}
@@ -90,7 +92,7 @@ const Sidebar = () => {
               >
                 <Logo />
               </Box>
-              <Scrollbar sx={{ height: "calc(100% - 190px)" }}>
+              <Scrollbar sx={{ flex: 1 }}>
                 {/* ------------------------------------------- */}
                 {/* Sidebar Items */}
                 {/* ------------------------------------------- */}
@@ -130,6 +132,7 @@ const Sidebar = () => {
           {/* Sidebar For Mobile */}
           {/* ------------------------------------------- */}
           <SidebarItems />
+          <Profile />
         </Drawer>
       )}
     </>

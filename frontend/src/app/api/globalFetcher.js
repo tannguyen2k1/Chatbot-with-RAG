@@ -111,7 +111,17 @@ const getFetcher = (url, options = {}) => {
     if (res.status === 401) {
       return handle401AndRetry(doFetch, (t) => { token = t; });
     }
-    if (!res.ok) throw new Error("Failed to fetch the data");
+    if (!res.ok) {
+      let errorMessage = "Failed to process request";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        const text = await res.text().catch(() => "");
+        errorMessage = text || res.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
     return res.json();
   };
   return doFetch();
@@ -140,7 +150,17 @@ const postFetcher = (url, arg, options = {}) => {
     if (res.status === 401) {
       return handle401AndRetry(doFetch, (t) => { token = t; });
     }
-    if (!res.ok) throw new Error("Failed to post data");
+    if (!res.ok) {
+      let errorMessage = "Failed to process request";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        const text = await res.text().catch(() => "");
+        errorMessage = text || res.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
     return res.json();
   };
   return doFetch();
@@ -182,7 +202,17 @@ const putFetcher = (url, arg, options = {}) => {
     if (res.status === 401) {
       return handle401AndRetry(doFetch, (t) => { token = t; });
     }
-    if (!res.ok) throw new Error("Failed to updated data");
+    if (!res.ok) {
+      let errorMessage = "Failed to process request";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        const text = await res.text().catch(() => "");
+        errorMessage = text || res.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
     return res.json();
   };
   return doFetch();
@@ -211,7 +241,17 @@ const patchFetcher = (url, arg, options = {}) => {
     if (res.status === 401) {
       return handle401AndRetry(doFetch, (t) => { token = t; });
     }
-    if (!res.ok) throw new Error("Failed to updated data");
+    if (!res.ok) {
+      let errorMessage = "Failed to process request";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        const text = await res.text().catch(() => "");
+        errorMessage = text || res.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
     return res.json();
   };
   return doFetch();
@@ -240,7 +280,17 @@ const deleteFetcher = (url, arg, options = {}) => {
     if (res.status === 401) {
       return handle401AndRetry(doFetch, (t) => { token = t; });
     }
-    if (!res.ok) throw new Error("Failed to delete data");
+    if (!res.ok) {
+      let errorMessage = "Failed to process request";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        const text = await res.text().catch(() => "");
+        errorMessage = text || res.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
     // Nếu status là 204 thì không có body, trả về null
     if (res.status === 204) return null;
     return res.json();

@@ -10,6 +10,7 @@ import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
+import { usePathname } from "next/navigation";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -20,7 +21,6 @@ const MainWrapper = styled("div")(() => ({
 const PageWrapper = styled("div")(() => ({
   display: "flex",
   flexGrow: 1,
-  paddingBottom: "60px",
   flexDirection: "column",
   zIndex: 1,
   width: "100%",
@@ -31,21 +31,18 @@ export default function RootLayout({ children }) {
   const { activeLayout, isLayout, activeMode, isCollapse } =
     useContext(CustomizerContext);
   const theme = useTheme();
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   const MiniSidebarWidth = config.miniSidebarWidth;
 
   return (
     <MainWrapper
       className={activeMode === "dark" ? "darkbg mainwrapper" : "mainwrapper"}
     >
-      {/* ------------------------------------------- */}
       {/* Sidebar */}
-      {/* ------------------------------------------- */}
-
       {activeLayout === "horizontal" ? "" : <Sidebar />}
 
-      {/* ------------------------------------------- */}
       {/* Main Wrapper */}
-      {/* ------------------------------------------- */}
       <PageWrapper
         className="page-wrapper"
         sx={{
@@ -54,31 +51,28 @@ export default function RootLayout({ children }) {
               ml: `${MiniSidebarWidth}px`,
             },
           }),
+          ...(isHome && {
+            height: "100vh",
+          }),
         }}
       >
-        {/* ------------------------------------------- */}
         {/* Header */}
-        {/* ------------------------------------------- */}
         {activeLayout === "horizontal" ? <HorizontalHeader /> : <Header />}
-        {/* PageContent */}
         {activeLayout === "horizontal" ? <Navigation /> : ""}
-        <Container
-          sx={{
-            pt: "30px",
-            maxWidth: isLayout === "boxed" ? "lg" : "100%!important",
-          }}
-        >
-          {/* ------------------------------------------- */}
-          {/* PageContent */}
-          {/* ------------------------------------------- */}
 
-          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
-
-          {/* ------------------------------------------- */}
-          {/* End Page */}
-          {/* ------------------------------------------- */}
-        </Container>
-        <Customizer />
+        {isHome ? (
+          <Box sx={{ width: "100%", height: "100vh" }}>{children}</Box>
+        ) : (
+          <Container
+            sx={{
+              pt: "30px",
+              maxWidth: isLayout === "boxed" ? "lg" : "100%!important",
+            }}
+          >
+            <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
+          </Container>
+        )}
+        {!isHome && <Customizer />}
       </PageWrapper>
     </MainWrapper>
   );

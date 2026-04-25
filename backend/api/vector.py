@@ -7,7 +7,6 @@ from qdrant_client import AsyncQdrantClient
 
 from database.qdrant import get_async_qdrant_client
 from dependencies import get_current_user
-from middleware.permission import require_permission
 from schemas.vector import (
     CollectionCreate,
     CollectionInfo,
@@ -35,28 +34,28 @@ def get_vector_service(
 
 @router.get("/health")
 async def vector_health(
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "view")),
 ):
-    return await service.health_check()
+    return await service.health_check_for(current_user.id)
 
 
 @router.get("/collections", response_model=list[str])
 async def list_collections(
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "view")),
 ):
-    return await service.list_collections()
+    return await service.list_collections_for(current_user.id)
 
 
 @router.get("/collections/{name}", response_model=CollectionInfo)
 async def get_collection(
     name: str,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "view")),
 ):
     try:
-        return await service.get_collection_info(name)
+        return await service.get_collection_info_for(current_user.id, name)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Collection '{name}' not found: {e}")
 
@@ -64,12 +63,11 @@ async def get_collection(
 @router.post("/collections", status_code=status.HTTP_201_CREATED)
 async def create_collection(
     data: CollectionCreate,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "create")),
 ):
     try:
-        await service.create_collection(data)
-        return {"message": f"Collection '{data.name}' created successfully"}
+        return await service.create_collection_for(current_user.id, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -77,12 +75,11 @@ async def create_collection(
 @router.delete("/collections/{name}", status_code=status.HTTP_200_OK)
 async def delete_collection(
     name: str,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "delete")),
 ):
     try:
-        await service.delete_collection(name)
-        return {"message": f"Collection '{name}' deleted successfully"}
+        return await service.delete_collection_for(current_user.id, name)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -91,12 +88,11 @@ async def delete_collection(
 async def upsert_points(
     collection_name: str,
     data: PointsBatchUpsert,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "create")),
 ):
     try:
-        await service.upsert_points(collection_name, data.points)
-        return {"message": f"Upserted {len(data.points)} points"}
+        return await service.upsert_points_for(current_user.id, collection_name, data.points)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -105,30 +101,25 @@ async def upsert_points(
 async def get_point(
     collection_name: str,
     point_id: str,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "view")),
 ):
     try:
         pid = int(point_id)
     except ValueError:
         pid = point_id
-
-    result = await service.get_point(collection_name, pid)
-    if not result:
-        raise HTTPException(status_code=404, detail=f"Point '{point_id}' not found")
-    return result
+    return await service.get_point_for(current_user.id, collection_name, pid)
 
 
 @router.delete("/collections/{collection_name}/points")
 async def delete_points(
     collection_name: str,
     point_ids: list[str | int],
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "delete")),
 ):
     try:
-        await service.delete_points(collection_name, point_ids)
-        return {"message": f"Deleted {len(point_ids)} points"}
+        return await service.delete_points_for(current_user.id, collection_name, point_ids)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -136,12 +127,11 @@ async def delete_points(
 @router.delete("/collections/{collection_name}/clear", status_code=status.HTTP_200_OK)
 async def clear_collection(
     collection_name: str,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "delete")),
 ):
     try:
-        await service.clear_collection(collection_name)
-        return {"message": f"All points in collection '{collection_name}' have been cleared"}
+        return await service.clear_collection_for(current_user.id, collection_name)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -150,18 +140,11 @@ async def clear_collection(
 async def search_vectors(
     collection_name: str,
     request: VectorSearchRequest,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("vector", "view")),
 ):
     try:
-        results = await service.search(
-            collection_name=collection_name,
-            vector=request.vector,
-            limit=request.limit,
-            score_threshold=request.score_threshold,
-            filter_conditions=request.filter,
-        )
-        return VectorSearchResponse(results=results, count=len(results))
+        return await service.search_vectors_for(current_user.id, collection_name, request)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -170,31 +153,14 @@ async def search_vectors(
 async def search_by_text(
     collection_name: str,
     search_req: TextSearchRequest,
+    current_user=Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),
-    _=Depends(require_permission("vector", "view")),
 ):
     try:
-        query_vector = embedding.encode_single(search_req.query, is_query=True)
-        fetch_limit = search_req.rerank_top_k if search_req.use_reranker else search_req.limit
-
-        results = await service.search(
-            collection_name=collection_name,
-            vector=query_vector,
-            limit=fetch_limit,
-            score_threshold=None if search_req.use_reranker else search_req.score_threshold,
-            filter_conditions=search_req.filter,
+        return await service.search_by_text_for(
+            current_user.id, collection_name, search_req, embedding, reranker
         )
-
-        if search_req.use_reranker and results:
-            results = reranker.rerank_results(
-                query=search_req.query,
-                results=results,
-                top_k=search_req.limit,
-                score_threshold=search_req.score_threshold,
-            )
-
-        return VectorSearchResponse(results=results, count=len(results))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
