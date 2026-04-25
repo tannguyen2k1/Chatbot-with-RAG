@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from database.models.user import User
 from dependencies import get_db, get_current_user
 from schemas import  PaginatedAuditLogResponse
 from services import AuditLogService, PermissionError
@@ -12,7 +13,7 @@ async def get_audit_logs(
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query(None, alias="search"),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = AuditLogService(db)
     try:

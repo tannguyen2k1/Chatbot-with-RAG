@@ -8,10 +8,12 @@ import { styled } from "@mui/material/styles";
 import config from "@/utils/config";
 import { useContext, useEffect } from "react";
 // ...existing code...
-import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";
+import { IconMenu2, IconSettings } from "@tabler/icons-react";
 import Profile from "./Profile";
 import Search from "./Search";
 import Language from "./Language";
+import SettingsDialog from "@/app/components/user/SettingsDialog";
+import { useState } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const Header = () => {
@@ -28,6 +30,8 @@ const Header = () => {
     isMobileSidebar,
     setIsMobileSidebar,
   } = useContext(CustomizerContext);
+
+  const [showSettings, setShowSettings] = useState(false);
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: "none",
@@ -100,20 +104,12 @@ const Header = () => {
           <Language />
           {/* <Cart /> */}
 
-          <IconButton size="large" color="inherit">
-            {activeMode === "light" ? (
-              <IconMoon
-                size="21"
-                stroke="1.5"
-                onClick={() => setActiveMode("dark")}
-              />
-            ) : (
-              <IconSun
-                size="21"
-                stroke="1.5"
-                onClick={() => setActiveMode("light")}
-              />
-            )}
+          <IconButton 
+            size="large" 
+            color="inherit"
+            onClick={() => setShowSettings(true)}
+          >
+            <IconSettings size="21" stroke="1.5" />
           </IconButton>
 
           {/* <Notifications /> */}
@@ -121,6 +117,10 @@ const Header = () => {
           <Profile />
         </Stack>
       </ToolbarStyled>
+      <SettingsDialog 
+        open={showSettings} 
+        onClose={() => setShowSettings(false)} 
+      />
     </AppBarStyled>
     // ...existing code...
   );

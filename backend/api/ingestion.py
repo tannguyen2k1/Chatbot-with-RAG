@@ -3,6 +3,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from database.models.user import User
 
 from api.vector import get_vector_service
 from dependencies import get_current_user
@@ -26,7 +27,7 @@ async def ingest_file(
     file: UploadFile = File(...),
     collection_name: str = Query(..., description="Ten collection Qdrant de luu."),
     entity_name: Optional[str] = Query(None, description="Ten thuc the de tiem vao ngu canh."),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service),
 ):
@@ -71,7 +72,7 @@ async def ingest_file(
 @router.post("/db", response_model=IngestResponse, summary="Ingest & Parse du lieu tu Database")
 async def ingest_db(
     request: IngestDBRequest,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service),
 ):

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from database.models.user import User
 from schemas import DemoCreate, DemoUpdate, DemoResponse, PaginatedDemoResponse
 from dependencies import get_db, get_current_user
 from services import DemoService, PermissionError
@@ -13,7 +14,7 @@ async def get_demos(
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy danh sách tất cả demos (có tìm kiếm)"""
     demo_service = DemoService(db)
@@ -28,7 +29,7 @@ async def get_demos(
 async def create_demo(
     demo_data: DemoCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Tạo demo mới"""
     demo_service = DemoService(db)
@@ -45,7 +46,7 @@ async def update_demo(
     demo_id: int,
     demo_data: DemoUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Cập nhật demo"""
     demo_service = DemoService(db)
@@ -61,7 +62,7 @@ async def update_demo(
 async def delete_demo(
     demo_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Xóa demo"""
     demo_service = DemoService(db)
@@ -78,7 +79,7 @@ async def delete_demo(
 async def get_demo(
     demo_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy chi tiết demo"""
     demo_service = DemoService(db)

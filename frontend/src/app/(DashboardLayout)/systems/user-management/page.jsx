@@ -13,16 +13,13 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import UserTableTemplate from "./UserTableTemplate";
 import UserFormDialog from "./UserFormDialog";
+import { useSnackbar } from "@/app/context/SnackbarContext";
 
 export default function UserManagementPage() {
   const [openForm, setOpenForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [reload, setReload] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const showSnackbar = useSnackbar();
 
   const handleAdd = () => {
     setEditUser(null);
@@ -36,7 +33,7 @@ export default function UserManagementPage() {
     setOpenForm(false);
     setEditUser(null);
     if (refresh) setReload((r) => !r);
-    if (msg) setSnackbar({ open: true, message: msg, severity });
+    if (msg) showSnackbar(msg, severity);
   };
   // Quyền
   const canCreate = useHasPermission("user", "create");
@@ -77,15 +74,6 @@ export default function UserManagementPage() {
         onClose={handleCloseForm}
         user={editUser}
       />
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

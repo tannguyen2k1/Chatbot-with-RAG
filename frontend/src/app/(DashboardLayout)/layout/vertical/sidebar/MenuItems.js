@@ -3,11 +3,8 @@ import { uniqueId } from "lodash";
 import {
   IconUserCircle,
   IconPackage,
-  IconAperture,
   IconFileCheck,
   IconHome,
-  IconMessageCircle,
-  IconBrain,
 } from "@tabler/icons-react";
 
 const Menuitems = [
@@ -18,26 +15,11 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: "Modern",
-    icon: IconAperture,
-    href: "/",
+    title: "Home",
+    icon: IconHome,
+    href: "/home",
     chipColor: "secondary",
   },
-
-  {
-    navlabel: true,
-    subheader: "AI",
-  },
-
-  {
-    id: uniqueId(),
-    title: "AI Assistant",
-    icon: IconMessageCircle,
-    href: "/chats",
-    chipColor: "primary",
-    chip: "New",
-  },
-
   {
     navlabel: true,
     subheader: "Systems",
@@ -73,7 +55,7 @@ const Menuitems = [
     chipColor: "secondary",
     href: "/systems/audit-log",
     permission: "audit_log.view",
-  },
+  }
 ];
 
 export default Menuitems;

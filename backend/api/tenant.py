@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from typing import Optional
+from database.models.user import User
 from dependencies import get_current_tenant, get_current_user
 from dependencies.database import get_global_db
 from database.models import Tenant
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 async def create_tenant(
     tenant_data: TenantCreate,
     db: AsyncSession = Depends(get_global_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Tạo tenant mới"""
     
@@ -69,7 +70,7 @@ async def list_tenants(
     search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy danh sách tenants với phân trang và tìm kiếm"""
     
@@ -124,7 +125,7 @@ async def get_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy thông tin tenant theo ID"""
     
@@ -158,7 +159,7 @@ async def update_tenant(
     tenant_data: TenantUpdate,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Cập nhật thông tin tenant"""
     
@@ -224,7 +225,7 @@ async def delete_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Xóa tenant vĩnh viễn (hard delete)"""
     

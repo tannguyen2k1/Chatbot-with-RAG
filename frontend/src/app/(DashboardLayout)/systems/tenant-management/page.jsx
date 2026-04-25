@@ -32,6 +32,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { useSnackbar } from '@/app/context/SnackbarContext';
 
 const fetchTenants = async (page, pageSize, search) => {
   const url = `/api/tenant?page=${page + 1}&page_size=${pageSize}&search=${search || ''}`;
@@ -58,7 +59,7 @@ export default function TenantManagementPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [formDialog, setFormDialog] = useState({ open: false, tenant: null });
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const showSnackbar = useSnackbar();
 
   // Quyền
   const canCreate = useHasPermission('tenant', 'create');
@@ -83,7 +84,7 @@ export default function TenantManagementPage() {
   };
   const handleFormClose = (success, msg, severity = 'success') => {
     setFormDialog({ open: false, tenant: null });
-    if (msg) setSnackbar({ open: true, message: msg, severity });
+    if (msg) showSnackbar(msg, severity);
     if (success) loadData();
   };
   const handleDeleteClick = (tenant) => {
@@ -94,10 +95,10 @@ export default function TenantManagementPage() {
   const handleDelete = async () => {
     try {
       await deleteTenant(deleteId);
-      setSnackbar({ open: true, message: 'Xoá tenant thành công', severity: 'success' });
+      showSnackbar('Xoá tenant thành công', 'success');
       loadData();
     } catch (e) {
-      setSnackbar({ open: true, message: e.message, severity: 'error' });
+      showSnackbar(e.message, 'error');
     }
     setConfirmOpen(false);
     setDeleteId(null);
@@ -113,7 +114,7 @@ export default function TenantManagementPage() {
     } catch (e) {
       setRows([]);
       setRowCount(0);
-      if (e.message) setSnackbar({ open: true, message: e.message, severity: 'error' });
+      if (e.message) showSnackbar(e.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -176,11 +177,11 @@ export default function TenantManagementPage() {
       } else {
         const res = await postFetcher(`/api/tenant/`, payload);
         if (!res) throw new Error('Tạo tenant thất bại');
-        setSnackbar({ open: true, message: 'Thêm mới thành công', severity: 'success' });
+        showSnackbar('Thêm mới thành công', 'success');
       }
       handleFormClose(true);
     } catch (e) {
-      setSnackbar({ open: true, message: e.message, severity: 'error' });
+      showSnackbar(e.message, 'error');
       handleFormClose(false);
     } finally {
       setFormLoading(false);
@@ -274,10 +275,6 @@ export default function TenantManagementPage() {
             </DialogActions>
           </form>
         </Dialog>
-        {/* Snackbar notify */}
-        <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-          <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity} sx={{ width: '100%' }}>{snackbar.message}</Alert>
-        </Snackbar>
       </Box>
     </Box>
   );

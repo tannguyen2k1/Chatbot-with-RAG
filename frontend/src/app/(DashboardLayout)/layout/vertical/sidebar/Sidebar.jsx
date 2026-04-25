@@ -5,7 +5,6 @@ import { useTheme } from "@mui/material/styles";
 import SidebarItems from "./SidebarItems";
 import Logo from "../../shared/logo/Logo";
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
-import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
@@ -98,7 +97,6 @@ const Sidebar = () => {
                 {/* ------------------------------------------- */}
                 <SidebarItems />
               </Scrollbar>
-              <Profile />
             </Box>
           </Drawer>
         </Box>
@@ -132,7 +130,6 @@ const Sidebar = () => {
           {/* Sidebar For Mobile */}
           {/* ------------------------------------------- */}
           <SidebarItems />
-          <Profile />
         </Drawer>
       )}
     </>

@@ -18,6 +18,7 @@ export const CustomizerContextProvider = ({ children }) => {
   const [isBorderRadius, setIsBorderRadius] = useState(config.isBorderRadius);
   const [isCollapse, setIsCollapse] = useState(config.isCollapse);
   const [isLanguage, setIsLanguage] = useState(config.isLanguage);
+  const [isFontSize, setIsFontSize] = useState(config.isFontSize);
 
   // trước mount, cập nhật lại state từ localStorage nếu có
   useLayoutEffect(() => {
@@ -40,6 +41,8 @@ export const CustomizerContextProvider = ({ children }) => {
       if (collapse) setIsCollapse(collapse);
       const language = localStorage.getItem("customizer_language");
       if (language) setIsLanguage(language);
+      const fontSize = localStorage.getItem("customizer_fontSize");
+      if (fontSize) setIsFontSize(fontSize);
     }
   }, []);
   // Save settings to localStorage when change
@@ -80,6 +83,8 @@ export const CustomizerContextProvider = ({ children }) => {
         setIsSidebarHover,
         isMobileSidebar,
         setIsMobileSidebar,
+        isFontSize,
+        setIsFontSize,
       }}
     >
       {children}

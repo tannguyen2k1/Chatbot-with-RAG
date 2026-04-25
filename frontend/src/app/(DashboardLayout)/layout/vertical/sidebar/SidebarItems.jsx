@@ -25,11 +25,11 @@ const SidebarItems = () => {
       <List sx={{ pt: 0 }} className="sidebarNav">
         {Menuitems.map((item) => {
           // Nếu có trường permission thì kiểm tra quyền, không có thì luôn hiển thị
-          if (item.permission) {
+          /* if (item.permission) {
             const [module, action] = item.permission.split(".");
             const hasPerm = useHasPermission(module, action);
             if (!hasPerm) return null;
-          }
+          } */
           // {/********SubHeader**********/}
           if (item.subheader) {
             return (

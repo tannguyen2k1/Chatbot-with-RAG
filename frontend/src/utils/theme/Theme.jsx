@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { createTheme } from "@mui/material/styles";
+import { createTheme, useMediaQuery } from "@mui/material";
 
 import { useEffect, useContext } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
@@ -19,7 +19,8 @@ export const BuildTheme = (config) => {
   const darkthemeOptions = DarkThemeColors.find(
     (theme) => theme.name === config.theme
   );
-  const { activeMode, isBorderRadius } = useContext(CustomizerContext);
+  const { isBorderRadius } = useContext(CustomizerContext);
+  const activeMode = config.mode || "light";
 
   const defaultTheme = activeMode === "dark" ? baseDarkTheme : baselightTheme;
   const defaultShadow = activeMode === "dark" ? darkshadows : shadows;
@@ -32,7 +33,10 @@ export const BuildTheme = (config) => {
       borderRadius: isBorderRadius,
     },
     shadows: defaultShadow,
-    typography: typography,
+    typography: {
+      ...typography,
+      fontSize: config.fontSize === 'small' ? 12 : config.fontSize === 'large' ? 16 : 14,
+    },
   };
   const theme = createTheme(
     _.merge({}, baseMode, defaultTheme, locales, themeSelect, {
@@ -45,11 +49,18 @@ export const BuildTheme = (config) => {
 };
 
 const ThemeSettings = () => {
-  const { activeDir, activeTheme } = useContext(CustomizerContext);
+  const { activeDir, activeTheme, isFontSize, activeMode } = useContext(CustomizerContext);
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  
+  const resolvedMode = activeMode === 'system' 
+    ? (prefersDarkMode ? 'dark' : 'light') 
+    : activeMode;
 
   const theme = BuildTheme({
     direction: activeDir,
     theme: activeTheme,
+    fontSize: isFontSize,
+    mode: resolvedMode,
   });
   useEffect(() => {
     document.dir = activeDir;

@@ -1,7 +1,8 @@
-from schemas import UserResponse, PaginatedUserResponse, UserCreate, UserUpdate, PermissionError  # Pydantic response model for users
+from schemas import UserResponse, PaginatedUserResponse, UserCreate, UserUpdate, PermissionError
 from schemas.user import UserResetPassword
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from database.models.user import User
 from dependencies import get_db, get_current_user, get_current_tenant_id_from_token
 from services import UserService
 from services.rbac_helper import ensure_permission_global
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def update_my_profile(
     update_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """User tự cập nhật thông tin cá nhân (email, phone, full_name)"""
     service = UserService(db)
@@ -28,7 +29,7 @@ async def update_my_profile(
 async def create_user(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant_id_from_token)
 ):
     service = UserService(db)
@@ -44,7 +45,7 @@ async def list_users(
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query("", description="Search by username or email"),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant_id_from_token)
 ):
     service = UserService(db)
@@ -58,7 +59,7 @@ async def list_users(
 async def get_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = UserService(db)
     try:
@@ -72,7 +73,7 @@ async def update_user(
     user_id: int,
     update_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = UserService(db)
     try:
@@ -85,7 +86,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = UserService(db)
     try:
@@ -100,7 +101,7 @@ async def reset_user_password(
     user_id: int,
     reset_data: UserResetPassword,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Reset password cho user (chỉ admin/root có quyền)"""
     # Kiểm tra quyền reset password
