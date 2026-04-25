@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+import logging
+
+logger = logging.getLogger(__name__)
 
 from api.vector import get_vector_service, search_by_text
 from dependencies import get_current_user
@@ -7,6 +10,7 @@ from schemas.chat import ChatResponse, ContextChatRequest, ContextChatResponse
 from schemas.vector import TextSearchRequest
 from services.chat import ChatService, get_chat_service
 from services.embedding import EmbeddingService, get_embedding_service
+from services.query_classifier import QueryClassifier, get_query_classifier
 from services.rerank import RerankService, get_rerank_service
 from services.vector import VectorService
 
@@ -24,7 +28,17 @@ async def context_chat_endpoint(
     vector: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
+    classification = classifier.classify(request.query)
+    if not classification.needs_context:
+        return ContextChatResponse(
+            query=request.query,
+            context="",
+            raw_results_count=0,
+            prompt_preview=classification.reason,
+        )
+
     search_req = TextSearchRequest(
         query=request.query,
         limit=request.limit,
@@ -59,7 +73,17 @@ async def chat_endpoint(
     vector: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
+    classification = classifier.classify(request.query)
+    if not classification.needs_context:
+        answer = await chat.generate_simple_answer(request.query)
+        return ChatResponse(
+            query=request.query,
+            answer=answer,
+            context_sources=0,
+        )
+
     search_req = TextSearchRequest(
         query=request.query,
         limit=request.limit,
@@ -93,7 +117,28 @@ async def chat_stream_endpoint(
     vector: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
+    logger.info(f"[chat/stream] Received request: query={request.query!r}, collection={request.collection_name}")
+
+    try:
+        classification = classifier.classify(request.query)
+    except Exception as e:
+        logger.error(f"[chat/stream] Classification error: {e}")
+        return StreamingResponse(
+            iter([f"Lỗi khi phân loại câu hỏi: {str(e)}"]),
+            media_type="text/plain; charset=utf-8",
+            headers={"X-Context-Sources": "0"},
+        )
+
+    if not classification.needs_context:
+        headers = {"X-Context-Sources": "0"}
+        return StreamingResponse(
+            chat.stream_simple_answer(request.query),
+            media_type="text/plain; charset=utf-8",
+            headers=headers,
+        )
+
     search_req = TextSearchRequest(
         query=request.query,
         limit=request.limit,

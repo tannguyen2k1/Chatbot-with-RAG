@@ -1,10 +1,21 @@
+import sys
+import os
+import asyncio
+
+# Fix for Windows ProactorEventLoop issue with psycopg
+if os.name == 'nt':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from fastapi import FastAPI, APIRouter
 from middleware import log_requests
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine, AsyncSessionLocal
 from database.models.base import Base
-from api import auth, rbac, demo, user, audit_log, tenant, vector, ingestion, chat
+from api import auth, rbac, demo, user, audit_log, tenant, vector, ingestion, chat, config
 from database.audit_event import register_audit_events  # Đăng ký audit event listener
 
 
@@ -66,51 +77,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FastAPI User Management Base Project",
+    title="Chat Assistant",
     description="""
-    [>] **FastAPI Base Project với JWT Authentication & RBAC**
-    
-    ## [>] Cách sử dụng:
-    1. **Login:** POST `/api/auth/login` (cần tenant_id)
-    2. **Copy token** từ response 
-    3. **Authorize:** Click nút "Authorize" và nhập: `Bearer YOUR_TOKEN`
-    
-    ## [>] Tài khoản mặc định:
-    - Username: `root`  
-    - Password: `root123456`
-    - Tenant Code: `default` (tenant mặc định)
-    
-    ## [>] Hệ thống Multi-Tenant:
-    - Mỗi user thuộc về một tenant
-    - API calls tự động filter theo tenant context
-    - Admin có thể quản lý tất cả tenants
-    
-    ## [>] Hệ thống phân quyền RBAC:
-    **Cấu trúc:** User → Role → Permission → Module
-    
-    **Các loại quyền:** `view`, `create`, `update`, `delete`
-    
-    **Modules chính:** 
-    - `tenant` - Quản lý tenant
-    - `user` - Quản lý user  
-    - `role` - Quản lý role
-    - `permission` - Quản lý permission
-    - `demo` - Module demo
-    - `audit_log` - Xem audit logs
-    
-    **Ví dụ gán quyền:**
-    ```json
-    POST /api/rbac/assign-permission
-    {
-        "role_id": 1,
-        "module_id": 1,
-        "permission_id": 1
-    }
-    ```
-    
-    ## [>] Audit Logging:
-    - Tự động log tất cả thay đổi CRUD
-    - Xem tại: `/api/audit-logs`
+    Chat Assistant - API Documentation
     """,
     version="1.0.0",
     lifespan=lifespan,
@@ -136,6 +105,7 @@ api_router.include_router(tenant.router)
 api_router.include_router(vector.router)
 api_router.include_router(ingestion.router)
 api_router.include_router(chat.router)
+api_router.include_router(config.router)
 app.include_router(api_router)
 
 
@@ -143,7 +113,7 @@ app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://([a-zA-Z0-9-]+\.)?localhost:3000$",
+    allow_origin_regex=r"^http://([a-zA-Z0-9-]+\.)?localhost:(3000|3001|3002)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

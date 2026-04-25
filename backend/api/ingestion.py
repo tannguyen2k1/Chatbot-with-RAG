@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from api.vector import get_vector_service
 from dependencies import get_current_user
-from middleware.permission import require_permission
 from schemas.ingestion import IngestDBRequest, IngestResponse
 from schemas.vector import PointUpsert
 from services.chunking import chunking_service
 from services.embedding import EmbeddingService, get_embedding_service
 from services.ingestion import ingestion_service
+from services.rbac_helper import ensure_permission_global
 from services.vector import VectorService
 
 router = APIRouter(
@@ -26,10 +26,12 @@ async def ingest_file(
     file: UploadFile = File(...),
     collection_name: str = Query(..., description="Ten collection Qdrant de luu."),
     entity_name: Optional[str] = Query(None, description="Ten thuc the de tiem vao ngu canh."),
+    current_user=Depends(get_current_user),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("ingestion", "create")),
 ):
+    await ensure_permission_global(current_user.id, "ingestion", "create")
+
     allowed_extensions = [".pdf", ".docx", ".doc", ".html", ".htm"]
     ext = os.path.splitext(file.filename)[1].lower()
 
@@ -69,10 +71,12 @@ async def ingest_file(
 @router.post("/db", response_model=IngestResponse, summary="Ingest & Parse du lieu tu Database")
 async def ingest_db(
     request: IngestDBRequest,
+    current_user=Depends(get_current_user),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service),
-    _=Depends(require_permission("ingestion", "create")),
 ):
+    await ensure_permission_global(current_user.id, "ingestion", "create")
+
     try:
         source_metadata = {
             "source_table": request.source_table,

@@ -8,6 +8,7 @@ from database.seeds.tenant_seed import seed_default_tenant
 from database.seeds.role_seed import seed_default_roles
 from database.seeds.user_seed import seed_default_accounts
 from database.seeds.demo_seed import seed_default_demos
+from database.seeds.config_seed import seed_default_configs
 
 # Import new global seed functions
 from database.seeds.global_role_seed import seed_global_roles
@@ -46,6 +47,7 @@ async def auto_seed_all(db: AsyncSession) -> None:
         await seed_default_roles(db, default_tenant)
         await seed_default_accounts(db, default_tenant)
         await seed_default_demos(db, default_tenant)
+        await seed_default_configs(db)
         
         print("[OK] Seeding completed successfully!")
         

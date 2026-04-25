@@ -6,6 +6,8 @@ import {
   IconAperture,
   IconFileCheck,
   IconHome,
+  IconMessageCircle,
+  IconBrain,
 } from "@tabler/icons-react";
 
 const Menuitems = [
@@ -21,18 +23,21 @@ const Menuitems = [
     href: "/",
     chipColor: "secondary",
   },
+
   {
     navlabel: true,
-    subheader: "Apps",
+    subheader: "AI",
   },
+
   {
     id: uniqueId(),
-    title: "Demo",
-    icon: IconPackage,
-    chipColor: "secondary",
-    href: "/apps/demos",
-    permission: "demo.view",
+    title: "AI Assistant",
+    icon: IconMessageCircle,
+    href: "/chats",
+    chipColor: "primary",
+    chip: "New",
   },
+
   {
     navlabel: true,
     subheader: "Systems",
@@ -48,7 +53,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "RoleManagement",
-    icon: IconPackage, // Changed to IconPackage for roles
+    icon: IconPackage,
     chipColor: "secondary",
     href: "/systems/role-management",
     permission: "role.view",
@@ -56,7 +61,7 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "TenantManagement",
-    icon: IconHome, // Changed to IconPackage for roles
+    icon: IconHome,
     chipColor: "secondary",
     href: "/systems/tenant-management",
     permission: "tenant.view",
