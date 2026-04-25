@@ -48,6 +48,7 @@ export const CustomizerContextProvider = ({ children }) => {
   // Save settings to localStorage when change
   const [isSidebarHover, setIsSidebarHover] = useState(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState(false);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
   // Set attributes immediately
   useEffect(() => {
     document.documentElement.setAttribute("class", activeMode);
@@ -85,6 +86,8 @@ export const CustomizerContextProvider = ({ children }) => {
         setIsMobileSidebar,
         isFontSize,
         setIsFontSize,
+        customizerOpen,
+        setCustomizerOpen,
       }}
     >
       {children}

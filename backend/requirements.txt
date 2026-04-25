@@ -29,3 +29,7 @@ pdf2image
 pdfminer.six
 mistralai<2.0.0
 sentencepiece
+scikit-learn
+joblib
+seaborn
+matplotlib

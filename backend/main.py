@@ -66,6 +66,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] Lỗi tải AI Models: {e}")
 
+    # Train query classifier
+    try:
+        from services.query_classifier import get_query_classifier
+        print("[Query Classifier] Đang train classifier...")
+        get_query_classifier()
+    except Exception as e:
+        print(f"[WARN] Lỗi train Query Classifier: {e}")
+
     yield
 
     # Shutdown: đóng Qdrant client

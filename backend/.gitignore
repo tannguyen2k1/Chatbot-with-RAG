@@ -40,4 +40,5 @@ settings_local.py
 # PyInstaller build output
 dist/
 build/
-run_app.spec
+# Trained ML models
+services/models/

@@ -1,0 +1,3242 @@
+text_norm,need_context
+độ phhức tạp O(n) là gì,1
+cảm ơn nha,0
+cách resolve conflict git,1
+cách kết nối database,1
+transfer learning là gì,1
+cách dùng kubernetes,1
+byee bạn,0
+van loi,1
+CI/CD là gì,1
+câu trả lời rất hữu ích,0
+viết regex kiểm tra email,1
+rest api là gì,1
+mình log out đây bye,0
+cau tra loi nay ok do,0
+mình ngủ đây bye,0
+đc rồi,0
+de toi thu,0
+cach xu ly overfitting,1
+ok duoc roi minh lam theo cach do,0
+DNS  là gì,1
+design pattern  là gì,1
+minh phai di roi bye,0
+DevOps là gì,1
+thiết kế api cho ứng dụng todo,1
+hello mọi người,0
+còn cách nào không,1
+viet dockerfile cho app nodejs,1
+nên dùng orm hay raw sql,1
+cach dung websocket,1
+cho minh suy nghi them,0
+cach chunking document cho rag,1
+cách implement feature flaag,1
+thanks nhieu,0
+LLM la gi,1
+được rồi mình biết làm rồi cảm ơn,0
+implement pagination trong api,1
+thu cach nao,1
+khong can giup nua dau,0
+recursion la gi,1
+raag là gì,1
+viet unit test cho function nay,1
+nên dùng React hay Vue,1
+agile la gi,1
+viet middleware authentication jwt,1
+web3 la gi,1
+typescript co can thiet khong,1
+không cần giúp nữa đâu,0
+on roi,0
+khong work,1
+hiểu,0
+sao khong duoc,1
+joiin trong sql,1
+cach publish package len npm,1
+cảm ơn bạn đã giúp,0
+hiểu rồi,0
+cách xử lý overfitting,1
+ok thoi bye ban nhe,0
+được rồi,0
+không hiểu,1
+tối ưu đoạn code này,1
+không giúp ích đượcc gì cả,0
+data pipeline la gi,1
+bạn ơi,0
+loi segmentation fault,1
+cảm ơn bạn,0
+này bạn ơi,0
+viet query tinh doanh thu theo thang,1
+cách đánh giá chất lượng rag,1
+độ phức tạp O(n) là gì,1
+git  rebase là gì,1
+lỗi immport module,1
+redis la gi,1
+data lake là gì,1
+giải thích machine learning cho người mới,1
+rest api la gi,1
+tóm tắt đoạn văn này,1
+cách xử lý imbalanced dataset,1
+machine learning la gi,1
+graphql có thực sự cần thiết không,1
+tạo mock data cho test,1
+để tôi thử,0
+cảm ơn bạn rất nhiều vì đã giúp mình giải quyết vấn đề này,0
+cloud computing la gi,1
+cách dùng docker compose,1
+cach setup load balancing,1
+tạm thời thế đã,0
+on ban nhieu,0
+thanks ban da giai thich de hieu qua,0
+redux  hay zustand,1
+giai thich doan code nay,1
+học Python hay JavaScript trước,1
+tạo schema database cho app bán hàng,1
+thank ban,0
+dạ rồi,0
+good morning,0
+BDD la gi,1
+cach cai dat ubuntu server,1
+khong huu ich lam,0
+ok luon,0
+cach setup logging,1
+cach xu ly file upload lon,1
+ơi bạn ơi,0
+websocket là gì,1
+viết sql query lấy top 10,1
+được,0
+rag là gì,1
+hieu,0
+cai nay,1
+ok hiểu,0
+ban tra loi rat chuyen nghiep,0
+CDN là gì,1
+cach estimate task,1
+lỗi này,1
+vector database la gi,1
+cam on nha,0
+viết unit test cho function này,1
+à,0
+thannk you,0
+cách setup nginx,1
+cách implement cachiing strategy,1
+dạ,0
+u toi lam duoc roi khong can giai thich them dau,0
+metaverse la gi,1
+toi uu model AI,1
+tối ưu query sql,1
+oke,0
+hướng dẫn setup project react từ đầu,1
+cach lam code review,1
+hieu roi,0
+cau hinh nginx reverse proxy,1
+cách monitor ứng dụng production,1
+express hay nestjs,1
+SQL và NoSQL khác nhau thế nào,1
+viết dockerfile cho app nodejs,1
+chào buổi sáng,0
+tam biet,0
+ừ tôi làm được rồi không cần giải thích thêm đâu,0
+blockchain hoat dong the nao,1
+viết code xử lý ảnh bằng opencv,1
+functional programming là gì,1
+hi,0
+cách implement search full text,1
+cách estimate task,1
+cach ket noi database,1
+git merge là gì,1
+giai thich nhu vay kho hieu qua,0
+viet github action deploy tu dong,1
+minh xem lai da,0
+bye nha,0
+chuyển code python sang javascript,1
+minh lam theo huong dan va da xong roi,0
+thoi minh di roi,0
+van bi,1
+rõ rồi,0
+giải thích như vậy khó hiểu quá,0
+viết query tính doanh thu theo tháng,1
+u toi da lam theo va chay duoc roi,0
+cam on ban da giup,0
+cách tạo pull request,1
+câu trả lời này không đúng lắm,0
+kết nối mysql ppython,1
+oi ban oi,0
+cảm ơn vì câu trả lời chi tiết,0
+cách visualize data bằng matplotlib,1
+giai thich cai nay,1
+viet api endpoint upload file,1
+cách deploy  lên gcp,1
+dung kieu gi,1
+bug này,1
+nen dung orm hay raw sql,1
+microservice hay monolith cho startup,1
+cảm ơn bạn đã support mình trong suốt thời gian qua,0
+huong dan fine-tune model bert,1
+redux hay zustand,1
+làm sao,1
+git rebase là gì,1
+message queue la gi,1
+django hay fastapi,1
+khong chay,1
+github actions là gì,1
+thoi ban roi bye,0
+ok luôn,0
+loi 500,1
+lỗi 404,1
+cách implement real-time notification,1
+bị lỗi,1
+hẹn gặp lại nhé,0
+ừ,0
+OOP la gi,1
+thôi được rồi mình xử lý được rồi không cần hỗ trợ nữa,0
+cảm ơn rất nhiều,0
+ừm,0
+postgres hay mysql tốt hơn,1
+cách setup load balancing,1
+o,0
+de minh thu lai,0
+giải thích dễ hiểu quá,0
+data pipeline là gì,1
+mình phải đi rồi bye,0
+thôi mình offline rồi,0
+cho mình hỏi bạn có ở đây không,0
+thank you so much ban oi giup ich cho minh rat nhieu,0
+cách deploy lên aws,1
+cách cài đặt ubuntu server,1
+thanks ban da giai dap thac mac cua minh,0
+cách cấu hình ssl certificate,1
+bạn sai rồi,0
+cach toi uu database query,1
+TDD là gì,1
+câu trả lời này ok đó,0
+cách xử lýý imbalanced dataset,1
+alo,0
+a hieu y ban roi minh se lam the,0
+ban giai thich hay day,0
+uhm,0
+review code này giúp tôi,1
+giải thích cái này,1
+mình thích cách bạn giải thích,0
+di lam roi bye,0
+DNS là gì,1
+LLM là gì,1
+bạn giải thích hay đấy,0
+flutter hay react native,1
+cáách dùng redis,1
+thoi ok khong sao cam on ban,0
+NFT la gi,1
+cách phân tích dữ liệu bằng pandas,1
+thanks nhiều,0
+hen gap lai,0
+thôi thôi,0
+debug giúp tôi,1
+ok cảm ơn bạn đã hướng dẫn tận tình,0
+cái này,1
+hi ban oi,0
+cách setup logging,1
+tối ưu performance nodejs,1
+setup ci/cd như thế nào,1
+viet api bang fastapi,1
+ok minh tu lam duoc roi thanks,0
+hiii,0
+bạn thông minh ghê,0
+cach secure api,1
+dc roi,0
+GPT la gi,1
+cấu hình nginx reverse proxy,1
+để mình thử lại,0
+ok rồi,0
+cảm ơn bạn đã giải thích rất rõ ràng,0
+lỗi 4404,1
+dynamic programming là gì,1
+HTTP va HTTPS,1
+websocket la gi,1
+cách cài đặt python,1
+toi uu query sql,1
+setup môi trường dev cho project react,1
+tensorflow hay pytorch,1
+bug nay,1
+nen deploy tren vps hay serverless,1
+deep learning là gì,1
+xin chao,0
+cach setup moi truong staging,1
+vẫn bị,1
+vâng rồi,0
+thank you so much bạn ơi giúp ích cho mình rất nhiều,0
+NFT là gì,1
+tam biet nha,0
+lỗi 500,1
+xin chao ban,0
+redis là gì,1
+cách implement feature flag,1
+cach viet clean code,1
+cáách dùng docker,1
+chao buoi toi,0
+cam on ban nhieu,0
+cam on ban,0
+lỗi này là gì,1
+ok cau tra loi nay du roi,0
+ro,0
+ok done bye,0
+fix sao,1
+minh ngu day bye,0
+deep learning la gi,1
+uh huh,0
+thoi duoc,0
+cach deploy model ml len production,1
+thử rồi chạy được cảm ơn bạn nhiều nhé,0
+ừ thôi được rồi,0
+HTTP và HTTPS,1
+ok được rồi mình làm theo cách đó,0
+cách viết api documentation,1
+ổn,0
+graphql la gi,1
+thoi duoc roi minh xu ly duoc roi khong can ho tro nua,0
+viet bash script backup database,1
+ro roi,0
+ban hay that do,0
+good afternoon,0
+data lake la gi,1
+thanks bạn,0
+cảm ơn bạn nhiều,0
+tạm biệt hẹn gặp lại,0
+cach dung kubernetes,1
+nen hoc aws cert nao truoc,1
+ok minh se thu theo huong do xem,0
+vẫn lỗi,1
+chao,0
+tam duoc roi,0
+fix lỗi này như thế nào,1
+thannks bạn đã giúp,0
+hello  mọi người,0
+sao không được,1
+next.js hay remix,1
+thu roi chay duoc cam on ban nhieu nhe,0
+hey bạn,0
+SOLID la gi,1
+tức là sao,1
+docker hay podman,1
+kafka hay rabbitmq cho message queue,1
+thoi minh di ngu bye bye,0
+toi uu doan code nay,1
+functional programming la gi,1
+jest hay vitest,1
+setup ci/cd nhu the nao,1
+ok tam biet ban nhe,0
+chào buổi tối,0
+tại sao lại thế,1
+chào chị,0
+cách dùng websocket,1
+thoi minh offline roi,0
+cach setup nginx,1
+fix lỗi nàày như thế nào,1
+cam on ban da support minh trong suot thoi gian qua,0
+cach danh gia chat luong rag,1
+viết code C# kết nối database,1
+cách dùng hugging face,1
+vâng tôi đã hiểu rồi cảm ơn bạn,0
+tam thoi the da,0
+cach xu ly memory leak,1
+tai sao lai the,1
+cloud computing là gì,1
+lỗi import module,1
+nen hoc golang hay rust,1
+cách setup ssh key,1
+bye,0
+ờ,0
+dynamic programming la gi,1
+blockchain hoạt động thế nào,1
+dc r,0
+viet sql query lay top 10,1
+viết api bằng flask,1
+lỗi tiếp,1
+fine tuning model,1
+ổn rồi,0
+lam sao,1
+tạm được rồi,0
+à vậy thôi cũng được,0
+cách cấu hình ssl certifiicate,1
+TCP và UDP khác nhau thế nào,1
+cách dùng langchain,1
+xin chào,0
+cách khhác,1
+giai thich de hieu qua,0
+viet api bang django,1
+ban tra loi tot lam,0
+cryptocurrency là gì,1
+cach monitor ung dung production,1
+không sao đâu,0
+tối ưu model AI,1
+bạn thônng minh ghê,0
+cách xử lý memory leak,1
+ok cảm  ơn bạn đã hướng dẫn tận tình,0
+machine learning là gì,1
+recursion là gì,1
+khôông cần nữa,0
+bạn trả lời nhanh quá,0
+khong sao dau,0
+cách deplloy lên aws,1
+TCP va UDP khac nhau the nao,1
+loi tiep,1
+tailwind hay styled-components,1
+vẫn fail,1
+heyyyy,0
+prompt engineering là gì,1
+ETL là gì,1
+ban giai thich ro rang qua,0
+cám ơn bạn,0
+viết api endpoint upload file,1
+vim hay vscode,1
+chao moi nguoi,0
+còn cách khác không,1
+cách deploy lên heroku,1
+scrum  là gì,1
+cosine similarity la gi,1
+không cần nữa,0
+cảm ơn vì đã dành thời gian giải thích cho mình,0
+blockchain la gi,1
+ok bo qua di duoc roi,0
+vâng anh/chị hiểu rồi em sẽ làm theo,0
+thanks ban,0
+agile hay waterfall cho du an nay,1
+cach visualize data bang matplotlib,1
+cam on ban da ho tro minh nhe,0
+lỗi null pointer,1
+transformer trong AI là gì,1
+caching la gi,1
+phân tích độ pphức tạp thuật toán này,1
+còn cách nào khônng,1
+ok câu trả lời này đủ rồi,0
+thôi ok không sao cảm ơn bạn,0
+huong dan dung langchain,1
+tuc la sao,1
+cách debug python,1
+u toi hieu roi de toi thu lai xem sao,0
+thanks bạn đã giúp,0
+e ban oi,0
+tóm tắt đoạn văn nnày,1
+van khong xong,1
+viết function tính fibonacci,1
+mongodb hay postgresql,1
+cach phan tich du lieu bang pandas,1
+bạn giải thích rõ ràng quá,0
+nên deploy trên vps hay serverless,1
+mình không thích cách bạn giải thích,0
+cách học lập trình hiệu quả,1
+thử cách nào,1
+viết cho tôi đoạn code python đọc file csv,1
+hi ban,0
+gặp lại sau nhé,0
+huong dan setup project react tu dau,1
+thuật toán sắp xếp,1
+cách implement rate limiting,1
+tao erd cho database cua toi,1
+chào mọi người,0
+hướng dẫn migrate database,1
+cách setup môi trường staging,1
+GPT là gì,1
+aws hay gcp hay azure,1
+heyy,0
+cach cai dat python,1
+đi làm rồi bye,0
+cảm ơn nhiều,0
+thôi mình đi ngủ bye bye,0
+sao vậy,1
+SOLID là gì,1
+con cach khac khong,1
+cách chunking document cho rag,1
+vang,0
+vẫn không xong,1
+transfer learning la gi,1
+bye bạn,0
+ừ nhưng mà thôi không cần đâu,0
+a ra vay hieu roi thanks ban nhieu,0
+etheereum là gì,1
+viết bash script backup database,1
+cau tra loi nay khong dung lam,0
+agile là gì,1
+cho mình suy nghĩ thêm,0
+da,0
+bye nha mai gặp lại,0
+nên học golang hay rust,1
+vang anh/chi hieu roi em se lam theo,0
+mình cảm ơn bạn nhiều lắm nha rất hữu ích,0
+tạm biệt hẹn gặp  lại,0
+caching là gì,1
+ethereum là gì,1
+chao ban,0
+dạ không cần nữa ạ cảm ơn,0
+viết code sắp xếp mảng,1
+nghĩa là gì,1
+nay ban oi,0
+cam on,0
+cach dung hugging face,1
+thoi minh tu nghien cuu them vay,0
+TDD là ggì,1
+viết api bằng django,1
+ok không sao,0
+loi,1
+cam on ban da giai thich rat ro rang,0
+à ra vậy hiểu rồi thanks bạn nhiều,0
+lỗi segmentation fault,1
+BDD là gì,1
+viet function tinh fibonacci,1
+cach tao pull request,1
+chào buổi  sáng,0
+cảm ơn vì đã dành thời gian giải thícch cho mình,0
+CDN la gi,1
+duoc roi minh biet lam roi cam on,0
+chào,0
+crosss validation là gì,1
+cám ơn,0
+viet api bang flask,1
+hẹn gặp lại,0
+cach tich hop openai api,1
+ok tạm biệt bạn nhé,0
+ê bạn ơi,0
+thank bạn,0
+không hiểểu,1
+binary search la gi,1
+hello,0
+cach implement rate limiting,1
+load balancer la gi,1
+linked list vs array,1
+ETL la gi,1
+a,0
+u,0
+viet code C# ket noi database,1
+metaverse là gì,1
+ok mình sẽ thử theo hướng đó xem,0
+serverless là gì,1
+chao em,0
+message queue là gì,1
+heyyy,0
+cach implement real-time notification,1
+cam on rat nhieu,0
+nên dùng sql hay nosql,1
+cách train model machine learning,1
+thx,0
+viếết code kết nối redis cache,1
+elasticsearch hay opensearch,1
+duoc roi,0
+fine  tuning model,1
+cach dung git,1
+loi nay,1
+cách deploy lên gcp,1
+toi uu performance nodejs,1
+microservice la gi,1
+minh thich cach ban giai thich,0
+cách backup và restore databbase,1
+ket noi mongodb,1
+prompt eengineering là gì,1
+mình đi đây,0
+huong dan doc error log,1
+tạm biệt,0
+ừ thì cũng không quan trọng lắm  thôi kệ,0
+tao mock data cho test,1
+bi loi,1
+ok để tôi xem,0
+rabbitmq vs kafka,1
+thôi  thôi,0
+mình làm theo hướng dẫn và đã xong rồi,0
+hey ban,0
+cách tích hợp openai api,1
+ừ thôi để mình tự xử,0
+thanks bạn đã giải thích dễ hiểu quá,0
+không được lắm đâu bạn ơi,0
+cách backup và restore database,1
+setup moi truong dev cho project react,1
+cách dùng git,1
+cach debug javascript,1
+van fail,1
+chào buổi chiều,0
+chuyen code python sang javascript,1
+tks,0
+ok de toi xem,0
+thế nào,1
+neural network hoạt động thế nào,1
+cach setup ssh key,1
+serverless la gi,1
+viet code xu ly anh bang opencv,1
+cách khác,1
+design pattern là gì,1
+cách deploy model ml lên production,1
+bạn hay thật đó,0
+sao vay,1
+overfittting là gì,1
+cảm ơn  vì câu trả lời chi tiết,0
+ok khong sao,0
+bạn trả lời rất chuyên nghiệp,0
+câu trả lời quá dài dòng,0
+viet cho toi doan code python doc file csv,1
+ket noi postgresql nodejs,1
+viết regex kiểm tra emaail,1
+tạo erd cho database của tôi,1
+minh khong thich cach ban giai thich,0
+dịch đoạn text này sang tiếng Anh,1
+cách debug javascript,1
+cũng được không quan trọng lắm,0
+hash table la gi,1
+không giúp ích được gì cả,0
+viết codee sắp xếp mảng,1
+cách cài đặt nodejs,1
+bitcoin là gì,1
+load balancer là gì,1
+hướng dẫn đọc error log,1
+thôi mình tự nghiên cứu thêm vậy,0
+lỗi cors,1
+kết nối mongodb,1
+ban oi,0
+không chạy được,1
+cách xây dựng rag pipeline,1
+loi nay la gi,1
+ừ thì cũng không quan trọng lắm thôi kệ,0
+cách implement oauth2,1
+neural network hoat dong the nao,1
+cách dùng docker coompose,1
+cach deploy len heroku,1
+graphql là gì,1
+SQL va NoSQL khac nhau the nao,1
+viet api bang express,1
+cach resolve conflict git,1
+git merge la gi,1
+cách viết clean code,1
+cách viết apii documentation,1
+thoi bo qua di,0
+không work,1
+van khong chay,1
+gap lai sau nhe,0
+cau tra loi qua dai dong,0
+mình xem lại đã,0
+cross validation là gì,1
+debug giup toi,1
+the nao,1
+jenkins hay github actions,1
+confusion matrix là gì,1
+nen dung React hay Vue,1
+stack và queue,1
+hướng dẫn sql join các loại,1
+cach xu ly concurrent requests,1
+typescript có cần thiết không,1
+vẫn không chạy,1
+web3 là gì,1
+sqlite có đủ cho production không,1
+cách tạo virtual environment python,1
+cách dùng redis,1
+sqlite có đủ cho production khôông,1
+cach debug python,1
+hello ban,0
+viết code kết nối redis cache,1
+u roi,0
+stack vvà queue,1
+bitcoin la gi,1
+loi null pointer,1
+khong chay duoc,1
+cach xay dung rag pipeline,1
+nghia la gi,1
+chào cchị,0
+viet scraper don gian bang python,1
+ừ rồi,0
+cosine similarity là gì,1
+bye bye,0
+cau tra loi rat huu ich,0
+thank you,0
+ừ thôôi được rồi,0
+thôi bận rồi bye,0
+thuat toan sap xep,1
+huong dan sql join cac loai,1
+DevOps la gi,1
+ừ tôi đã làm theo và chạy được rồi,0
+github actions la gi,1
+vector database là gì,1
+postgres hay mysql tot hon,1
+cam on nhieu,0
+chào buổi cchiều,0
+thiet ke api cho ung dung todo,1
+join trong sql,1
+cách xử lý file upload lớn,1
+cách làm code review,1
+giai thich machine learning cho nguoi moi,1
+monolith vs microservice,1
+hey,0
+van bi loi,1
+CI/CD la gi,1
+cach cai dat nodejs,1
+bye nhha mai gặp lại,0
+à hiểu ý bạn rồi mình sẽ làm thế,0
+cach tao virtual environment python,1
+cách implement caching strategy,1
+ok roi,0
+ơn bạn nhiều,0
+cảm ơn,0
+kết nối mysql python,1
+bạn trả lời tốt lắm,0
+xin chào bạn,0
+hoc Python hay JavaScript truoc,1
+overfitting là gì,1
+minh di day,0
+agile hay waterfall cho dự án này,1
+scrum là gì,1
+hướng dẫn dùng langchain,1
+cach nao,1
+cách secure api,1
+loi cors,1
+chao anh,0
+không hữu ích lắm,0
+ok,0
+ok toi se thu theo cach khac xem sao,0
+kubernetes la gi,1
+ok bỏ qua đi được rồi,0
+hướng dẫnn migrate database,1
+da roi,0
+okay,0
+hello bạn,0
+tạm biệt nha,0
+thanks nha,0
+ban tra loi nhanh qua,0
+nên học aws cert nào trước,1
+viết api bằng fastapi,1
+microservice là gì,1
+cảm ơn bạn đã hỗ trợ mình nhé,0
+phân tích độ phức tạp thuật toán này,1
+OOP là gì,1
+cryptocurrency la gi,1
+dùng kiểu gì,1
+u nhung ma thoi khong can dau,0
+u thoi de minh tu xu,0
+big  data là gì,1
+vẫn bị lỗi,1
+kết nối postgresql nodejs,1
+thôi mình đi rồi,0
+không đưược lắm đâu bạn ơi,0
+cách profile performance ứng dụng,1
+cach implement search full text,1
+da khong can nua a cam on,0
+thôi được,0
+cach implement oauth2,1
+cách xử lý concurrent requests,1
+chào bạn,0
+graphql co thuc su can thiet khong,1
+cho mình hỏi bạn có ở đđây không,0
+rõ,0
+index trong sql là gì,1
+thanks,0
+hen gap lai nhe,0
+ok done roi ban oi chay ngon lanh,0
+duoc,0
+java hay kotlin cho android,1
+ừ tôi hiểu rồi để tôi thử lại xem sao,0
+viết scraper đơn giản bằng python,1
+embedding la gi,1
+viết middleware authentication jwt,1
+embedding là gì,1
+hi bạn ơi,0
+hash table là gì,1
+review code nay giup toi,1
+cách tối ưu database query,1
+AI là gì,1
+ok thôi bye bạn nhé,0
+confusion maatrix là gì,1
+cach hoc lap trinh hieu qua,1
+cung duoc khong quan trong lam,0
+jest hayy vitest,1
+on,0
+lỗi,1
+index trong sql la gi,1
+ok donee bye,0
+nen dung sql hay nosql,1
+viết api bằng express,1
+AI la gi,1
+vang toi da hieu roi cam on ban,0
+transformer trong AI la gi,1
+ok hieu,0
+thanks bạn đã giải đáp thắc mắc của mình,0
+cam on ban rat nhieu vi da giup minh giai quyet van de nay,0
+mình cảm ơn bạn nhiều lắm nnha rất hữu ích,0
+cách dùng laangchain,1
+cách nào,1
+chào anh,0
+binary search là gì,1
+da em hieu roi em se thu lai a,0
+ciao,0
+blockchain là gì,1
+cách dùng docker,1
+cách publish package lên npm,1
+hướng dẫn fine-tune model bert,1
+minh log out day bye,0
+viết github action deploy tự động,1
+big data là gì,1
+dich doan text nay sang tieng Anh,1
+ok tôi sẽ thử theo cách khác xem sao,0
+cach train model machine learning,1
+dạ em hiểu rồi em sẽ thử lại ạ,0
+github hay gitlab,1
+đuoc roi,0
+a vay thoi cung duoc,0
+giải thích đoạn code này,1
+kubernetes là gì,1
+vang roi,0
+ok mình tự làm được rồi thanks,0
+tao schema database cho app ban hang,1
+chào em,0
+cach profile performance ung dung,1
+vâng,0
+thôi bỏ qua đi,0
+không chạy,1
+ban sai roi,0
+ok done rồi bạn ơi chạy ngon lành,0
+tối ưu docker image size cho nodejs,1
+mongodb vs cassandra khi nào dùng,1
+chào buổi sáng mọi người,0
+cách viết api endpoint chuẩn REST,1
+sao máy chạy chậm quá,0
+giải thích về eventual consistency,1
+cách dùng async await trong javascript,1
+tạm biệt nhé hẹn gặp lại sau,0
+lỗi OutOfMemoryError trong Java,1
+unit test và integration test khác nhau thế nào,1
+ok để yên đấy đi,0
+cách tối ưu webpack build time,1
+hướng dẫn sử dụng git stash,1
+mình phải đi họp đây,0
+các loại database hiện nay,1
+làm sao để học nhanh hơn,1
+ôi không được rồi,0
+cách migrate từ django 3 lên 4,1
+thiết lập CI/CD với GitLab,1
+để tôi thử cách khác xem,0
+bootstrap 5 có gì mới,1
+cách cài đặt và cấu hình jenkins,1
+mình mệt rồi tạm nghỉ đây,0
+cơ chế hoạt động của JWT,1
+cách xử lý transaction trong spring boot,1
+sao import module cứ bị lỗi hoài,1
+được rồi mình biết rồi,0
+cách build ứng dụng desktop với electron,1
+so sánh flutter và react native 2024,1
+thôi mình đi nấu cơm đây,0
+cách integrate stripe payment,1
+tìm hiểu về webpack module federation,1
+bị lỗi CORS policy,1
+mình cần thêm thời gian suy nghĩ,0
+cách dùng react hook form,1
+tự học python cho người mới,1
+câu lệnh git để undo commit cuối,1
+hẹn gặp lại chiều nay,0
+graphql subscription là gì,1
+cách export default và named export,1
+mình chưa cài thư viện này,1
+mai mình hỏi tiếp được không,1
+cách config cors trong express,1
+tìm hiểu về react server component,1
+máy lag quá không code nổi,0
+cách dùng zod validation,1
+gợi ý cho tôi vài open source project,1
+còn tùy trường hợp nữa,1
+chắc là do version cũ,1
+tôi mới học python cần giúp,1
+cách cấu hình babel,1
+data modeling cho ứng dụng social,1
+mình chưa hình dung ra,1
+phân biệt props và state,1
+cách tối ưu re-render trong react,1
+thấy hơi khó hiểu,1
+các design pattern phổ biến,1
+cách implement dark mode react,1
+nguyên lý hoạt động của blockchain,1
+tại sao lại chọn event-driven architecture,1
+tối ưu chi phí cloud,1
+sự khác nhau giữa mvc và mvvm,1
+mình cần tư vấn chọn stack,1
+làm sao để có kinh nghiệm thực tế,1
+học java hay C# cho web backend,1
+tôi bị lỗi này là sao,1
+cách dùng react context hiệu quả,1
+hướng dẫn sử dụng docker swarm,1
+nguyên lý dry trong lập trình,1
+tầm quan trọng của code review,1
+cách xử lý multipart form data,1
+so sánh giữa MySQL và MariaDB,1
+giải thích về distributed tracing,1
+cách migrate từ class component sang functional,1
+mình cần học thêm về system design,1
+cách dùng react-query để fetch data,1
+viết api document bằng swagger,1
+sử dụng custom hook trong react,1
+nên dùng prisma hay sequelize,1
+Tại sao phải dùng immutable state,1
+cách viết test coverage cao,1
+nghệ devops là làm gì,1
+nguyên tắc kiss trong thiết kế,1
+cách implement infinite scroll,1
+cách dùng react memo,1
+tôi muốn chuyển từ frontend sang fullstack,1
+cách dùng nextjs middleware,1
+khi nào dùng static generation,1
+microfrontend có đáng để học không,1
+tôi muốn viết game cơ bản,1
+sự khác biệt giữa library và framework,1
+cách tạo npm package đầu tiên,1
+học nextjs có cần biết react không,1
+cách cải thiện lighthouse score,1
+tôi muốn làm web realtime,1
+chọn ngôn ngữ nào để bắt đầu,1
+jsx là gì giải thích đơn giản,1
+lý do nên học typescript,1
+cách xử lý lỗi trong async function,1
+debug memory leak trong react,1
+tối ưu seo cho nextjs,1
+làm thế nào để code sạch hơn,1
+tôi bị confilict code,1
+cách học lập trình hiệu quả mỗi ngày,1
+các bước deploy ứng dụng lên production,1
+những sai lầm khi mới học lập trình,1
+bạn giải thích ngắn gọn được không,1
+giải thích lại theo cách khác đi,1
+mình chưa hiểu ý bạn,1
+à thì ra là vậy,0
+cảm ơn bạn mình hiểu sơ sơ rồi,0
+để mai mình thử tiếp,0
+ok để tôi search thêm,0
+cũng tạm được nhưng chưa tối ưu lắm,0
+mình thấy nó không ổn lắm,1
+có vẻ hợp lý đó,0
+cách này thấy cũng ổn,0
+mình thấy phức tạp quá,1
+có thể rút gọn lại không,1
+mình muốn nghe giải thích chi tiết hơn,1
+đọc chưa hiểu lắm,1
+bạn ơi giúp mình cái này với,1
+mình cần hỗ trợ gấp về cái này,1
+hello cả nhà iu,0
+chúc mọi người một ngày tốt lành,0
+hôm nay trời đẹp quá,0
+ai có kinh nghiệm về cái này không,1
+nhờ mọi người review code giúp,1
+bài toán này khó quá ai giúp với,1
+giải thích hộ em với các bác,1
+các pro cho em hỏi tí,1
+mọi người ơi cứu mình với,1
+việc này ai biết chỉ mình với,1
+thắc mắc cần giải đáp gấp,1
+cho mình hỏi ké tí được không,1
+có bác nào rảnh giúp em với,1
+xin chỉ giáo về lập trình web,1
+em mới tập tành code mong giúp đỡ,1
+mình không biết bắt đầu từ đâu,1
+mông lung như một trò đùa,1
+ai đã từng làm cái này chưa,1
+kinh nghiệm thực chiến của mọi người,1
+mọi người chọn angular hay react,1
+nên học cái nào trước cái nào sau,1
+lộ trình học cho người trái ngành,1
+cách học để nhớ lâu,1
+làm sao để không bị nản khi học code,1
+động lực học lập trình,1
+tối ưu visual studio code cho mượt,1
+extension vscode hay nên cài,1
+phím tắt vscode cần biết,1
+cách format code tự động,1
+snippets hữu ích cho Javascript,1
+cách tự tạo snippet,1
+thiết lập môi trường ảo python,1
+cách quản lý version python,1
+pip vs conda,1
+nên cài python từ đâu,1
+tạo api fake cho frontend test,1
+json-server là gì,1
+tutorial về cách dùng axios,1
+xử lý response interceptor,1
+dùng fetch hay axios,1
+async await có thực sự tốt hơn promise,1
+promise.all là gì,1
+callback hell và cách giải quyết,1
+event loop và call stack,1
+setTimeout hoạt động thế nào,1
+closures trong js là gì,1
+scope và hosting khác nhau,1
+tìm hiểu về strict mode,1
+es6 có những tính năng gì nổi bật,1
+arrow function khác gì function bình thường,1
+destructuring trong javascript,1
+spread và rest operator,1
+optional chaining dùng khi nào,1
+nullish coalescing,1
+các loại vòng lặp trong JS,1
+phân biệt for in và for of,1
+phương thức của mảng,1
+cách clone mảng sâu,1
+bất biến dữ liệu,1
+thao tác với chuỗi,1
+template literal,1
+chuyển đổi kiểu dữ liệu,1
+truthy và falsy values,1
+cách debug javascript trên chrome,1
+debugger statement,1
+cách dùng console.table,1
+kiểm tra performance code,1
+cách viết code ít bug hơn,1
+cách tự học hiệu quả,1
+tài liệu học javascript hay,1
+sách cho javascript developer,1
+khóa học online nào tốt,1
+chứng chỉ aws có giá trị không,1
+cách viết CV cho fresher,1
+kinh nghiệm phỏng vấn IT,1
+câu hỏi phỏng vấn thường gặp,1
+thuật toán phỏng vấn cần biết,1
+leetcode nên bắt đầu từ đâu,1
+cách rèn luyện tư duy thuật toán,1
+có nên học đại học chính quy không,1
+tự học và học đại học,1
+chi phí học lập trình,1
+kiếm tiền từ lập trình khi còn đi học,1
+bắt đầu freelancer như thế nào,1
+nền tảng freelance cho dev,1
+top các công nghệ hot năm nay,1
+xu hướng lập trình tương lai,1
+AI có thay thế lập trình viên không,1
+nỗi sợ bị AI cướp việc,1
+kỹ năng mềm cho developer,1
+làm việc nhóm hiệu quả,1
+giao tiếp với khách hàng,1
+quản lý dự án nhỏ,1
+agile scrum có thực sự cần thiết,1
+cách viết user story hiệu quả,1
+cách estimate story point,1
+burndown chart,1
+retrospective meeting,1
+cách tổ chức công việc,1
+công cụ quản lý task,1
+jira hay trello,1
+notion để quản lý kiến thức,1
+cách viết blog kỹ thuật,1
+xây dựng thương hiệu cá nhân,1
+github profile ấn tượng,1
+cách viết readme thu hút,1
+open source cho newbie,1
+đóng góp vào open source thế nào,1
+tìm dự án open source để tham gia,1
+cách tạo pull request đầu tiên,1
+git flow hay github flow,1
+commit message convention,1
+semantic versioning là gì,1
+conventional commits,1
+commitlint,1
+eslint config chuẩn,1
+prettier config,1
+cấu hình prettier và eslint cùng nhau,1
+stylelint cho css,1
+công cụ kiểm tra chính tả code,1
+spell check cho vscode,1
+markdown là gì,1
+căn bản về markdown,1
+viết tài liệu bằng markdown,1
+cú pháp markdown nâng cao,1
+toán tử trong javascript,1
+so sánh == và ===,1
+truthy falsy trong js,1
+các kiểu dữ liệu,1
+undefined và null,1
+NaN trong javascript,1
+kiểm tra kiểu dữ liệu,1
+type coercion,1
+number methods,1
+math object,1
+random số trong javascript,1
+date object,1
+xử lý datetime,1
+moment js hay date-fns,1
+dayjs,1
+array.from,1
+set và map,1
+weakmap weakset,1
+symbol trong javascript,1
+iterator,1
+generator function,1
+module trong javascript,1
+commonjs và es module,1
+package json,1
+cấu hình package json,1
+nodejs căn bản,1
+lập trình bất đồng bộ,1
+callback pattern,1
+stream trong nodejs,1
+buffer,1
+event emitter,1
+process object,1
+các module built-in của nodejs,1
+fs module làm việc với file,1
+path module,1
+os module,1
+http module,1
+tạo server đơn giản bằng nodejs,1
+nodejs với express,1
+routing trong express,1
+middleware trong express,1
+xác thực api,1
+passport js,1
+json web token chi tiết,1
+refresh token,1
+oauth2 flow,1
+openid connect,1
+social login,1
+tích hợp đăng nhập google,1
+gửi email trong nodejs,1
+nodemailer,1
+sendgrid,1
+xử lý upload file với multer,1
+giới hạn dung lượng upload,1
+validate dữ liệu,1
+joi validation,1
+sanitize dữ liệu,1
+chống sql injection,1
+chống xss,1
+helmet js,1
+rate limiting với express-rate-limit,1
+cors config chi tiết,1
+logging với winston,1
+morgan logger,1
+biến môi trường,1
+dotenv,1
+process manager cho node,1
+pm2 là gì,1
+forever js,1
+cluster mode,1
+nodejs và worker threads,1
+scale ứng dụng nodejs,1
+nginx load balancer cho node,1
+redis cho ứng dụng node,1
+session management,1
+cookie parser,1
+local storage vs session storage,1
+indexeddb,1
+web storage api,1
+service worker,1
+pwa cơ bản,1
+manifest json,1
+làm ứng dụng offline,1
+notification api,1
+push notification,1
+firebase cloud messaging,1
+websocket với socket io,1
+phòng chat với socketio,1
+kênh trong socketio,1
+webrtc là gì,1
+video call với webrtc,1
+media devices api,1
+geolocation api,1
+làm việc với maps,1
+google maps api,1
+leaflet js,1
+chart js vẽ biểu đồ,1
+d3 js,1
+three js,1
+làm game với javascript,1
+canvas api,1
+svg animation,1
+css animation,1
+css transition,1
+flexbox cơ bản,1
+grid layout,1
+responsive design,1
+media query,1
+mobile first,1
+css framework nào tốt,1
+bootstrap 5 tutorial,1
+tailwind css tutorial,1
+tailwind config,1
+tùy chỉnh theme tailwind,1
+sass tutorial,1
+less tutorial,1
+styled components,1
+css modules,1
+bem methodology,1
+tối ưu css,1
+critical css,1
+purgecss,1
+font google,1
+icon font,1
+svg icon,1
+favicon,1
+seo cơ bản,1
+meta tag,1
+open graph,1
+twitter card,1
+json ld,1
+schema markup,1
+web performance,1
+core web vitals,1
+lazy loading images,1
+code splitting,1
+tree shaking,1
+webpack cơ bản,1
+vite js,1
+esbuild,1
+snowpack,1
+parcel js,1
+babel plugin,1
+typescript cơ bản,1
+type và interface,1
+generics trong typescript,1
+enum,1
+union type,1
+intersection type,1
+utility types,1
+typeof và keyof,1
+mapped types,1
+conditional types,1
+declaration files,1
+tsconfig cơ bản,1
+migrate js sang ts,1
+react với typescript,1
+props type trong react,1
+event type,1
+useRef type,1
+context type,1
+custom hook return type,1
+form event,1
+generic component,1
+nodejs với typescript,1
+express typescript,1
+typeorm,1
+mikro-orm,1
+prisma tutorial,1
+prisma schema,1
+migrate database với prisma,1
+seed database,1
+câu query nâng cao SQL,1
+subquery,1
+common table expression,1
+window function,1
+partition by,1
+rank và dense rank,1
+indexing strategy,1
+composite index,1
+full text search,1
+trigram index,1
+postgresql tutorial,1
+mysql tutorial,1
+mongodb tutorial,1
+aggregation pipeline,1
+mongodb lookup,1
+elasticsearch tutorial,1
+kibana,1
+logstash,1
+filebeat,1
+elk stack,1
+grafana,1
+prometheus,1
+monitoring với prometheus và grafana,1
+alertmanager,1
+docker cơ bản,1
+dockerfile best practice,1
+multi-stage build,1
+dockerignore,1
+docker compose tutorial,1
+docker network,1
+volume trong docker,1
+docker hub,1
+private registry,1
+kubernetes cơ bản,1
+pod là gì,1
+service trong k8s,1
+deployment,1
+statefulset,1
+configmap,1
+secret,1
+ingress controller,1
+helm chart,1
+istio service mesh,1
+linkerd,1
+terraform cơ bản,1
+iac là gì,1
+ansible cơ bản,1
+ci/cd là gì,1
+jenkins pipeline,1
+github actions tutorial,1
+gitlab ci tutorial,1
+bitbucket pipeline,1
+circleci,1
+travis ci,1
+code build,1
+code deploy,1
+code pipeline,1
+artifact management,1
+nexus,1
+jfrog,1
+sonarqube,1
+code quality check,1
+static analysis,1
+dependency scan,1
+sast và dast,1
+owasp top 10,1
+bảo mật ứng dụng web,1
+https hoạt động,1
+tls handshake,1
+ssl certificate,1
+let's encrypt,1
+certbot,1
+firewall,1
+waf,1
+cloudflare,1
+dns management,1
+route53,1
+cdn explained,1
+cloudfront,1
+load balancer types,1
+application load balancer,1
+network load balancer,1
+auto scaling,1
+aws ec2,1
+aws s3,1
+aws lambda,1
+aws dynamodb,1
+aws rds,1
+aws api gateway,1
+cloudformation,1
+cdk,1
+gcp compute engine,1
+gcp cloud storage,1
+gcp cloud functions,1
+gcp cloud run,1
+gcp bigquery,1
+gcp pubsub,1
+azure vm,1
+azure blob storage,1
+azure functions,1
+azure devops,1
+serverless framework,1
+lambda cold start,1
+lambda layer,1
+lambda alias,1
+lambda environment variables,1
+step functions,1
+event bridge,1
+sqs,1
+sns,1
+kinesis,1
+kafka,1
+rabbitmq,1
+redis pub sub,1
+grpc,1
+graphql cơ bản,1
+apollo server,1
+apollo client,1
+typegraphql,1
+hasura,1
+rest api thiết kế,1
+hateoas,1
+swagger openapi,1
+api versioning,1
+api docs,1
+microservices pattern,1
+saga pattern,1
+circuit breaker pattern,1
+bulkhead pattern,1
+strangler fig pattern,1
+event driven architecture,1
+domain driven design,1
+cqrs pattern,1
+event sourcing,1
+materialized view,1
+sự kiện nhất quán,1
+cap theorem,1
+pacelc theorem,1
+distributed transaction,1
+2 phase commit,1
+saga,1
+outbox pattern,1
+idempotent consumer,1
+message deduplication,1
+message ordering,1
+dead letter queue,1
+poison message,1
+circuit breaker,1
+retry logic,1
+backoff strategy,1
+rate limiter,1
+token bucket,1
+leaky bucket,1
+fixed window counter,1
+sliding window log,1
+concurrent rate limiter,1
+cache strategy,1
+cache aside,1
+read through,1
+write through,1
+write behind,1
+cache invalidation,1
+distributed cache,1
+redis cluster,1
+redis sentinel,1
+memcached,1
+consistent hashing,1
+geohash,1
+bloom filter,1
+hyperloglog,1
+data partitioning,1
+sharding,1
+consistent hashing,1
+database replication,1
+master slave,1
+leader follower,1
+multi leader,1
+quorum,1
+vector clock,1
+gossip protocol,1
+raft consensus,1
+paxos,1
+zookeeper,1
+etcd,1
+service discovery,1
+api gateway pattern,1
+backends for frontends,1
+sidecar pattern,1
+ambassador pattern,1
+adapter pattern,1
+hexagonal architecture,1
+clean architecture,1
+solid principles,1
+single responsibility,1
+open closed,1
+liskov substitution,1
+interface segregation,1
+dependency inversion,1
+design patterns gof,1
+factory pattern,1
+abstract factory,1
+builder pattern,1
+prototype pattern,1
+singleton pattern,1
+adapter pattern,1
+bridge pattern,1
+composite pattern,1
+decorator pattern,1
+facade pattern,1
+flyweight pattern,1
+proxy pattern,1
+chain of responsibility,1
+command pattern,1
+iterator pattern,1
+mediator pattern,1
+memento pattern,1
+observer pattern,1
+state pattern,1
+strategy pattern,1
+template method,1
+visitor pattern,1
+mvc pattern,1
+mvp pattern,1
+mvvm pattern,1
+flux architecture,1
+redux architecture,1
+redux toolkit,1
+recoil js,1
+jotai,1
+zustand,1
+mobx,1
+xstate,1
+react formik,1
+react hook form,1
+react router,1
+tanstack router,1
+nextjs app router,1
+nextjs page router,1
+gatsby js,1
+remix run,1
+nuxt js,1
+sveltekit,1
+solidjs,1
+qwik,1
+astro,1
+vue 3 composition api,1
+vuex,1
+pinia,1
+angular cơ bản,1
+angular modules,1
+angular services,1
+angular dependency injection,1
+rxjs,1
+observable,1
+react native cơ bản,1
+expo,1
+flutter cơ bản,1
+dart ngôn ngữ,1
+widget trong flutter,1
+stateful vs stateless widget,1
+bloc pattern,1
+provider,1
+riverpod,1
+kotlin cơ bản,1
+java spring boot,1
+spring mvc,1
+spring data jpa,1
+spring security,1
+hibernate,1
+maven,1
+gradle,1
+python flask,1
+django cơ bản,1
+django orm,1
+django rest framework,1
+fastapi tutorial,1
+pydantic,1
+sqlalchemy,1
+alembic migration,1
+celery,1
+flower,1
+machine learning cơ bản,1
+supervised learning,1
+unsupervised learning,1
+reinforcement learning,1
+deep learning tutorial,1
+neural network lớp cơ bản,1
+cnn,1
+rnn,1
+lstm,1
+transformer architecture,1
+attention mechanism,1
+bert,1
+gpt,1
+stable diffusion,1
+llm cơ bản,1
+fine tuning llm,1
+rag kỹ thuật,1
+vector embedding,1
+pinecone,1
+chroma db,1
+langchain tutorial,1
+llamaindex,1
+prompt engineering kỹ thuật,1
+few shot prompting,1
+chain of thought,1
+react prompting,1
+ai agent,1
+autogpt,1
+công cụ dev ai,1
+github copilot,1
+code whisperer,1
+chatgpt cho lập trình,1
+tabnine,1
+kite,1
+biên dịch và thông dịch,1
+compiler và interpreter,1
+llvm,1
+ngôn ngữ lập trình rust,1
+cargo,1
+ownership,1
+borrowing,1
+lifetime,1
+unsafe rust,1
+golang,1
+goroutine,1
+channel,1
+select,1
+defer,1
+interface trong go,1
+generic trong go,1
+ruby on rails,1
+laravel,1
+php cơ bản,1
+symfony,1
+c sharp dot net,1
+dot net core api,1
+entity framework,1
+blazor,1
+xamarin,1
+unity,1
+unreal engine,1
+swift ui,1
+combine,1
+async await swift,1
+kotlin coroutines,1
+flow,1
+học gì để đi làm ngay,1
+kinh nghiệm đi thực tập,1
+mức lương fresher,1
+deal lương,1
+offer,1
+probation,1
+onboarding,1
+mentor,1
+1on1 meeting,1
+okr,1
+kpi,1
+đánh giá hiệu suất,1
+promotion,1
+career path,1
+ic hay manager,1
+tech lead,1
+principal engineer,1
+staff engineer,1
+distributed systems,1
+high availability,1
+disaster recovery,1
+backup strategy,1
+rto rpo,1
+business continuity,1
+incident management,1
+postmortem,1
+runbook,1
+sre,1
+devops culture,1
+devsecops,1
+shift left testing,1
+chaos engineering,1
+canary deployment,1
+blue green deployment,1
+rolling deployment,1
+feature toggle,1
+dark launching,1
+a/b testing,1
+analytics,1
+google analytics,1
+mixpanel,1
+amplitude,1
+hotjar,1
+fullstory,1
+session replay,1
+heatmap,1
+funnel analysis,1
+retention,1
+ma trận eisenhower,1
+pomodoro,1
+deep work,1
+quản lý thời gian,1
+focus mode,1
+distractions,1
+glossary công nghệ,1
+acronyms trong IT,1
+thuật ngữ chuyên ngành,1
+viết tắt phổ biến,1
+meme lập trình,1
+hài hước dev,1
+quote truyền cảm hứng,1
+sách hay cho dân IT,1
+clean code sách,1
+pragmatic programmer,1
+refactoring sách,1
+gang of four,1
+peopleware,1
+the mythical man-month,1
+soft skills sách,1
+deep work sách,1
+atomic habits,1
+tựa sách về tư duy,1
+podcast cho dev,1
+channel youtube về lập trình,1
+streamer dev nổi tiếng,1
+vlog học code,1
+cộng đồng dev việt nam,1
+group facebook lập trình,1
+diễn đàn nổi tiếng,1
+stackoverflow,1
+reddit lập trình,1
+devto,1
+hashnode,1
+medium,1
+substack,1
+newsletter công nghệ,1
+tldr,1
+hackernews,1
+producthunt,1
+indiehackers,1
+build in public,1
+saas boilerplate,1
+shipfast,1
+kiếm tiền thụ động,1
+ý tưởng saas,1
+validate idea,1
+mvp,1
+customer development,1
+lean startup,1
+pivot,1
+product market fit,1
+growth hacking,1
+content marketing,1
+seo cho saas,1
+landing page,1
+email marketing,1
+cold outreach,1
+pricing strategy,1
+freemium,1
+subscription,1
+stripe billing,1
+paddle,1
+lemonsqueezy,1
+gumroad,1
+công cụ no code,1
+bubble,1
+webflow,1
+zapier,1
+make,1
+n8n,1
+airtable,1
+notion api,1
+google sheet api,1
+app script,1
+low code platform,1
+mendix,1
+outsystems,1
+power apps,1
+salesforce,1
+dynamics 365,1
+crm hệ thống,1
+erp,1
+hrms,1
+quản lý kho,1
+pos,1
+thương mại điện tử,1
+platform này có ai không,0
+cảm ơn bạn đã lắng nghe,0
+hôm nay học được gì mới,0
+mỗi ngày một chút,0
+chúc mừng năm mới,0
+giáng sinh vui vẻ,0
+nghỉ lễ vui vẻ,0
+cuối tuần vui vẻ,0
+chào tạm biệt và hẹn gặp lại,0
+mình sẽ quay lại sau,0
+hết pin rồi,0
+sập nguồn đây,0
+cúp điện mất rồi,0
+bão tới nơi rồi,0
+thôi tránh bão đây,0
+mình đi chợ đây,0
+đi đón con đây,0
+mai đi làm sớm,0
+ngủ ngon mơ đẹp,0
+mình đi tập gym đây,0
+đi đá banh đây,0
+đi nhậu với bạn đây,0
+đi date,0
+đi xem phim đây,0
+nấu ăn đây,0
+rửa bát đây,0
+dọn nhà đây,0
+giặt đồ đây,0
+phơi đồ đây,0
+trời mưa to quá,0
+nắng nóng quá,0
+lạnh quá,0
+điều hòa hỏng rồi,0
+mạng chậm quá,0
+rớt mạng rồi,0
+mất wifi rồi,0
+4g yếu quá,0
+sắp hết data,0
+sạc pin điện thoại đây,0
+pin yếu rồi,0
+chuẩn bị cắm sạc,0
+tạm thời thế đã bạn nhé,0
+hẹn khi khác nhé,0
+để khi khác nói chuyện tiếp,0
+bây giờ mình hơi bận tí,0
+bận tí việc nhà,0
+đang dở việc,0
+đang tập trung,0
+suy nghĩ đã,0
+nghiên cứu thêm cái này,0
+phân vân quá,1
+tại sao nó không hoạt động,1
+tôi đã thử rất nhiều cách,1
+mọi cách đều fail,1
+bó tay rồi,0
+chịu,0
+give up,0
+nản,0
+code hoài không xong,1
+bực mình,0
+ức chế,0
+tạm dừng,0
+mai làm tiếp,0
+chiều làm tiếp,0
+tối làm tiếp,0
+để sang tuần,0
+hết idea,1
+bí ý tưởng,1
+cần cảm hứng,1
+cần người truyền lửa,1
+ai động viên mình với,0
+cảm ơn sự động viên,0
+bạn tốt quá,0
+bạn thật tuyệt vời,0
+mình ngưỡng mộ bạn,0
+bạn là thần tượng của mình,0
+pro quá,0
+đỉnh quá,0
+siêu quá,0
+xuất sắc,0
+quá đỉnh,0
+quá hay,0
+cách tối ưu performance cho nextjs,1
+xử lý lỗi 502 bad gateway,1
+kinh nghiệm phỏng vấn backend,1
+so sánh aws và google cloud,1
+mình cần tìm hiểu về apache kafka,1
+tư vấn giúp mình chọn ngôn ngữ lập trình đầu tiên,1
+đi phỏng vấn cần chuẩn bị những gì,1
+cách xây dựng api cho app di động,1
+docker compose cho người mới bắt đầu,1
+mình muốn deploy app lên vps,1
+chào buổi sáng bạn khỏe không,0
+cảm ơn bạn đã tư vấn,0
+thôi mình nghỉ trưa đây lát quay lại,0
+bạn có thể giải thích đơn giản hơn không,1
+học gì để trở thành data engineer,1
+sự khác biệt giữa sql và nosql,1
+cách bảo mật api public,1
+mình không hiểu khái niệm này lắm,1
+có thể cho ví dụ thực tế được không,1
+học python bao lâu thì đi làm được,1
+mình vừa mới bắt đầu học react,1
+loi undefined khi goi api,1
+cách cấu hình vite cho dự án react,1
+làm thế nào để code ít bug hơn,1
+kinh nghiệm làm việc với legacy code,1
+tôi muốn thiết kế hệ thống bán vé online,1
+phân biệt rest api và graphql,1
+hướng dẫn viết api đầu tiên bằng express,1
+mình nên học java hay c sharp,1
+npm install bị lỗi permission denied,1
+tại sao phải dùng docker,1
+cách quản lý state trong ứng dụng lớn,1
+mình muốn học về machine learning,1
+tìm hiểu về deep learning cho người mới,1
+các thuật toán sắp xếp cơ bản,1
+hướng dẫn sử dụng postman để test api,1
+sao máy mình không chạy được docker,1
+tối ưu website cho seo,1
+mình muốn chuyển từ python sang golang,1
+giải thích event loop trong javascript,1
+cách build thư viện ui riêng,1
+nên dùng mysql hay postgresql,1
+tư vấn lộ trình học full stack,1
+mình muốn học cách viết unit test,1
+sao lại bị lỗi cross origin,1
+cách làm việc với git nhóm,1
+hướng dẫn cài đặt môi trường java,1
+cách deploy ứng dụng lên github pages,1
+tìm hiểu về blockchain cho người mới,1
+học javascript có khó không,1
+mình muốn viết bot telegram bằng python,1
+cách tối ưu sql query,1
+tôi muốn hiểu về solidity,1
+nên chọn react hay angular cho dự án mới,1
+bị lỗi cannot read properties of undefined,1
+giải thích dependency injection đơn giản,1
+cách dùng swagger để viết tài liệu api,1
+mình cần tư vấn về cấu trúc database,1
+sao máy chạy python chậm quá,1
+cách debug code javascript trên browser,1
+tìm hiểu về aws lambda,1
+học aws từ đâu,1
+mình muốn trở thành frontend developer,1
+các câu hỏi phỏng vấn javascript,1
+hướng dẫn dùng array method trong js,1
+cách cài đặt và sử dụng redis,1
+mình muốn học về elasticsearch,1
+nên học react native hay flutter,1
+làm thế nào để viết code sạch sẽ,1
+tôi cần giải thích về oop,1
+cách triển khai microservices,1
+tìm hiểu về ci cd pipeline,1
+mình bị mất dữ liệu trong git,1
+cách phục hồi commit đã xóa,1
+hướng dẫn tạo chatbot cơ bản,1
+mình cần học về bảo mật web,1
+tối ưu thời gian load trang,1
+sao không kết nối được database,1
+cách viết bash script tự động hóa,1
+mình muốn xây dựng hệ thống giỏ hàng,1
+phân biệt get và post,1
+khi nào nên dùng put và patch,1
+hướng dẫn tạo form đăng nhập cơ bản,1
+tôi muốn tìm hiểu về nextjs 14,1
+cách dùng app router trong nextjs,1
+mình bị lỗi hydrate trong react,1
+sao component không re-render,1
+cách dùng useeffect đúng,1
+mình muốn học về animation trong css,1
+hướng dẫn làm responsive website,1
+cách kiểm tra phiên bản nodejs,1
+npm và npx khác nhau thế nào,1
+mình cần cài đặt môi trường ảo,1
+học gì để làm web developer,1
+mình muốn chuyển ngành sang lập trình,1
+có quá muộn để bắt đầu học code không,1
+lời khuyên cho người mới học lập trình,1
+tôi cần giải thích về closure trong js,1
+promise trong javascript là gì,1
+cách dùng async await hiệu quả,1
+sao api trả về status 401,1
+xử lý token hết hạn như thế nào,1
+cách refresh token tự động,1
+mình muốn hiểu về jwt,1
+cách lưu trữ token an toàn,1
+hướng dẫn tích hợp đăng nhập google,1
+tôi muốn làm chức năng upload ảnh,1
+cách resize ảnh trước khi upload,1
+sao file upload lên bị lỗi,1
+cách validate file type,1
+mình muốn tạo video call đơn giản,1
+tìm hiểu về webrtc,1
+hướng dẫn dùng socket io,1
+mình cần làm chức năng chat realtime,1
+cách scale ứng dụng nodejs,1
+sao server bị quá tải,1
+mình cần tư vấn về kiến trúc hệ thống,1
+thiết kế hệ thống cho mạng xã hội,1
+cách tính toán băng thông cho server,1
+mình muốn học về cloud computing,1
+các dịch vụ của aws cần biết,1
+s3 là gì và dùng thế nào,1
+cách cấu hình cloudfront cho website,1
+mình bị charge tiền aws nhiều quá,1
+cách tối ưu chi phí trên cloud,1
+nên dùng serverless hay ec2,1
+hướng dẫn deploy nodejs lên ec2,1
+cách cài đặt nginx trên ubuntu,1
+cấu hình ssl miễn phí với certbot,1
+sao website không hiển thị https,1
+mình muốn mua tên miền ở đâu,1
+cách trỏ tên miền về server,1
+hướng dẫn cấu hình cloudflare,1
+mình bị ddos thì phải làm sao,1
+cách bảo vệ website khỏi tấn công,1
+tìm hiểu về sql injection,1
+cách phòng chống xss,1
+mình muốn kiểm tra lỗ hổng bảo mật,1
+công cụ scan bảo mật web,1
+học ethical hacking từ đâu,1
+mình muốn hiểu về networking cơ bản,1
+ip address và subnet mask là gì,1
+dns hoạt động như thế nào,1
+tcp và udp khác nhau ở đâu,1
+mình bị mất kết nối mạng liên tục,1
+cách kiểm tra port có đang mở không,1
+firewall là gì và dùng thế nào,1
+hướng dẫn cấu hình iptables,1
+mình muốn học linux command line,1
+các lệnh linux cơ bản cần biết,1
+cách phân quyền file trong linux,1
+sao không ssh được vào server,1
+cách tạo user mới trong ubuntu,1
+mình muốn cài đặt mysql server,1
+cách import database lớn,1
+sao query chạy chậm,1
+cách đánh index trong database,1
+khi nào nên dùng composite index,1
+mình muốn tối ưu câu lệnh join,1
+các loại join trong sql,1
+subquery và join cái nào nhanh hơn,1
+hướng dẫn dùng explain analyze,1
+mình cần thiết kế database cho blog,1
+cách xây dựng schema cho ecommerce,1
+mối quan hệ many to many,1
+khi nào dùng json column,1
+nên normalize hay denormalize database,1
+mình muốn học về redis caching,1
+các chiến lược caching phổ biến,1
+sao cache không hết hạn,1
+cách xóa cache trong redis,1
+mình muốn dùng message queue,1
+rabbitmq hay kafka cho hệ thống nhỏ,1
+cách cài đặt rabbitmq,1
+hướng dẫn dùng bull queue trong nodejs,1
+xử lý job thất bại như thế nào,1
+mình muốn monitor hệ thống,1
+cách cài đặt grafana và prometheus,1
+hướng dẫn tạo dashboard theo dõi server,1
+cảnh báo khi server quá tải,1
+mình muốn học về terraform,1
+cách viết file terraform đầu tiên,1
+quản lý infrastructure as code,1
+nên dùng terraform hay cloudformation,1
+mình muốn tự động hóa việc deploy,1
+hướng dẫn viết ansible playbook,1
+cách quản lý nhiều server,1
+mình muốn học về kubernetes,1
+các khái niệm cơ bản trong k8s,1
+pod và deployment khác nhau thế nào,1
+cách scale pod trong kubernetes,1
+sao pod cứ bị crash loop back off,1
+cách debug ứng dụng trong kubernetes,1
+mình muốn cài đặt cluster kubernetes,1
+nên dùng minikube hay kind,1
+hướng dẫn dùng helm chart,1
+cách viết helm chart cho ứng dụng,1
+mình muốn triển khai service mesh,1
+istio là gì và có cần không,1
+cách quản lý traffic trong microservices,1
+circuit breaker pattern hoạt động sao,1
+mình muốn tìm hiểu về domain driven design,1
+cách áp dụng ddd vào dự án thực tế,1
+aggregate và entity trong ddd,1
+event sourcing là gì,1
+có nên dùng event sourcing không,1
+mình muốn học về cqrs,1
+cách tách read model và write model,1
+hướng dẫn dùng mediatr trong net,1
+mình muốn viết clean architecture,1
+các layer trong clean architecture,1
+dependency rule là gì,1
+cách tổ chức code theo feature,1
+mình muốn refactor code cũ,1
+các bước refactor an toàn,1
+làm sao để không làm hỏng chức năng cũ,1
+vai trò của unit test khi refactor,1
+mình muốn viết integration test,1
+cách test api endpoint,1
+hướng dẫn dùng supertest,1
+mock database khi test,1
+nên dùng in memory database hay docker,1
+mình muốn học về tdd,1
+cách viết test trước khi code,1
+lợi ích của tdd là gì,1
+ví dụ thực tế về tdd,1
+mình muốn áp dụng solid principles,1
+cách nhận biết code vi phạm solid,1
+refactor để code tuân thủ solid,1
+học design pattern có cần thiết không,1
+factory pattern và abstract factory,1
+khi nào dùng singleton,1
+observer pattern trong thực tế,1
+strategy pattern giúp ích gì,1
+cách tối ưu performance cho ứng dụng nextjs,1
+xử lý lỗi 502 bad gateway nginx,1
+mình nên học python hay javascript trước,1
+so sánh aws và google cloud platform,1
+tìm hiểu về apache kafka cho người mới,1
+chào bạn khỏe không,0
+cảm ơn bạn đã tư vấn nhiệt tình,0
+thôi mình nghỉ trưa đây lát quay lại,0
+bạn có thể giải thích đơn giản hơn không,1
+học gì để trở thành data engineer,1
+sự khác biệt giữa sql và nosql,1
+cách bảo mật api public,1
+mình không hiểu khái niệm này lắm,1
+có thể cho ví dụ thực tế được không,1
+học python bao lâu thì đi làm được,1
+mình vừa mới bắt đầu học react,1
+lỗi undefined khi gọi api,1
+cách cấu hình vite cho dự án react,1
+làm thế nào để code ít bug hơn,1
+kinh nghiệm làm việc với legacy code,1
+tôi muốn thiết kế hệ thống bán vé online,1
+phân biệt rest api và graphql,1
+hướng dẫn viết api đầu tiên bằng express,1
+mình nên học java hay c sharp,1
+npm install bị lỗi permission denied,1
+tại sao phải dùng docker,1
+cách quản lý state trong ứng dụng lớn,1
+mình muốn học về machine learning,1
+tìm hiểu về deep learning cho người mới,1
+các thuật toán sắp xếp cơ bản,1
+sao máy mình không chạy được docker,1
+tối ưu website cho seo,1
+mình muốn chuyển từ python sang golang,1
+giải thích event loop trong javascript,1
+cách build thư viện ui riêng,1
+nên dùng mysql hay postgresql,1
+tư vấn lộ trình học full stack,1
+mình muốn học cách viết unit test,1
+sao lại bị lỗi cross origin,1
+cách làm việc với git nhóm,1
+cách deploy ứng dụng lên github pages,1
+học javascript có khó không,1
+mình muốn viết bot telegram bằng python,1
+tôi muốn hiểu về smart contract,1
+nên chọn react hay angular cho dự án mới,1
+bị lỗi cannot read properties of undefined,1
+giải thích dependency injection đơn giản,1
+cách dùng swagger để viết tài liệu api,1
+mình cần tư vấn về cấu trúc database,1
+sao máy chạy python chậm quá,1
+cách debug code javascript trên browser,1
+học aws từ đâu,1
+mình muốn trở thành frontend developer,1
+các câu hỏi phỏng vấn javascript,1
+hướng dẫn dùng array method trong js,1
+mình muốn học về elasticsearch,1
+nên học react native hay flutter,1
+tôi cần giải thích về oop,1
+mình bị mất dữ liệu trong git,1
+cách phục hồi commit đã xóa,1
+mình cần học về bảo mật web,1
+tối ưu thời gian load trang,1
+sao không kết nối được database,1
+mình muốn xây dựng hệ thống giỏ hàng,1
+phân biệt get và post,1
+khi nào nên dùng put và patch,1
+mình muốn tìm hiểu về nextjs 14,1
+cách dùng app router trong nextjs,1
+mình bị lỗi hydrate trong react,1
+sao component không re-render,1
+cách dùng useeffect đúng,1
+mình muốn học về animation trong css,1
+npm và npx khác nhau thế nào,1
+học gì để làm web developer,1
+có quá muộn để bắt đầu học code không,1
+tôi cần giải thích về closure trong js,1
+promise trong javascript là gì,1
+cách dùng async await hiệu quả,1
+sao api trả về status 401,1
+xử lý token hết hạn như thế nào,1
+cách refresh token tự động,1
+mình muốn hiểu về jwt,1
+cách lưu trữ token an toàn,1
+tôi muốn làm chức năng upload ảnh,1
+sao file upload lên bị lỗi,1
+mình muốn tạo video call đơn giản,1
+hướng dẫn dùng socket io,1
+mình cần làm chức năng chat realtime,1
+cách scale ứng dụng nodejs,1
+sao server bị quá tải,1
+mình cần tư vấn về kiến trúc hệ thống,1
+thiết kế hệ thống cho mạng xã hội,1
+cách tính toán băng thông cho server,1
+mình muốn học về cloud computing,1
+các dịch vụ của aws cần biết,1
+s3 là gì và dùng thế nào,1
+cách cấu hình cloudfront cho website,1
+mình bị charge tiền aws nhiều quá,1
+cách tối ưu chi phí trên cloud,1
+nên dùng serverless hay ec2,1
+cách cài đặt nginx trên ubuntu,1
+cấu hình ssl miễn phí với certbot,1
+sao website không hiển thị https,1
+mình muốn mua tên miền ở đâu,1
+cách trỏ tên miền về server,1
+hướng dẫn cấu hình cloudflare,1
+mình bị ddos thì phải làm sao,1
+cách bảo vệ website khỏi tấn công,1
+tìm hiểu về sql injection,1
+cách phòng chống xss,1
+mình muốn kiểm tra lỗ hổng bảo mật,1
+công cụ scan bảo mật web,1
+học ethical hacking từ đâu,1
+ip address và subnet mask là gì,1
+dns hoạt động như thế nào,1
+tcp và udp khác nhau ở đâu,1
+cách kiểm tra port có đang mở không,1
+firewall là gì và dùng thế nào,1
+các lệnh linux cơ bản cần biết,1
+cách phân quyền file trong linux,1
+sao không ssh được vào server,1
+cách tạo user mới trong ubuntu,1
+sao query chạy chậm,1
+cách đánh index trong database,1
+khi nào nên dùng composite index,1
+mình muốn tối ưu câu lệnh join,1
+các loại join trong sql,1
+subquery và join cái nào nhanh hơn,1
+mình cần thiết kế database cho blog,1
+cách xây dựng schema cho ecommerce,1
+mối quan hệ many to many,1
+khi nào dùng json column,1
+nên normalize hay denormalize database,1
+mình muốn học về redis caching,1
+các chiến lược caching phổ biến,1
+sao cache không hết hạn,1
+cách xóa cache trong redis,1
+mình muốn dùng message queue,1
+rabbitmq hay kafka cho hệ thống nhỏ,1
+cách cài đặt rabbitmq,1
+xử lý job thất bại như thế nào,1
+mình muốn monitor hệ thống,1
+cách cài đặt grafana và prometheus,1
+cảnh báo khi server quá tải,1
+mình muốn học về terraform,1
+cách viết file terraform đầu tiên,1
+quản lý infrastructure as code,1
+nên dùng terraform hay cloudformation,1
+hướng dẫn viết ansible playbook,1
+mình muốn học về kubernetes,1
+các khái niệm cơ bản trong k8s,1
+pod và deployment khác nhau thế nào,1
+cách scale pod trong kubernetes,1
+sao pod cứ bị crash loop back off,1
+cách debug ứng dụng trong kubernetes,1
+mình muốn cài đặt cluster kubernetes,1
+nên dùng minikube hay kind,1
+hướng dẫn dùng helm chart,1
+mình muốn tìm hiểu về domain driven design,1
+cách áp dụng ddd vào dự án thực tế,1
+aggregate và entity trong ddd,1
+event sourcing là gì,1
+có nên dùng event sourcing không,1
+mình muốn học về cqrs,1
+cách tách read model và write model,1
+mình muốn viết clean architecture,1
+các layer trong clean architecture,1
+mình muốn refactor code cũ,1
+các bước refactor an toàn,1
+làm sao để không làm hỏng chức năng cũ,1
+mình muốn viết integration test,1
+cách test api endpoint,1
+mock database khi test,1
+mình muốn học về tdd,1
+cách viết test trước khi code,1
+lợi ích của tdd là gì,1
+ví dụ thực tế về tdd,1
+học design pattern có cần thiết không,1
+factory pattern và abstract factory,1
+khi nào dùng singleton,1
+observer pattern trong thực tế,1
+strategy pattern giúp ích gì,1
+decorator pattern trong python,1
+mvc mvvm và mvp khác nhau,1
+mình muốn học về graphql,1
+cách viết resolver trong graphql,1
+nên dùng apollo hay relay,1
+graphql subscription hoạt động sao,1
+mình muốn tìm hiểu về rust,1
+ownership và borrowing trong rust,1
+lifetime trong rust là gì,1
+học rust có khó không,1
+so sánh rust và go,1
+golang có đáng học không,1
+goroutine và channel trong go,1
+mình muốn viết cli tool bằng go,1
+học java spring boot mất bao lâu,1
+dependency injection trong spring,1
+jpa và hibernate khác nhau,1
+cách viết rest api bằng django,1
+django orm vs sqlalchemy,1
+fastapi có nhanh hơn flask không,1
+mình muốn học về docker swarm,1
+docker compose cho production,1
+cách tối ưu docker image size,1
+multi stage build trong docker,1
+docker network các loại,1
+volume trong docker dùng sao,1
+mình muốn học về ci cd,1
+github actions cho người mới,1
+cách viết workflow github actions,1
+gitlab ci vs github actions,1
+jenkins pipeline cho dự án nhỏ,1
+mình muốn tự động deploy,1
+cách deploy không downtime,1
+blue green deployment là gì,1
+canary release hoạt động sao,1
+feature flag dùng thế nào,1
+mình muốn học về microservices,1
+cách chia nhỏ monolith,1
+service discovery là gì,1
+api gateway pattern,1
+circuit breaker trong microservices,1
+saga pattern cho distributed transaction,1
+mình muốn học về blockchain,1
+cách viết smart contract đơn giản,1
+solidity cho người mới,1
+web3 là gì và dùng sao,1
+nft hoạt động như thế nào,1
+defi là gì,1
+mình muốn học về machine learning,1
+cách train model đầu tiên,1
+overfitting và underfitting,1
+cross validation là gì,1
+confusion matrix đọc sao,1
+nên dùng tensorflow hay pytorch,1
+transformer trong ai,1
+bert và gpt khác nhau,1
+fine tune model ngôn ngữ,1
+mình muốn build chatbot với llm,1
+langchain dùng sao,1
+vector database cho rag,1
+prompt engineering cơ bản,1
+mình muốn học về data engineering,1
+etl pipeline là gì,1
+apache spark cơ bản,1
+data lake và data warehouse,1
+big data xử lý sao,1
+mình muốn học về devops,1
+sre là gì,1
+terraform cho người mới,1
+ansible dùng sao,1
+helm chart viết sao,1
+monitoring với datadog,1
+logging tập trung,1
+open telemetry là gì,1
+mình muốn học về testing,1
+unit test và integration test,1
+e2e test với cypress,1
+playwright hay puppeteer,1
+load test với k6,1
+cách viết test bảo trì được,1
+test driven development thực hành,1
+mình đi đây,0
+mình out đây,0
+tạm biệt nhé,0
+bye bye nha,0
+pp bạn nhé,0
+lát nói chuyện tiếp,0
+hẹn gặp lại sau nha,0
+thôi mình đi làm đây,0
+mình phải đi họp rồi,0
+đi họp tí về nói chuyện tiếp,0
+sếp gọi mình rồi,0
+mình phải ra ngoài tí,0
+có việc gấp phải đi,0
+bận đột xuất rồi,0
+thôi mình tắt máy đây,0
+mình shutdown đây,0
+hết pin rồi bye,0
+sắp hết pin phải sạc,0
+mình cắm sạc tí,0
+để máy nghỉ tí đã,0
+nghỉ giải lao cái đã,0
+mình đi uống nước tí,0
+đi vệ sinh tí về,0
+chờ mình vài phút,0
+đợi mình xíu nha,0
+mình quay lại ngay,0
+sẽ quay lại sớm thôi,0
+đừng đi đâu nhé,0
+ở đó đi mình về liền,0
+mình hứa sẽ quay lại,0
+tin mình đi,0
+mình không bỏ bạn đâu,0
+yên tâm đi,0
+đừng lo,0
+mình vẫn ở đây,0
+mình chưa đi đâu,0
+mình vẫn online,0
+mình vẫn nghe đây,0
+bạn nói tiếp đi mình nghe,0
+mình đang tập trung nghe bạn nói,0
+bạn nói đi đừng ngại,0
+cứ tự nhiên đi,0
+thoải mái đi bạn,0
+đừng căng thẳng,0
+mình thân thiện mà,0
+mình dễ tính lắm,0
+bạn cứ hỏi gì cũng được,0
+không sao đâu mà,0
+có gì đâu mà ngại,0
+mình với bạn là bạn bè mà,0
+bạn bè với nhau cả mà,0
+anh em với nhau cả,0
+người nhà cả thôi,0
+mình coi bạn như người nhà,0
+bạn như anh em mình vậy,0
+thân thiết rồi còn gì,0
+khách sáo làm gì,0
+không cần phải khách sáo,0
+cảm ơn làm gì cho mệt,0
+có gì to tát đâu,0
+chuyện nhỏ như con thỏ,0
+giúp được là mình vui rồi,0
+mình vui khi giúp được bạn,0
+niềm vui của mình là được giúp người,0
+mình thích giúp đỡ mọi người,0
+giúp được ai mình giúp liền,0
+bạn cần gì cứ nói,0
+cứ việc nhờ mình,0
+mình sẵn sàng giúp,0
+mình luôn sẵn lòng,0
+bất cứ lúc nào bạn cần,0
+ngày đêm đều được,0
+mình thức khuya lắm,0
+mình online suốt,0
+mình ít khi offline lắm,0
+có việc gì cứ ping mình,0
+ping mình phát là có mặt,0
+mình phản hồi nhanh lắm,0
+trả lời trong một nốt nhạc,0
+nhanh như chớp,0
+nhanh như điện,0
+mình không làm bạn đợi lâu đâu,0
+bạn đợi lâu chưa,0
+mình xin lỗi vì để bạn đợi,0
+xin lỗi vì phản hồi chậm,0
+mạng mình hơi lag tí,0
+máy mình hơi chậm,0
+máy đang update dở,0
+windows đang update,0
+máy mình bị đơ,0
+máy đơ quá phải restart,0
+mình vừa restart máy xong,0
+khởi động lại máy mới mượt,0
+máy mượt hẳn ra,0
+giờ chạy ngon rồi,0
+mọi thứ ổn rồi,0
+đã hoạt động bình thường,0
+đã ổn định trở lại,0
+không còn vấn đề gì nữa,0
+vấn đề đã được giải quyết,0
+xong xuôi hết rồi,0
+đâu vào đấy cả rồi,0
+ngon lành cành đào,0
+ngon ơ,0
+tốt rồi,0
+đẹp rồi,0
+hoàn hảo,0
+trên cả tuyệt vời,0
+không chê vào đâu được,0
+mười điểm,0
+mình cho bạn mười điểm,0
+bạn xứng đáng được điểm tối đa,0
+bạn xứng đáng được tăng lương,0
+sếp bạn nên tăng lương cho bạn,0
+bạn làm việc hiệu quả quá,0
+năng suất kinh khủng,0
+bạn là cỗ máy làm việc,0
+bạn không biết mệt mỏi à,0
+nghỉ ngơi đi bạn ơi,0
+làm nhiều quá không tốt đâu,0
+sức khỏe quan trọng hơn,0
+giữ gìn sức khỏe đi,0
+ăn uống đầy đủ vào,0
+ngủ đủ giấc đi,0
+đừng thức khuya quá,0
+thức khuya hại sức khỏe lắm,0
+mình lo cho bạn quá,0
+mình quan tâm bạn thôi,0
+mình mong bạn luôn khỏe mạnh,0
+chúc bạn sức khỏe dồi dào,0
+chúc bạn luôn vui vẻ,0
+chúc bạn hạnh phúc,0
+chúc bạn thành công trong cuộc sống,0
+chúc bạn may mắn,0
+may mắn sẽ đến với bạn,0
+bạn xứng đáng với điều tốt đẹp,0
+bạn là người tốt,0
+bạn có tấm lòng vàng,0
+bạn tốt bụng quá,0
+bạn hào phóng thật,0
+bạn rộng lượng quá,0
+mình nể bạn thật sự,0
+mình khâm phục bạn,0
+mình respect bạn,0
+bạn là hình mẫu của mình,0
+mình muốn được như bạn,0
+bạn là mục tiêu phấn đấu của mình,0
+mình sẽ cố gắng để giỏi như bạn,0
+mình sẽ học hỏi từ bạn,0
+bạn dạy mình nhiều điều quá,0
+mình học được nhiều từ bạn,0
+bạn là người thầy tuyệt vời,0
+bạn là mentor tốt nhất,0
+mình may mắn khi gặp được bạn,0
+duyên số đã cho mình gặp bạn,0
+mình biết ơn vì đã quen bạn,0
+quen bạn là điều tuyệt nhất,0
+bạn làm cuộc sống mình tốt hơn,0
+bạn mang lại niềm vui cho mình,0
+bạn là ánh sáng của mình,0
+bạn là mặt trời của mình,0
+sến súa quá rồi,0
+mình nói quá rồi,0
+mình hơi quá lời tí,0
+nhưng mà thật lòng đó,0
+mình nói thật đấy,0
+mình không nịnh đâu,0
+mình ghét nịnh nhất,0
+mình thẳng tính lắm,0
+có gì nói đó,0
+mình không vòng vo đâu,0
+mình nói thẳng nói thật,0
+mình sống thật với cảm xúc,0
+mình không giả tạo,0
+mình ghét sự giả tạo,0
+mình thích sự chân thành,0
+chân thành là trên hết,0
+thật thà là vàng,0
+mình sống theo phương châm đó,0
+đó là kim chỉ nam của mình,0
+mình luôn giữ vững nguyên tắc,0
+mình có nguyên tắc sống riêng,0
+mỗi người một quan điểm thôi,0
+mình tôn trọng ý kiến của bạn,0
+bạn có quyền nghĩ khác mình,0
+khác biệt là tốt mà,0
+đa dạng mới phong phú,0
+nếu ai cũng giống nhau thì chán lắm,0
+cuộc sống muôn màu muôn vẻ,0
+mỗi người một vẻ đẹp riêng,0
+bạn có nét riêng của bạn,0
+mình thích cá tính của bạn,0
+bạn rất có cá tính,0
+bạn đặc biệt lắm,0
+bạn không giống ai cả,0
+bạn là duy nhất,0
+không ai giống bạn,0
+bạn là phiên bản giới hạn,0
+bạn là limited edition,0
+quý hiếm lắm đấy,0
+phải giữ gìn bạn mới được,0
+mình sẽ giữ liên lạc với bạn,0
+đừng mất liên lạc nhé,0
+giữ liên lạc nha,0
+mình sẽ nhắn bạn sau,0
+mình sẽ inbox bạn,0
+check inbox đi bạn,0
+mình vừa gửi tin nhắn,0
+bạn xem tin nhắn của mình đi,0
+mình gửi mail cho bạn rồi,0
+check mail giúp mình,0
+bạn nhận được mail chưa,0
+mail có vào spam không,0
+đừng để mail vào spam nhé,0
+thêm mình vào contact đi,0
+add mình vào danh bạ đi,0
+lưu số mình đi,0
+kết bạn facebook đi,0
+follow mình trên github đi,0
+mình vừa follow bạn trên github,0
+github của bạn xịn quá,0
+bạn code nhiều project ghê,0
+mình star repo của bạn rồi,0
+repo của bạn được nhiều sao thế,0
+bạn nổi tiếng trên github à,0
+bạn có nhiều follower quá,0
+mình ngưỡng mộ github của bạn,0
+bạn cho mình xin link github với,0
+cho mình tham khảo code của bạn với,0
+mình muốn đọc code của bạn,0
+code của bạn sạch sẽ quá,0
+code của bạn dễ đọc ghê,0
+mình học được cách viết code từ bạn,0
+phong cách code của bạn hay quá,0
+bạn có gu thẩm mỹ code tốt,0
+code vừa đẹp vừa hiệu quả,0
+mình thích comment của bạn,0
+comment hài hước mà dễ hiểu,0
+bạn viết readme hay quá,0
+readme của bạn chuyên nghiệp,0
+bạn có kinh nghiệm viết docs không,0
+bạn nên làm technical writer,0
+bạn hợp làm content creator,0
+bạn nên mở blog đi,0
+mình sẽ đọc blog của bạn mỗi ngày,0
+bạn viết blog đi mình ủng hộ,0
+mình sẽ là fan cứng của bạn,0
+mình làm fan của bạn rồi đấy,0
+có fanclub chưa cho mình tham gia,0
+mình muốn vào hội những người thích bạn,0
+lập group riêng đi bạn,0
+mình sẽ làm admin phụ bạn,0
+mình sẽ mod cho group của bạn,0
+bạn làm leader đi mình theo,0
+mình tin tưởng bạn,0
+mình giao phó cho bạn,0
+bạn lãnh đạo đi,0
+mình ủng hộ bạn hết mình,0
+mình hậu thuẫn bạn,0
+có mình ở đây rồi,0
+bạn không cô đơn đâu,0
+mình luôn ở bên bạn,0
+dù có chuyện gì mình cũng ở đây,0
+mình sẽ không rời xa bạn,0
+mình hứa đấy,0
+lời hứa của mình chắc như đinh đóng cột,0
+mình giữ lời lắm,0
+mình nói là làm,0
+mình không thất hứa đâu,0
+bạn tin mình đi,0
+niềm tin là thứ quý giá nhất,0
+mình trân trọng niềm tin của bạn,0
+mình sẽ không phụ lòng bạn,0
+mình sẽ không làm bạn thất vọng,0
+mình sẽ cố gắng hết sức,0
+mình sẽ nỗ lực 200%,0
+mình sẽ làm hết khả năng,0
+để bạn không phải thất vọng,0
+sự hài lòng của bạn là động lực của mình,0
+bạn vui là mình vui rồi,0
+nụ cười của bạn là hạnh phúc của mình,0
+mình lại nói sến nữa rồi,0
+thôi mình dừng sến tại đây,0
+mình xin phép dừng sến,0
+sến quá chịu không nổi,0
+mình tự thấy ngượng,0
+ngượng chín mặt,0
+đỏ cả mặt rồi,0
+may mà bạn không thấy mặt mình,0
+mặt mình đang nóng bừng đây,0
+tai mình đỏ hết rồi,0
+mình dễ ngại lắm,0
+mình hay xấu hổ,0
+mình hướng nội mà,0
+mình là introvert chính hiệu,0
+mình thích ở một mình,0
+ở một mình thoải mái hơn,0
+mình tận hưởng sự cô đơn,0
+cô đơn nhưng không buồn,0
+mình thấy bình yên,0
+bình yên trong tâm hồn,0
+tâm hồn mình thanh thản,0
+mình đang thiền,0
+mình tập mindfulness,0
+sống trong hiện tại,0
+hiện tại là món quà,0
+present is a gift,0
+mình biết ơn cuộc sống này,0
+mình biết ơn mọi thứ,0
+mình biết ơn cả bạn nữa,0
+cảm ơn đời mỗi sớm mai thức dậy,0
+mình có thêm một ngày để yêu thương,0
+mình yêu cuộc sống này,0
+cuộc sống tươi đẹp biết bao,0
+đời đẹp lắm bạn ạ,0
+hãy tận hưởng đi,0
+đừng lãng phí thời gian,0
+thời gian quý giá lắm,0
+mỗi giây phút đều đáng trân trọng,0
+sống hết mình đi,0
+sống như ngày mai không bao giờ đến,0
+live like there's no tomorrow,0
+carpe diem,0
+nắm bắt khoảnh khắc đi,0
+đừng chần chừ nữa,0
+hành động ngay đi,0
+bắt đầu ngay hôm nay,0
+đừng trì hoãn,0
+procrastination là kẻ thù,0
+đánh bại sự lười biếng,0
+lười biếng làm ta thụt lùi,0
+phải chăm chỉ lên,0
+chăm chỉ sẽ được đền đáp,0
+có công mài sắt có ngày nên kim,0
+mình tin vào điều đó,0
+mình tin vào luật nhân quả,0
+gieo gì gặt nấy,0
+làm việc tốt sẽ gặp điều tốt,0
+bạn đã làm nhiều việc tốt rồi,0
+điều tốt sẽ đến với bạn,0
+vũ trụ sẽ trả ơn bạn,0
+luật hấp dẫn mà,0
+suy nghĩ tích cực sẽ thu hút điều tích cực,0
+mình luôn suy nghĩ tích cực,0
+mình lạc quan lắm,0
+mình thấy ly nước đầy một nửa,0
+nửa ly nước vẫn là có nước,0
+quan trọng là góc nhìn,0
+góc nhìn quyết định tất cả,0
+thay đổi góc nhìn thay đổi cuộc đời,0
+mình đã thay đổi rất nhiều,0
+mình đã trưởng thành hơn,0
+mình không còn như xưa nữa,0
+mình đã khác rồi,0
+ngày xưa mình ngây thơ lắm,0
+giờ mình chín chắn hơn,0
+va vấp nhiều nên trưởng thành,0
+trải nghiệm làm mình lớn lên,0
+mình biết ơn những khó khăn,0
+khó khăn làm mình mạnh mẽ hơn,0
+what doesn't kill you makes you stronger,0
+mình mạnh mẽ hơn bạn nghĩ đấy,0
+mình không dễ gục ngã đâu,0
+mình kiên cường lắm,0
+mình dẻo dai như cỏ dại,0
+cỏ dại không dễ chết đâu,0
+gió lay không ngã,0
+mưa rơi không sờn,0
+nắng cháy không khô,0
+mình là cỏ dại đấy,0
+bạn có thấy mình mạnh mẽ không,0
+bạn công nhận đi,0
+bạn phải công nhận mình đi,0
+công nhận mình giỏi đi,0
+mình không khiêm tốn tí nào,0
+mình tự tin quá mức,0
+tự tin là tốt mà,0
+tự tin quá thành tự phụ,0
+mình đùa thôi,0
+mình chỉ đùa thôi mà,0
+bạn đừng giận mình nhé,0
+mình sợ bạn giận,0
+bạn mà giận là mình buồn lắm,0
+mình không muốn làm bạn buồn,0
+mình xin lỗi nếu có gì sai,0
+mình xin lỗi trước,0
+mong bạn bỏ qua cho mình,0
+bỏ qua đi nhé,0
+tha thứ cho mình đi,0
+mình biết lỗi rồi,0
+mình sẽ không tái phạm nữa,0
+mình hứa sẽ sửa sai,0
+mình sẽ rút kinh nghiệm,0
+bài học này mình nhớ mãi,0
+mình ghi nhớ trong lòng,0
+khắc cốt ghi tâm,0
+không bao giờ quên,0
+mình sẽ nhớ lời bạn nói,0
+bạn nói câu nào mình nhớ câu đó,0
+mình nhớ dai lắm,0
+đừng hòng qua mặt mình,0
+mình tinh ý lắm,0
+mắt mình tinh như cú vọ,0
+mình quan sát giỏi lắm,0
+mình để ý từng chi tiết nhỏ,0
+không gì qua được mắt mình,0
+mình soi kỹ lắm,0
+mình cầu toàn mà,0
+tỉ mỉ từng li từng tí,0
+mình khó tính với bản thân,0
+mình dễ tính với người khác,0
+với mình thì khó với người thì dễ,0
+mình khắt khe với chính mình,0
+mình luôn đòi hỏi cao ở bản thân,0
+đôi khi mệt với chính mình,0
+mình tự tạo áp lực cho mình,0
+áp lực tạo nên kim cương,0
+mình đang rèn luyện bản thân,0
+mình đang trong quá trình hoàn thiện,0
+không ai hoàn hảo cả,0
+mình chấp nhận khuyết điểm của mình,0
+mình yêu bản thân mình,0
+yêu bản thân là bước đầu tiên,0
+phải yêu mình trước rồi mới yêu người,0
+mình đã học được cách yêu bản thân,0
+mình đã từng ghét bản thân lắm,0
+giờ thì hết rồi,0
+mình đã hòa hợp với chính mình,0
+mình thấy bình yên trong tâm,0
+tâm bất biến giữa dòng đời vạn biến,0
+mình sẽ giữ tâm an nhiên,0
+an nhiên như nước chảy,0
+nhẹ nhàng như mây trôi,0
+cuộc đời vô thường,0
+có gì là mãi mãi đâu,0
+trân trọng từng khoảnh khắc thôi,0
+mình lại triết lý rồi,0
+mình dừng triết lý đây,0
+nói nhiều quá rồi,0
+mình nói nhiều thật đấy,0
+bạn thấy mình nói nhiều không,0
+bạn chán mình chưa,0
+đừng chán mình nhé,0
+mình hứa sẽ ít nói lại,0
+mình sẽ kiệm lời hơn,0
+im lặng là vàng,0
+nhưng đôi khi im lặng cũng khó,0
+với mình nói mới khó,0
+mình thích nói hơn là im lặng,0
+mình là người hướng ngoại,0
+extrovert chính hiệu đây,0
+mình thích giao tiếp,0
+mình thích gặp gỡ mọi người,0
+mình thích nói chuyện phiếm,0
+chém gió là nghề của mình,0
+mình chém gió chuyên nghiệp,0
+đùa thôi chứ mình nghiêm túc mà,0
+mình vừa đùa vừa thật,0
+khó đoán không,0
+bạn đoán được mình không,0
+mình là người bí ẩn,0
+bí ẩn mới hấp dẫn,0
+mình thích sự huyền bí,0
+mình thích khám phá,0
+khám phá những điều mới mẻ,0
+mỗi ngày là một cuộc phiêu lưu,0
+cuộc sống là một chuyến đi dài,0
+mình là lữ khách,0
+bạn cũng là lữ khách,0
+chúng ta cùng đi trên một con đường,0
+chúng ta gặp nhau là duyên,0
+duyên phận đưa ta đến với nhau,0
+mình trân trọng cái duyên này,0
+mong duyên này kéo dài mãi,0
+mãi mãi là bạn nhé,0
+bạn thân nhé,0
+bff nhé,0
+best friend forever,0
+mình có thêm một người bạn,0
+mình vui lắm,0
+hôm nay là một ngày vui,0
+ngày hôm nay thật tuyệt,0
+mình sẽ nhớ ngày hôm nay,0
+kỷ niệm đẹp đấy,0
+mình sẽ lưu lại kỷ niệm này,0
+chụp màn hình lại đã,0
+screenshot kỷ niệm,0
+để sau này còn có cái mà nhớ,0
+sau này nhìn lại sẽ cười,0
+cười vì tuổi trẻ,0
+cười vì những điều ngốc nghếch,0
+tuổi trẻ thật đẹp,0
+mình đang ở độ tuổi đẹp nhất,0
+thanh xuân là thứ quý giá nhất,0
+đừng lãng phí thanh xuân,0
+hãy sống hết mình vì tuổi trẻ,0
+sống sao cho không hối tiếc,0
+mình sẽ không hối tiếc,0
+mình đang sống theo cách mình muốn,0
+mình tự do,0
+tự do là hạnh phúc,0
+mình hạnh phúc với sự tự do,0
+tự do lựa chọn,0
+tự do suy nghĩ,0
+tự do hành động,0
+không gì ràng buộc mình,0
+mình là gió,0
+gió tự do bay khắp trời,0
+mình muốn đi khắp thế gian,0
+mình muốn thấy thế giới,0
+thế giới rộng lớn lắm,0
+mình muốn đặt chân đến mọi nơi,0
+đi để trải nghiệm,0
+đi để trưởng thành,0
+đi để biết mình nhỏ bé,0
+mình nhỏ bé giữa vũ trụ bao la,0
+nhưng mình không vô dụng,0
+mình có giá trị riêng,0
+mỗi người đều có giá trị,0
+bạn cũng có giá trị của bạn,0
+đừng bao giờ nghi ngờ bản thân,0
+bạn có ý nghĩa với mình,0
+bạn quan trọng với mình lắm,0
+mình nói thật lòng đấy,0
+mình không nói dối đâu,0
+mình ghét nói dối,0
+sự thật mất lòng,0
+nhưng mình vẫn nói thật,0
+thà mất lòng trước được lòng sau,0
+mình mong bạn hiểu cho mình,0
+mong bạn thông cảm,0
+thông cảm cho mình nhé,0
+mình cảm ơn bạn trước,0
+cảm ơn đã lắng nghe mình,0
+cảm ơn vì đã ở đây với mình,0
+cảm ơn vì tất cả,0
+mình biết ơn mọi thứ,0
+cảm ơn đời,0
+cảm ơn người,0
+cảm ơn bạn,0
+cảm ơn chính mình,0
+mình đã làm tốt,0
+tự vỗ vai mình cái,0
+good job,0
+well done,0
+proud of myself,0
+tự hào về bản thân,0
+mình xứng đáng được khen,0
+bạn khen mình đi,0
+khen mình một câu đi,0
+nịnh mình tí đi,0
+mình thích được nịnh,0
+ai chẳng thích được nịnh,0
+nịnh thật lòng thì nhận,0
+nịnh đểu thì thôi,0
+mình phân biệt được thật giả,0
+mình tinh tường lắm,0
+mình nhìn thấu tâm can,0
+không giấu được mình đâu,0
+mình như thần thám,0
+mình là sherlock holmes,0
+suy luận của mình sắc bén,0
+logic của mình không ai bằng,0
+mình khiêm tốn quá nhỉ,0
+mình đùa đấy,0
+đùa cho vui thôi,0
+cuộc sống cần tiếng cười,0
+cười lên cho đời thêm tươi,0
+cười nhiều vào,0
+cười hở mười cái răng,0
+cười sảng khoái đi,0
+cười như chưa bao giờ được cười,0
+nụ cười đẹp nhất là nụ cười thật,0
+bạn cười đi mình cười theo,0
+cả hai cùng cười,0
+cùng nhau vui vẻ,0
+hạnh phúc là khi ở bên nhau,0
+dù là online nhưng vẫn vui,0
+online hay offline đều vui,0
+miễn là có bạn,0
+bạn là nguồn vui của mình,0
+cảm ơn bạn vì niềm vui này,0
+niềm vui nhân đôi khi được chia sẻ,0
+mình chia sẻ niềm vui với bạn,0
+bạn chia sẻ niềm vui với mình,0
+chúng ta cùng chia sẻ,0
+chia sẻ là quan tâm,0
+sharing is caring,0
+mình quan tâm bạn,0
+bạn có quan tâm mình không,0
+mình tin là có,0
+bạn quan tâm mình mà,0
+mình cảm nhận được,0
+mình nhạy cảm lắm,0
+cảm xúc của mình phong phú,0
+mình dễ vui dễ buồn,0
+mình sống theo cảm xúc,0
+cảm xúc dẫn lối mình,0
+đôi khi lý trí bị lấn át,0
+nhưng không sao,0
+sống thật với cảm xúc là tốt,0
+đừng kìm nén,0
+hãy để cảm xúc tuôn trào,0
+khóc cũng được,0
+cười cũng được,0
+mọi cảm xúc đều đáng quý,0
+buồn cũng là một phần của cuộc sống,0
+có buồn mới biết vui,0
+có khổ mới biết sướng,0
+trải qua đau khổ mới trân trọng hạnh phúc,0
+mình đã trải qua nhiều rồi,0
+mình hiểu giá trị của hạnh phúc,0
+hạnh phúc không dễ có được,0
+phải biết giữ gìn,0
+giữ gìn hạnh phúc như giữ lửa,0
+đừng để lửa tắt,0
+hãy giữ ngọn lửa đam mê,0
+đam mê là động lực sống,0
+sống không có đam mê thì vô nghĩa,0
+mình sống vì đam mê,0
+đam mê của mình là công nghệ,0
+công nghệ thay đổi thế giới,0
+mình muốn thay đổi thế giới,0
+hú hú,0
+hẹ hẹ,0
+ha ha,0
+he he,0
+hí hí,0
+hô hô,0
+haha,0
+hehe,0
+hihi,0
+hoho,0
+huhu,0
+hí hí,0
+há há,0
+hề hề,0
+hứ hứ,0
+ha ha ha,0
+he he he,0
+hi hi hi,0
+hú hú hú,0
+hô hô hô,0
+hahaha,0
+hehehe,0
+hihihi,0
+hohoho,0
+huhuhu,0
+hê hê,0
+hê hê hê,0
+hehehehe,0
+hahahaha,0
+hihihihi,0
+hí hí hí,0
+há há há,0
+hề hề hề,0
+hứ hứ hứ,0
+haha haha,0
+hehe hehe,0
+hihi hihi,0
+hú hú hú hú,0
+ha ha ha ha,0
+he he he he,0
+hi hi hi hi,0
+khà khà,0
+khặc khặc,0
+khì khì,0
+khụ khụ,0
+kha kha,0
+khe khe,0
+khi khi,0
+kho kho,0
+khu khu,0
+khà khà khà,0
+khặc khặc khặc,0
+khì khì khì,0
+khakhakha,0
+khekhekhe,0
+khikhikhi,0
+khukhukhu,0
+hờ hờ,0
+hờ hờ hờ,0
+hơ hơ,0
+hơ hơ hơ,0
+hửm hứm,0
+ừm ừm,0
+hmm hmm,0
+hmmm,0
+hừm,0
+hứm,0
+hả hả,0
+hở hở,0
+hử hử,0
+hả hả hả,0
+hở hở hở,0
+hử hử hử,0
+haha có gì vui à,0
+hehe vui quá,0
+hihi buồn cười ghê,0
+hú hú sợ thật,0
+hô hô hay quá,0
+haha đúng rồi,0
+hehe chuẩn luôn,0
+hihi biết rồi,0
+haha hài quá,0
+hehe mắc cười thật,0
+hihi dễ thương ghê,0
+haha buồn cười quá,0
+hehe hay ghê,0
+haha vui thế,0
+hihi tếu thật,0
+hô hô bất ngờ ghê,0
+haha ra là vậy,0
+hehe hiểu rồi,0
+hihi ok luôn,0
+haha được đó,0
+hehe ngon rồi,0
+haha tuyệt,0
+hoho great,0
+haha nice,0
+hehe cool,0
+hihi awesome,0
+haha lol,0
+hehe lmao,0
+hihi rofl,0
+haha funny,0
+hehe hilarious,0
+haha cười đau bụng,0
+hehe cười ra nước mắt,0
+hihi cười muốn xỉu,0
+haha không nhịn được cười,0
+hehe cười chết mất,0
+haha cười rụng răng,0
+haha hài hước quá đi,0
+hehe vui tính ghê,0
+haha bạn hài quá,0
+hehe bạn vui tính thật,0
+haha nói chuyện với bạn vui quá,0
+hehe mình thích nói chuyện với bạn,0
+haha cười xong mệt luôn,0
+hehe cười đỏ cả mặt,0
+haha thôi mình đi cười tiếp đây,0
+hehe bye nha,0
+haha pp,0
+hihi tạm biệt,0
+haha cảm ơn bạn nhiều nha,0
+hehe ok mình hiểu rồi,0
+haha được rồi cảm ơn,0
+haha không sao đâu,0
+hehe ổn rồi,0
+haha ok bạn,0
+hehe rồi rồi,0
+haha bye bye,0
+hehe gặp lại sau,0
+hihi hẹn gặp lại,0
+haha chúc bạn ngày vui,0
+hehe chúc bạn tốt lành,0
+haha mình out đây,0
+hehe mình đi đây,0
+haha nghỉ đây bye,0
+haha mai gặp lại nha,0
+hehe sáng mai gặp,0
+haha thôi mình ngủ đây,0
+hehe ngủ ngon nha,0
+haha mơ đẹp nha,0
+hehe chúc ngủ ngon,0
+haha cảm ơn vì buổi tối vui vẻ,0
+hehe hôm nay vui quá,0
+haha vui quá trời,0
+hehe quá đã,0
+haha đã quá,0
+hehe xịn quá,0
+haha đỉnh quá,0
+hehe chất quá,0
+hehe tuyệt vời,0
+haha xuất sắc,0
+hehe quá hay,0
+haha hay quá,0
+hehe thú vị quá,0
+haha hay thật đấy,0
+hehe bất ngờ thật,0
+haha không ngờ luôn,0
+hehe ảo thật đấy,0
+haha sốc quá,0
+hehe không thể tin được,0
+haha tin được không,0
+hehe thật không đó,0
+haha thật hả,0
+hehe vậy luôn,0
+haha thế á,0
+hehe ồ,0
+haha ồ ra thế,0
+hehe à hiểu rồi,0
+haha à ra vậy,0
+hehe a hiểu rồi,0
+haha thì ra là thế,0
+hehe hóa ra vậy,0
+haha giờ mới hiểu,0
+hehe cuối cùng cũng hiểu,0
+haha sáng mắt ra rồi,0
+hehe khai sáng rồi,0
+haha thông não rồi,0
+hehe não mở ra rồi,0
+haha hết mù rồi,0
+hehe đã thông,0
+haha ok giờ thì rõ rồi,0
+hehe rõ như ban ngày,0
+haha clear luôn,0
+hehe crystal clear,0
+haha sáng tỏ rồi,0
+hehe minh bạch rồi,0
+haha không còn gì thắc mắc,0
+hehe hết thắc mắc rồi,0
+haha đã giải đáp hết,0
+hehe ok xong hết rồi,0
+haha done rồi nha,0
+hehe hoàn thành rồi,0
+haha xong xuôi rồi,0
+hehe kết thúc tốt đẹp,0
+haha thành công mỹ mãn,0
+hehe mọi thứ tốt đẹp,0
+haha happy ending,0
+hehe viên mãn,0
+haha trọn vẹn,0
+hehe perfect,0
+haha wonderful,0
+hehe excellent,0
+haha brilliant,0
+hehe fantastic,0
+haha marvelous,0
+hehe superb,0
+haha outstanding,0
+hehe phenomenal,0
+haha spectacular,0
+hehe magnificent,0
+haha fabulous,0
+hehe terrific,0
+haha amazing,0
+hehe incredible,0
+haha unbelievable,0
+hehe extraordinary,0
+haha remarkable,0
+hehe exceptional,0
+haha splendid,0
+hehe glorious,0
+haha divine,0
+hehe heavenly,0
+haha godlike,0
+hehe legendary,0
+haha epic,0
+hehe awesome sauce,0
+haha cool beans,0
+hehe sweet,0
+haha lit,0
+hehe fire,0
+haha dope,0
+hehe rad,0
+haha groovy,0
+hehe neat,0
+haha swell,0
+hehe peachy,0
+haha nifty,0
+hehe spiffy,0
+haha snazzy,0
+hehe jazzy,0
+haha fancy,0
+hehe chic,0
+haha elegant,0
+hehe classy,0
+haha sophisticated,0
+hehe refined,0
+haha polished,0
+hehe sleek,0
+haha smooth,0
+hehe silky,0
+haha buttery,0
+hehe velvety,0
+haha creamy,0
+hehe dreamy,0
+haha lovely,0
+hehe delightful,0
+haha charming,0
+hehe enchanting,0
+haha captivating,0
+hehe mesmerizing,0
+haha hypnotic,0
+hehe magical,0
+haha mystical,0
+hehe ethereal,0
+haha celestial,0
+hehe angelic,0
+haha divine,0
+hehe sublime,0
+haha transcendent,0
+hehe otherworldly,0
+haha out of this world,0
+hehe beyond compare,0
+haha second to none,0
+hehe best ever,0
+haha number one,0
+hehe top notch,0
+haha first class,0
+hehe world class,0
+haha premium,0
+hehe deluxe,0
+haha luxury,0
+hehe gold standard,0
+haha platinum,0
+hehe diamond,0
+haha priceless,0
+hehe invaluable,0
+haha treasure,0
+hehe gem,0
+haha jewel,0
+hehe masterpiece,0
+haha work of art,0
+hehe chef's kiss,0
+haha muah,0
+hehe perfecto,0
+haha magnifique,0
+hehe bellissimo,0
+haha wunderbar,0
+hehe maravilloso,0
+haha splendido,0
+hehe fantastico,0
+haha eccellente,0
+hehe ottimo,0
+haha perfetto,0
+hehe excelente,0
+haha ótimo,0
+hehe uitstekend,0
+haha uitmuntend,0
+hehe voortreffelijk,0
+haha erstklassig,0
+hehe hervorragend,0
+haha ausgezeichnet,0
+hehe wunderschön,0
+haha fantastisch,0
+hehe großartig,0
+haha sensationell,0
+hehe phänomenal,0
+haha außergewöhnlich,0
+hehe bemerkenswert,0
+haha erstaunlich,0
+hehe unglaublich,0
+haha beeindruckend,0
+hehe eindrucksvoll,0
+haha überragend,0
+hehe meisterhaft,0
+haha genial,0
+hehe brillant,0
+haha exzellent,0
+hehe vortrefflich,0
+haha fabelhaft,0
+hehe märchenhaft,0
+haha traumhaft,0
+hehe bezaubernd,0
+haha entzückend,0
+hehe reizend,0
+haha charmant,0
+hehe lieblich,0
+haha herrlich,0
+hehe köstlich,0
+haha prächtig,0
+hehe prachtvoll,0
+haha glanzvoll,0
+hehe glänzend,0
+haha strahlend,0
+hehe leuchtend,0
+haha funkelnd,0
+hehe schimmernd,0
+haha glitzernd,0
+hehe blinkend,0

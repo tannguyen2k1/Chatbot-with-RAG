@@ -35,6 +35,7 @@ import {
   getFetcher,
   postFetcher,
   putFetcher,
+  deleteFetcher,
 } from "@/app/api/globalFetcher";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -86,10 +87,14 @@ const SettingsDialog = ({ open, onClose }) => {
 
   // Create collection dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState(null);
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [newCollectionDistance, setNewCollectionDistance] = useState("Cosine");
+  const [newCollectionVectorSize, setNewCollectionVectorSize] = useState(1024);
   const [creatingCollection, setCreatingCollection] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [createSuccess, setCreateSuccess] = useState(false);
+  const [deletingCollection, setDeletingCollection] = useState(false);
 
   const showSnackbar = useSnackbar();
 
@@ -202,19 +207,40 @@ const SettingsDialog = ({ open, onClose }) => {
     setCreatingCollection(true);
     setCreateError("");
     try {
-      await postFetcher("/api/vectors/collections", { name: newCollectionName });
+      await postFetcher("/api/vectors/collections", {
+        name: newCollectionName,
+        vector_size: newCollectionVectorSize,
+        distance: newCollectionDistance,
+      });
 
-      setCreateSuccess(true);
+      setCreateDialogOpen(false);
       setNewCollectionName("");
-      setTimeout(() => {
-        setCreateSuccess(false);
-        setCreateDialogOpen(false);
-        fetchCollections();
-      }, 1000);
+      setNewCollectionDistance("Cosine");
+      showSnackbar("Tạo collection thành công", "success");
+      fetchCollections();
     } catch (err) {
       setCreateError(err.message);
     } finally {
       setCreatingCollection(false);
+    }
+  };
+
+  const handleDeleteCollection = async () => {
+    if (!collectionToDelete) return;
+    setDeletingCollection(true);
+    try {
+      await deleteFetcher(`/api/vectors/collections/${collectionToDelete}`);
+      if (selectedCollection === collectionToDelete) {
+        setSelectedCollection(collections.find((c) => c !== collectionToDelete) || "default");
+      }
+      fetchCollections();
+      showSnackbar("Đã xóa collection", "success");
+    } catch (err) {
+      showSnackbar(err.message || "Lỗi khi xóa collection", "error");
+    } finally {
+      setDeletingCollection(false);
+      setConfirmDialogOpen(false);
+      setCollectionToDelete(null);
     }
   };
 
@@ -423,20 +449,36 @@ const SettingsDialog = ({ open, onClose }) => {
                     <CircularProgress size={24} />
                   </Box>
                 ) : (
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Chọn collection</InputLabel>
-                    <Select
-                      value={selectedCollection}
-                      label="Chọn collection"
-                      onChange={(e) => setSelectedCollection(e.target.value)}
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Chọn collection</InputLabel>
+                      <Select
+                        value={selectedCollection}
+                        label="Chọn collection"
+                        onChange={(e) => setSelectedCollection(e.target.value)}
+                      >
+                        {collections.map((col) => (
+                          <MenuItem key={col} value={col}>
+                            {col}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => {
+                        setCollectionToDelete(selectedCollection);
+                        setConfirmDialogOpen(true);
+                      }}
+                      disabled={deletingCollection}
+                      startIcon={deletingCollection ? <CircularProgress size={14} /> : <IconTrash size={14} />}
+                      sx={{ whiteSpace: "nowrap", minWidth: "auto" }}
                     >
-                      {collections.map((col) => (
-                        <MenuItem key={col} value={col}>
-                          {col}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      Xóa
+                    </Button>
+                  </Box>
                 )}
               </Box>
 
@@ -589,18 +631,12 @@ const SettingsDialog = ({ open, onClose }) => {
           <IconPlus size={20} />
           Tạo Collection mới
         </DialogTitleMUI>
-        <DialogContentMUI>
-          {createSuccess ? (
-            <Alert severity="success" sx={{ mt: 1 }}>
-              Tạo collection thành công!
+        <DialogContentMUI sx={{ height: "100%" }}>
+          {createError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {createError}
             </Alert>
-          ) : (
-            <>
-              {createError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {createError}
-                </Alert>
-              )}
+          )}
               <TextField
                 autoFocus
                 fullWidth
@@ -614,12 +650,31 @@ const SettingsDialog = ({ open, onClose }) => {
                 placeholder="VD: documents, knowledge_base"
                 size="small"
                 helperText="Chỉ chứa chữ cái, số, gạch dưới (_) và gạch ngang (-)"
+                sx={{ mb: 2, marginTop:"10px" }}
               />
-            </>
-          )}
+              <TextField
+                fullWidth
+                label="Vector size"
+                type="number"
+                value={newCollectionVectorSize}
+                onChange={(e) => setNewCollectionVectorSize(Number(e.target.value))}
+                size="small"
+                sx={{ mb: 2 }}
+              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Distance</InputLabel>
+                <Select
+                  value={newCollectionDistance}
+                  label="Distance"
+                  onChange={(e) => setNewCollectionDistance(e.target.value)}
+                >
+                  <MenuItem value="Cosine">Cosine</MenuItem>
+                  <MenuItem value="Euclid">Euclid</MenuItem>
+                  <MenuItem value="Dot">Dot</MenuItem>
+                </Select>
+              </FormControl>
         </DialogContentMUI>
-        {!createSuccess && (
-          <DialogActionsMUI>
+        <DialogActionsMUI>
             <Button onClick={() => setCreateDialogOpen(false)}>Hủy</Button>
             <Button
               variant="contained"
@@ -630,7 +685,33 @@ const SettingsDialog = ({ open, onClose }) => {
               {creatingCollection ? "Đang tạo..." : "Tạo"}
             </Button>
           </DialogActionsMUI>
-        )}
+      </DialogMUI>
+
+      {/* Delete Collection Confirm Dialog */}
+      <DialogMUI open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitleMUI sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconTrash size={20} color="error" />
+          Xác nhận xóa Collection
+        </DialogTitleMUI>
+        <DialogContentMUI>
+          <Typography>
+            Bạn có chắc muốn xóa collection <strong>"{collectionToDelete}"</strong> không? Hành động này không thể hoàn tác.
+          </Typography>
+        </DialogContentMUI>
+        <DialogActionsMUI>
+          <Button onClick={() => setConfirmDialogOpen(false)} disabled={deletingCollection}>
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteCollection}
+            disabled={deletingCollection}
+            startIcon={deletingCollection ? <CircularProgress size={16} color="inherit" /> : <IconTrash size={16} />}
+          >
+            {deletingCollection ? "Đang xóa..." : "Xóa"}
+          </Button>
+        </DialogActionsMUI>
       </DialogMUI>
 
     </>
