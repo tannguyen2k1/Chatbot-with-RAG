@@ -59,6 +59,14 @@ const ChatSupport = () => {
   const handleSend = async () => {
     if (!message.trim() || loading) return;
 
+    if (!chatConfig?.collection_name) {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: "Collections chua duoc set" },
+      ]);
+      return;
+    }
+
     const userMessage = message;
     setChatHistory((prev) => [...prev, { role: "user", content: userMessage }]);
     setMessage("");
@@ -67,10 +75,10 @@ const ChatSupport = () => {
     try {
       const response = await postFetcher("/api/chat/ask", {
         query: userMessage,
-        collection_name: chatConfig?.collection_name || "default",
-        limit: chatConfig?.limit || 3,
-        use_reranker: chatConfig?.use_reranker ?? true,
-        rerank_top_k: chatConfig?.rerank_top_k || 30,
+        collection_name: chatConfig.collection_name,
+        limit: chatConfig.limit || 3,
+        use_reranker: chatConfig.use_reranker ?? true,
+        rerank_top_k: chatConfig.rerank_top_k || 30,
       });
 
       setChatHistory((prev) => [
@@ -82,13 +90,18 @@ const ChatSupport = () => {
       ]);
     } catch (err) {
       console.error("Chat error:", err);
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Rất tiếc, đã có lỗi xảy ra khi kết nối tới máy chủ.",
-        },
-      ]);
+      const errMsg = err.message || "";
+      if (errMsg.includes("collection") || errMsg.includes("Collection")) {
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: "Collections chua duoc set" },
+        ]);
+      } else {
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: "Rất tiếc, đã có lỗi xảy ra khi kết nối tới máy chủ." },
+        ]);
+      }
     } finally {
       setLoading(false);
     }

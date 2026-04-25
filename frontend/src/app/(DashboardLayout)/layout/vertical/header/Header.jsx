@@ -12,8 +12,6 @@ import { IconMenu2, IconSettings } from "@tabler/icons-react";
 import Profile from "./Profile";
 import Search from "./Search";
 import Language from "./Language";
-import SettingsDialog from "@/app/components/user/SettingsDialog";
-import { useState } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 
 const Header = () => {
@@ -29,9 +27,8 @@ const Header = () => {
     isCollapse,
     isMobileSidebar,
     setIsMobileSidebar,
+    setCustomizerOpen,
   } = useContext(CustomizerContext);
-
-  const [showSettings, setShowSettings] = useState(false);
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: "none",
@@ -104,10 +101,10 @@ const Header = () => {
           <Language />
           {/* <Cart /> */}
 
-          <IconButton 
-            size="large" 
+          <IconButton
+            size="large"
             color="inherit"
-            onClick={() => setShowSettings(true)}
+            onClick={() => setCustomizerOpen(true)}
           >
             <IconSettings size="21" stroke="1.5" />
           </IconButton>
@@ -117,10 +114,6 @@ const Header = () => {
           <Profile />
         </Stack>
       </ToolbarStyled>
-      <SettingsDialog 
-        open={showSettings} 
-        onClose={() => setShowSettings(false)} 
-      />
     </AppBarStyled>
     // ...existing code...
   );

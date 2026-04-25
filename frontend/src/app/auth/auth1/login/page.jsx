@@ -8,11 +8,10 @@ import Typography from "@mui/material/Typography";
 import PageContainer from "@/app/components/container/PageContainer";
 import Logo from "@/app/(DashboardLayout)/layout/shared/logo/Logo";
 import AuthLogin from "../../authForms/AuthLogin";
-import Image from "next/image";
 
 export default function Login() {
   return (
-    <PageContainer title="Sign In" description="VIETCIS AI Assistant">
+    <PageContainer title="Sign In" description="AI Assistant">
       <Grid
         container
         spacing={0}
@@ -87,14 +86,14 @@ export default function Login() {
                   fontWeight={700}
                   sx={{ mb: 1, color: "text.primary" }}
                 >
-                  VIETCIS AI Assistant
+                  AI Assistant
                 </Typography>
                 <Typography
                   variant="body1"
                   color="text.secondary"
                   sx={{ mb: 3, lineHeight: 1.8 }}
                 >
-                  Trợ lý AI thông minh của VIETCIS. Tìm kiếm thông tin trong tài liệu,
+                  Trợ lý AI thông minh. Tìm kiếm thông tin trong tài liệu,
                   trả lời câu hỏi và hỗ trợ công việc hàng ngày.
                 </Typography>
                 <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>

@@ -23,8 +23,9 @@ import { BorderOuter } from "@mui/icons-material";
 const SidebarWidth = "320px";
 
 const Customizer = () => {
-  const [showDrawer, setShowDrawer] = useState(false);
   const {
+    customizerOpen,
+    setCustomizerOpen,
     activeMode,
     setActiveMode,
     isCollapse,
@@ -103,8 +104,8 @@ const Customizer = () => {
     <div>
       <Drawer
         anchor="right"
-        open={showDrawer}
-        onClose={() => setShowDrawer(false)}
+        open={customizerOpen}
+        onClose={() => setCustomizerOpen(false)}
         slotProps={{
           paper: {
             sx: {
