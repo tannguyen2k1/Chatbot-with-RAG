@@ -20,7 +20,7 @@ const Logo = () => {
 
   if (activeDir === "ltr") {
     return (
-      <LinkStyled href="/">
+      <LinkStyled href="/home">
         {activeMode === "dark" ? (
           <Image
             src="/images/logos/light-logo.svg"
@@ -43,7 +43,7 @@ const Logo = () => {
   }
 
   return (
-    <LinkStyled href="/">
+    <LinkStyled href="/home">
       {activeMode === "dark" ? (
         <Image
           src="/images/logos/dark-rtl-logo.svg"

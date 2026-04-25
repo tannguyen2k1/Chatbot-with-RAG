@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from database.models.user import User
 from schemas.config import (
     ConfigCreate, 
     ConfigUpdate, 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/configs", tags=["Configs"])
 async def list_configs(
     group_name: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Lấy danh sách cấu hình (có phân quyền)"""
     service = ConfigService(db)
@@ -31,7 +32,7 @@ async def list_configs(
 @router.get("/general", response_model=dict)
 async def get_general_config(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Lấy cài đặt chung (có phân quyền)"""
     service = ConfigService(db)
@@ -47,7 +48,7 @@ async def get_general_config(
 async def update_general_config(
     data: GeneralConfigUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Cập nhật cài đặt chung (có phân quyền)"""
     service = ConfigService(db)
@@ -62,7 +63,7 @@ async def update_general_config(
 @router.get("/chat", response_model=dict)
 async def get_chat_config(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Lấy cấu hình chat hợp nhất (có phân quyền)"""
     service = ConfigService(db)
@@ -78,7 +79,7 @@ async def get_chat_config(
 async def update_chat_config(
     data: ChatConfigUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Cập nhật cấu hình chat (có phân quyền)"""
     service = ConfigService(db)
@@ -94,7 +95,7 @@ async def update_chat_config(
 async def get_config(
     key: str,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Lấy chi tiết cấu hình theo key (có phân quyền)"""
     service = ConfigService(db)
@@ -111,7 +112,7 @@ async def get_config(
 async def create_config(
     data: ConfigCreate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Tạo cấu hình mới (có phân quyền)"""
     service = ConfigService(db)
@@ -130,7 +131,7 @@ async def update_config(
     key: str,
     data: ConfigUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Cập nhật cấu hình theo key (có phân quyền)"""
     service = ConfigService(db)
@@ -146,7 +147,7 @@ async def update_config(
 async def delete_config(
     key: str,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Xóa cấu hình (có phân quyền)"""
     service = ConfigService(db)

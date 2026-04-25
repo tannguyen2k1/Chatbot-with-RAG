@@ -21,6 +21,7 @@ import RoleFormDialog from "./RoleFormDialog";
 import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
 import { useHasPermission } from "@/app/utils/auth/useHasPermission";
 import { useRouter } from "next/navigation";
+import { useSnackbar } from "@/app/context/SnackbarContext";
 
 const fetchRoles = async () => {
   return await getFetcher("/api/rbac/roles");
@@ -35,11 +36,7 @@ export default function RoleManagementPage() {
   const [loading, setLoading] = useState(true);
   const [openForm, setOpenForm] = useState(false);
   const [editRole, setEditRole] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const showSnackbar = useSnackbar();
   const [reload, setReload] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuRow, setMenuRow] = useState(null);
@@ -73,24 +70,16 @@ export default function RoleManagementPage() {
     setOpenForm(false);
     setEditRole(null);
     if (refresh) setReload((r) => !r);
-    if (msg) setSnackbar({ open: true, message: msg, severity });
+    if (msg) showSnackbar(msg, severity);
   };
   // Hiển thị snackbar khi xoá role
   const handleDelete = async () => {
     try {
       await deleteRole(deleteId);
-      setSnackbar({
-        open: true,
-        message: "Xoá vai trò thành công",
-        severity: "success",
-      });
+      showSnackbar("Xoá vai trò thành công", "success");
       setReload((r) => !r);
     } catch (e) {
-      setSnackbar({
-        open: true,
-        message: e.message || "Xoá vai trò thất bại",
-        severity: "error",
-      });
+      showSnackbar(e.message || "Xoá vai trò thất bại", "error");
     }
     setConfirmOpen(false);
     setDeleteId(null);
@@ -104,7 +93,7 @@ export default function RoleManagementPage() {
       })
       .catch((e) => {
         setRows([]);
-        setSnackbar({ open: true, message: e.message, severity: "error" });
+        showSnackbar(e.message, "error");
       })
       .finally(() => setLoading(false));
   }, [reload]);
@@ -185,16 +174,6 @@ export default function RoleManagementPage() {
         onClose={handleCloseForm}
         role={editRole}
       />
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

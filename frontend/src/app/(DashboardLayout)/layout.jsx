@@ -11,6 +11,7 @@ import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
 import { usePathname } from "next/navigation";
+import ChatSupport from "@/app/components/shared/ChatSupport";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -73,6 +74,7 @@ export default function RootLayout({ children }) {
           </Container>
         )}
         {!isHome && <Customizer />}
+        <ChatSupport />
       </PageWrapper>
     </MainWrapper>
   );

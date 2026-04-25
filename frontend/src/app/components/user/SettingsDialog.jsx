@@ -30,7 +30,7 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import {
   getFetcher,
   postFetcher,
@@ -51,6 +51,8 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 import { AuthContext } from "@/app/context/AuthContext";
+import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
+import { useSnackbar } from "@/app/context/SnackbarContext";
 
 const TabPanel = ({ children, value, index, ...other }) => (
   <Box
@@ -68,6 +70,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
 const SettingsDialog = ({ open, onClose }) => {
   const theme = useTheme();
   const { user } = useContext(AuthContext);
+  const { setActiveMode, setIsLanguage, setIsFontSize } = useContext(CustomizerContext);
   const [tab, setTab] = useState(0);
   const [settings, setSettings] = useState({
     theme: theme.palette.mode,
@@ -88,10 +91,7 @@ const SettingsDialog = ({ open, onClose }) => {
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  // Snackbar state
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-
-  const handleCloseSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
+  const showSnackbar = useSnackbar();
 
   // Chat config
   const [chatConfig, setChatConfig] = useState({
@@ -99,6 +99,33 @@ const SettingsDialog = ({ open, onClose }) => {
     use_reranker: true,
     rerank_top_k: 30,
   });
+
+  const isInitialGeneral = useRef(true);
+  const isInitialChat = useRef(true);
+
+  // Auto-save General Config
+  useEffect(() => {
+    if (isInitialGeneral.current) {
+      isInitialGeneral.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSaveGeneralConfig(settings);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [settings]);
+
+  // Auto-save Chat Config
+  useEffect(() => {
+    if (isInitialChat.current) {
+      isInitialChat.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSaveConfig();
+    }, 10);
+    return () => clearTimeout(timer);
+  }, [chatConfig, selectedCollection]);
 
   // Fetch collections and configs on tab change
   useEffect(() => {
@@ -115,6 +142,7 @@ const SettingsDialog = ({ open, onClose }) => {
   const fetchGeneralConfig = async () => {
     try {
       const data = await getFetcher("/api/configs/general");
+      isInitialGeneral.current = true;
       setSettings({
         theme: data.theme || theme.palette.mode,
         language: data.language || "vi",
@@ -128,6 +156,7 @@ const SettingsDialog = ({ open, onClose }) => {
   const fetchChatConfig = async () => {
     try {
       const data = await getFetcher("/api/configs/chat");
+      isInitialChat.current = true;
       setChatConfig({
         limit: data.limit || 3,
         use_reranker: data.use_reranker ?? true,
@@ -194,16 +223,23 @@ const SettingsDialog = ({ open, onClose }) => {
     setSettings({ ...settings, [field]: value });
   };
 
-  const handleSaveGeneralConfig = async () => {
+  const handleSaveGeneralConfig = async (currentSettings) => {
+    const s = currentSettings || settings;
     try {
       await putFetcher("/api/configs/general", {
-        theme: settings.theme,
-        language: settings.language,
-        font_size: settings.fontSize,
+        theme: s.theme,
+        language: s.language,
+        font_size: s.fontSize,
       });
-      setSnackbar({ open: true, message: "Lưu cài đặt thành công", severity: "success" });
+
+      // Sync with CustomizerContext
+      if (s.theme) setActiveMode(s.theme);
+      if (s.language) setIsLanguage(s.language);
+      if (s.fontSize) setIsFontSize(s.fontSize);
+
+      showSnackbar("Đã lưu cài đặt", "success");
     } catch (err) {
-      setSnackbar({ open: true, message: err.message || "Lỗi khi lưu cài đặt", severity: "error" });
+      showSnackbar(err.message || "Lỗi khi lưu cài đặt", "error");
     }
   };
 
@@ -226,9 +262,9 @@ const SettingsDialog = ({ open, onClose }) => {
         rerank_top_k: chatConfig.rerank_top_k,
         use_reranker: chatConfig.use_reranker,
       });
-      setSnackbar({ open: true, message: "Lưu cấu hình thành công", severity: "success" });
+      showSnackbar("Đã lưu cấu hình", "success");
     } catch (err) {
-      setSnackbar({ open: true, message: err.message || "Lỗi khi lưu cấu hình", severity: "error" });
+      showSnackbar(err.message || "Lỗi khi lưu cấu hình", "error");
     }
   };
 
@@ -354,10 +390,6 @@ const SettingsDialog = ({ open, onClose }) => {
                   </FormControl>
                 </Box>
               </Box>
-
-              <Button variant="contained" sx={{ mt: 1 }} onClick={handleSaveGeneralConfig}>
-                Lưu cài đặt
-              </Button>
             </Box>
           </TabPanel>
 
@@ -452,10 +484,6 @@ const SettingsDialog = ({ open, onClose }) => {
                   </Select>
                 </FormControl>
               )}
-
-              <Button variant="contained" sx={{ mt: 1 }} onClick={handleSaveConfig}>
-                Lưu cấu hình
-              </Button>
             </Box>
           </TabPanel>
 
@@ -605,20 +633,6 @@ const SettingsDialog = ({ open, onClose }) => {
         )}
       </DialogMUI>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

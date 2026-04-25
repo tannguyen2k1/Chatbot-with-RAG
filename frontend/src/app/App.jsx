@@ -8,6 +8,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 import "@/utils/i18n";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import { UserDataProvider } from "./context/UserDataContext";
+import ThemeSync from "@/app/components/shared/ThemeSync";
 
 const MyApp = ({ children }) => {
   const theme = ThemeSettings();
@@ -17,6 +18,7 @@ const MyApp = ({ children }) => {
     <>
       <AppRouterCacheProvider options={{ enableCssLayer: true }}>
         <ThemeProvider theme={theme}>
+          <ThemeSync />
           <RTL direction={activeDir}>
             <CssBaseline />
             <UserDataProvider>{children}</UserDataProvider>

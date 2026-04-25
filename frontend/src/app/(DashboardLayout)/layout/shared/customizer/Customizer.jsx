@@ -101,19 +101,6 @@ const Customizer = () => {
 
   return (
     <div>
-      {/* ------------------------------------------- */}
-      {/* --Floating Button to open customizer ------ */}
-      {/* ------------------------------------------- */}
-      <Tooltip title="Settings">
-        <Fab
-          color="primary"
-          aria-label="settings"
-          sx={{ position: "fixed", right: "25px", bottom: "15px" }}
-          onClick={() => setShowDrawer(true)}
-        >
-          <IconSettings stroke={1.5} />
-        </Fab>
-      </Tooltip>
       <Drawer
         anchor="right"
         open={showDrawer}

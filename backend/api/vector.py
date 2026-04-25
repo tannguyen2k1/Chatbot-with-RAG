@@ -4,6 +4,7 @@ Vector Database API Endpoints
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from qdrant_client import AsyncQdrantClient
+from database.models.user import User
 
 from database.qdrant import get_async_qdrant_client
 from dependencies import get_current_user
@@ -34,7 +35,7 @@ def get_vector_service(
 
 @router.get("/health")
 async def vector_health(
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     return await service.health_check_for(current_user.id)
@@ -42,7 +43,7 @@ async def vector_health(
 
 @router.get("/collections", response_model=list[str])
 async def list_collections(
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     return await service.list_collections_for(current_user.id)
@@ -51,7 +52,7 @@ async def list_collections(
 @router.get("/collections/{name}", response_model=CollectionInfo)
 async def get_collection(
     name: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -63,7 +64,7 @@ async def get_collection(
 @router.post("/collections", status_code=status.HTTP_201_CREATED)
 async def create_collection(
     data: CollectionCreate,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -75,7 +76,7 @@ async def create_collection(
 @router.delete("/collections/{name}", status_code=status.HTTP_200_OK)
 async def delete_collection(
     name: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -88,7 +89,7 @@ async def delete_collection(
 async def upsert_points(
     collection_name: str,
     data: PointsBatchUpsert,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -101,7 +102,7 @@ async def upsert_points(
 async def get_point(
     collection_name: str,
     point_id: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -115,7 +116,7 @@ async def get_point(
 async def delete_points(
     collection_name: str,
     point_ids: list[str | int],
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -127,7 +128,7 @@ async def delete_points(
 @router.delete("/collections/{collection_name}/clear", status_code=status.HTTP_200_OK)
 async def clear_collection(
     collection_name: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -140,7 +141,7 @@ async def clear_collection(
 async def search_vectors(
     collection_name: str,
     request: VectorSearchRequest,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
 ):
     try:
@@ -153,7 +154,7 @@ async def search_vectors(
 async def search_by_text(
     collection_name: str,
     search_req: TextSearchRequest,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     service: VectorService = Depends(get_vector_service),
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),

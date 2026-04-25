@@ -6,6 +6,7 @@ import "./global.css";
 import ClientCustomizerProvider from "./context/ClientCustomizerContext/ClientCustomizerProvider";
 import { AuthProvider } from "./context/AuthContext";
 import { TenantProvider } from "./context/TenantContext";
+import { SnackbarProvider } from "./context/SnackbarContext";
 
 export const metadata = {
   title: "AI Assistant",
@@ -18,11 +19,13 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <NextTopLoader color="#5D87FF" />
         <ClientCustomizerProvider>
-          <TenantProvider>
-            <AuthProvider>
-              <MyApp>{children}</MyApp>
-            </AuthProvider>
-          </TenantProvider>
+          <SnackbarProvider>
+            <TenantProvider>
+              <AuthProvider>
+                <MyApp>{children}</MyApp>
+              </AuthProvider>
+            </TenantProvider>
+          </SnackbarProvider>
         </ClientCustomizerProvider>
       </body>
     </html>

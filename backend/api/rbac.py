@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from database.models.user import User
 from schemas import RoleCreate, RoleUpdate, RoleOut, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole
 from dependencies import get_current_user
 from dependencies.database import get_global_db
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/rbac", tags=["RBAC"])
 @router.get("/roles", response_model=list[RoleOut])
 async def get_roles(
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -23,7 +24,7 @@ async def get_roles(
 async def get_role_by_id(
     role_id: int, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -38,7 +39,7 @@ async def get_role_by_id(
 async def create_role(
     data: RoleCreate, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     desc = data.description if data.description is not None else ""
@@ -52,7 +53,7 @@ async def update_role(
     role_id: int, 
     data: RoleUpdate, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -67,7 +68,7 @@ async def update_role(
 async def delete_role(
     role_id: int, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -82,7 +83,7 @@ async def delete_role(
 async def assign_role_to_user(
     data: AssignRoleToUser, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -94,7 +95,7 @@ async def assign_role_to_user(
 @router.get("/modules")
 async def get_modules(
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -106,7 +107,7 @@ async def get_modules(
 async def create_module(
     data: ModuleCreate, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     desc = data.description if data.description is not None else ""
@@ -119,7 +120,7 @@ async def create_module(
 @router.get("/permissions")
 async def get_permissions(
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -131,7 +132,7 @@ async def get_permissions(
 async def create_permission(
     data: PermissionCreate, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     desc = data.description if data.description is not None else ""
@@ -144,7 +145,7 @@ async def create_permission(
 async def remove_permission_from_role(
     data: RemovePermissionFromRole, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -159,7 +160,7 @@ async def remove_permission_from_role(
 async def assign_permission_to_role(
     data: AssignPermissionToRole, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
@@ -173,7 +174,7 @@ async def check_user_permission(
     module_name: str, 
     permission_name: str, 
     db: AsyncSession = Depends(get_global_db), 
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     service = RBACService(db)
     try:
