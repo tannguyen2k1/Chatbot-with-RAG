@@ -50,42 +50,19 @@ import {
   IconLogout,
   IconUser,
   IconKey,
-  IconClock,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { useAuth } from "@/app/context/AuthContext";
-import { getFetcher } from "@/app/api/globalFetcher";
+import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
 import ProfileDialog from "@/app/components/user/ProfileDialog";
 import SettingsDialog from "@/app/components/user/SettingsDialog";
 
-const STORAGE_KEY = "ai_chat_history";
-const MAX_TITLE_CHARS = 40;
 const SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 
 const normalizeAssistantText = (text) => {
   if (!text) return "";
   return text.replace(/^"+|"+$/g, "");
-};
-
-const generateTitle = (firstMessage) => {
-  const clean = firstMessage.replace(/\n+/g, " ").trim();
-  if (clean.length <= MAX_TITLE_CHARS) return clean;
-  return clean.substring(0, MAX_TITLE_CHARS - 1) + "...";
-};
-
-const loadHistory = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveHistory = (history) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-  } catch {}
 };
 
 const SimpleChatApp = () => {
@@ -96,17 +73,17 @@ const SimpleChatApp = () => {
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [chatHistory, setChatHistory] = useState(() => loadHistory());
+  const [chatHistory, setChatHistory] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [contextSources, setContextSources] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [configAnchor, setConfigAnchor] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(true);
   const [userAnchor, setUserAnchor] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   const [chatConfig, setChatConfig] = useState({
     collection_name: null,
@@ -123,6 +100,31 @@ const SimpleChatApp = () => {
   const syncingFromHistoryRef = useRef(false);
 
   const isDark = theme.palette.mode === "dark";
+
+  // Fetch chat history from backend
+  const fetchHistory = useCallback(async () => {
+    const token = getAccessToken?.();
+    if (!token) return;
+    
+    try {
+      const history = await getFetcher("/api/conversations");
+      const formatted = history.map(conv => ({
+        id: conv.id,
+        title: conv.title,
+        createdAt: conv.created_at,
+        updatedAt: conv.updated_at,
+      }));
+      setChatHistory(formatted);
+    } catch (err) {
+      console.error("Failed to fetch chat history", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [getAccessToken]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -143,36 +145,38 @@ const SimpleChatApp = () => {
     fetchConfig();
   }, []);
 
-  // Debounce save to localStorage
-  const prevHistoryRef = useRef(null);
-  useEffect(() => {
-    const serialized = JSON.stringify(chatHistory);
-    if (serialized !== prevHistoryRef.current) {
-      prevHistoryRef.current = serialized;
-      saveHistory(chatHistory);
+  // Load messages when selecting a conversation
+  const fetchMessages = useCallback(async (conversationId) => {
+    const token = getAccessToken?.();
+    if (!token || conversationId <= 0) return;
+    
+    try {
+      const conv = await getFetcher(`/api/conversations/${conversationId}`);
+      const formattedMessages = conv.messages.map(msg => ({
+        id: String(msg.id),
+        role: msg.role,
+        content: msg.content || "",
+        status: "done",
+      }));
+      setMessages(formattedMessages);
+      // Set context sources from last assistant message
+      const lastAssistant = [...formattedMessages].reverse().find(m => m.role === "assistant");
+      if (lastAssistant?.context_sources !== undefined) {
+        setContextSources(lastAssistant.context_sources || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch messages", err);
     }
-  }, [chatHistory]);
+  }, [getAccessToken]);
 
+  // Sync messages when activeChatId changes (only when not streaming)
   useEffect(() => {
-    if (isStreamingRef.current) return;
-    syncingFromHistoryRef.current = true;
-    const chat = chatHistory.find((c) => c.id === activeChatId);
-    if (chat) {
-      setMessages(chat.messages || []);
-      setContextSources(chat.contextSources || 0);
-    } else {
+    if (activeChatId && activeChatId > 0 && !isStreamingRef.current) {
+      fetchMessages(activeChatId);
+    } else if (!activeChatId) {
       setMessages([]);
-      setContextSources(0);
     }
-    setTimeout(() => { syncingFromHistoryRef.current = false; }, 0);
-  }, [activeChatId, chatHistory]);
-
-  // Auto-select first chat on mount if exists
-  useEffect(() => {
-    if (activeChatId === null && chatHistory.length > 0) {
-      setActiveChatId(chatHistory[0].id);
-    }
-  }, []);
+  }, [activeChatId, fetchMessages]);
 
   const filteredHistory = useMemo(() => {
     if (!searchQuery.trim()) return chatHistory;
@@ -219,37 +223,16 @@ const SimpleChatApp = () => {
     isStreamingRef.current = true;
     setErrorMessage("");
 
-    let currentChatId = activeChatId;
-    const isNewChat = !currentChatId;
-    if (isNewChat) {
-      const newId = Date.now();
-      const newChat = {
-        id: newId,
-        title: generateTitle(prompt),
-        messages: [],
-        contextSources: 0,
-        createdAt: new Date().toISOString(),
-      };
-      setChatHistory((prev) => [newChat, ...prev]);
-      currentChatId = newId;
-      setActiveChatId(newId);
-    } else {
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === currentChatId &&
-          (c.title === "Cuộc trò chuyện mới" || c.title === "New Chat")
-            ? { ...c, title: generateTitle(prompt) }
-            : c,
-        ),
-      );
-    }
-
+    const isNewChat = !activeChatId;
+    const userMessageId = `temp-user-${Date.now()}`;
+    const assistantId = `temp-assistant-${Date.now()}`;
+    
     const userMessage = {
-      id: `user-${Date.now()}`,
+      id: userMessageId,
       role: "user",
       content: prompt,
+      status: "done",
     };
-    const assistantId = `assistant-${Date.now()}`;
     const assistantMessage = {
       id: assistantId,
       role: "assistant",
@@ -263,20 +246,50 @@ const SimpleChatApp = () => {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const response = await fetch("/api/chat/stream", {
+      let endpoint, body;
+      
+      if (isNewChat) {
+        // Create new conversation with message
+        endpoint = "/api/conversations";
+        body = {
+          title: prompt.substring(0, 40),
+          query: prompt,
+          ...chatConfig,
+        };
+      } else {
+        // Add message to existing conversation
+        endpoint = `/api/conversations/${activeChatId}/messages`;
+        body = {
+          query: prompt,
+          ...chatConfig,
+        };
+      }
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          query: prompt,
-          ...chatConfig,
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 
+      const conversationIdHeader = response.headers.get("X-Conversation-Id");
       const sourcesHeader = response.headers.get("X-Context-Sources");
+      
+      if (isNewChat && conversationIdHeader) {
+        const newId = parseInt(conversationIdHeader, 10);
+        // Update local chat list
+        setChatHistory(prev => [{
+          id: newId,
+          title: prompt.substring(0, 40),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }, ...prev]);
+        setActiveChatId(newId);
+      }
+      
       setContextSources(parseInt(sourcesHeader || "0", 10));
 
       if (!response.ok || !response.body) {
@@ -298,7 +311,7 @@ const SimpleChatApp = () => {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: fullContent, status: "done" }
+                ? { ...m, content: fullContent, status: done ? "done" : "streaming" }
                 : m,
             ),
           );
@@ -321,24 +334,9 @@ const SimpleChatApp = () => {
       abortRef.current = null;
       setIsStreaming(false);
       isStreamingRef.current = false;
+      fetchHistory(); // Refresh chat list from backend
     }
   };
-
-  useEffect(() => {
-    if (!activeChatId || messages.length === 0 || syncingFromHistoryRef.current) return;
-    const hasDone = messages.some(
-      (m) => m.role === "assistant" && m.status === "done",
-    );
-    if (hasDone) {
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === activeChatId
-            ? { ...c, messages: messages, contextSources }
-            : c,
-        ),
-      );
-    }
-  }, [messages, contextSources, activeChatId]);
 
   const handleStop = () => {
     abortRef.current?.abort();
@@ -356,13 +354,6 @@ const SimpleChatApp = () => {
     if (isStreaming) abortRef.current?.abort();
     setMessages([]);
     setContextSources(0);
-    if (activeChatId) {
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === activeChatId ? { ...c, messages: [], contextSources: 0 } : c,
-        ),
-      );
-    }
   };
 
   const handleKeyDown = (event) => {
@@ -374,36 +365,33 @@ const SimpleChatApp = () => {
 
   const handleSelectChat = (id) => {
     setActiveChatId(id);
-    setHistoryOpen(false);
   };
 
   const handleNewChat = () => {
     if (isStreaming) abortRef.current?.abort();
-    const newId = Date.now();
-    const newChat = {
-      id: newId,
-      title: "Cuộc trò chuyện mới",
-      messages: [],
-      contextSources: 0,
-      createdAt: new Date().toISOString(),
-    };
-    setChatHistory((prev) => [newChat, ...prev]);
-    setActiveChatId(newId);
+    setActiveChatId(null);
     setMessages([]);
     setContextSources(0);
     setInput("");
     inputRef.current?.focus();
-    setHistoryOpen(false);
   };
 
-  const handleDeleteChat = (id, event) => {
-    event.stopPropagation();
-    setChatHistory((prev) => prev.filter((c) => c.id !== id));
-    if (activeChatId === id) {
-      const remaining = chatHistory.filter((c) => c.id !== id);
-      setActiveChatId(remaining[0]?.id || null);
-      setMessages([]);
-      setContextSources(0);
+  const handleDeleteChat = async (id, event) => {
+    event?.stopPropagation();
+    
+    try {
+      await deleteFetcher(`/api/conversations/${id}`);
+      
+      setChatHistory((prev) => prev.filter((c) => c.id !== id));
+      if (activeChatId === id) {
+        setActiveChatId(null);
+        setMessages([]);
+        setContextSources(0);
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation", err);
+      setErrorMessage("Không thể xóa cuộc trò chuyện");
+      setErrorSnackbar(true);
     }
   };
 
@@ -422,6 +410,7 @@ const SimpleChatApp = () => {
     if (lastUserIdx === -1) return;
     const userMsg = messages[messages.length - 1 - lastUserIdx];
     if (userMsg) {
+      // Remove last assistant message
       setMessages((prev) => prev.slice(0, prev.length - 1));
       setInput(userMsg.content);
       setTimeout(() => handleSend(), 50);
@@ -538,7 +527,11 @@ const SimpleChatApp = () => {
 
             {/* Chat List */}
             <Box sx={{ flex: 1, overflowY: "auto", px: 1 }}>
-              {filteredHistory.length === 0 ? (
+              {loadingHistory ? (
+                <Box sx={{ p: 2, textAlign: "center" }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : filteredHistory.length === 0 ? (
                 <Box sx={{ p: 2, textAlign: "center" }}>
                   <Typography variant="caption" color="text.secondary">
                     Chưa có cuộc trò chuyện nào
@@ -697,13 +690,17 @@ const SimpleChatApp = () => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Tìm kiếm đoạn chat" placement="right">
-              <IconButton>
+              <IconButton onClick={() => setHistoryOpen(true)}>
                 <IconSearch size={20} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Gần đây" placement="right">
-              <IconButton>
-                <IconClock size={20} />
+            <Tooltip title="Tải lại lịch sử" placement="right">
+              <IconButton onClick={fetchHistory} disabled={loadingHistory}>
+                {loadingHistory ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <IconRefresh size={20} />
+                )}
               </IconButton>
             </Tooltip>
           </Box>

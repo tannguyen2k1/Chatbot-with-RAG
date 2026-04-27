@@ -142,25 +142,6 @@ export default function Login() {
                   Chào mừng bạn quay trở lại
                 </Typography>
               }
-              subtitle={
-                <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
-                  <Typography color="textSecondary" variant="body2">
-                    Cần hỗ trợ?
-                  </Typography>
-                  <Typography
-                    component={Link}
-                    href="/auth/auth1/forgot-password"
-                    sx={{
-                      fontWeight: 500,
-                      textDecoration: "none",
-                      color: "primary.main",
-                      fontSize: 14,
-                    }}
-                  >
-                    Liên hệ admin
-                  </Typography>
-                </Stack>
-              }
             />
           </Box>
         </Grid>
