@@ -105,10 +105,10 @@ const SimpleChatApp = () => {
   const fetchHistory = useCallback(async () => {
     const token = getAccessToken?.();
     if (!token) return;
-    
+
     try {
       const history = await getFetcher("/api/conversations");
-      const formatted = history.map(conv => ({
+      const formatted = history.map((conv) => ({
         id: conv.id,
         title: conv.title,
         createdAt: conv.created_at,
@@ -146,30 +146,33 @@ const SimpleChatApp = () => {
   }, []);
 
   // Load messages when selecting a conversation
-  const fetchMessages = useCallback(async (conversationId) => {
-    const token = getAccessToken?.();
-    if (!token || conversationId <= 0) return;
-    
-    try {
-      const conv = await getFetcher(`/api/conversations/${conversationId}`);
-      console.log("[fetchMessages] Response:", conv);
-      console.log("[fetchMessages] Messages count:", conv.messages?.length);
-      const formattedMessages = conv.messages.map(msg => ({
-        id: String(msg.id),
-        role: msg.role,
-        content: msg.content || "",
-        status: "done",
-      }));
-      setMessages(formattedMessages);
-      // Set context sources from last assistant message
-      const lastAssistant = [...formattedMessages].reverse().find(m => m.role === "assistant");
-      if (lastAssistant?.context_sources !== undefined) {
-        setContextSources(lastAssistant.context_sources || 0);
+  const fetchMessages = useCallback(
+    async (conversationId) => {
+      const token = getAccessToken?.();
+      if (!token || conversationId <= 0) return;
+
+      try {
+        const conv = await getFetcher(`/api/conversations/${conversationId}`);
+        const formattedMessages = conv.messages.map((msg) => ({
+          id: String(msg.id),
+          role: msg.role,
+          content: msg.content || "",
+          status: "done",
+        }));
+        setMessages(formattedMessages);
+        // Set context sources from last assistant message
+        const lastAssistant = [...formattedMessages]
+          .reverse()
+          .find((m) => m.role === "assistant");
+        if (lastAssistant?.context_sources !== undefined) {
+          setContextSources(lastAssistant.context_sources || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch messages", err);
       }
-    } catch (err) {
-      console.error("Failed to fetch messages", err);
-    }
-  }, [getAccessToken]);
+    },
+    [getAccessToken],
+  );
 
   // Sync messages when activeChatId changes (only when not streaming)
   useEffect(() => {
@@ -228,7 +231,7 @@ const SimpleChatApp = () => {
     const isNewChat = !activeChatId;
     const userMessageId = `temp-user-${Date.now()}`;
     const assistantId = `temp-assistant-${Date.now()}`;
-    
+
     const userMessage = {
       id: userMessageId,
       role: "user",
@@ -249,7 +252,7 @@ const SimpleChatApp = () => {
       abortRef.current = controller;
 
       let endpoint, body;
-      
+
       if (isNewChat) {
         // Create new conversation with message
         endpoint = "/api/conversations";
@@ -279,19 +282,22 @@ const SimpleChatApp = () => {
 
       const conversationIdHeader = response.headers.get("X-Conversation-Id");
       const sourcesHeader = response.headers.get("X-Context-Sources");
-      
+
       if (isNewChat && conversationIdHeader) {
         const newId = parseInt(conversationIdHeader, 10);
         // Update local chat list
-        setChatHistory(prev => [{
-          id: newId,
-          title: prompt.substring(0, 40),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }, ...prev]);
+        setChatHistory((prev) => [
+          {
+            id: newId,
+            title: prompt.substring(0, 40),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
         setActiveChatId(newId);
       }
-      
+
       setContextSources(parseInt(sourcesHeader || "0", 10));
 
       if (!response.ok || !response.body) {
@@ -313,7 +319,11 @@ const SimpleChatApp = () => {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: fullContent, status: done ? "done" : "streaming" }
+                ? {
+                    ...m,
+                    content: fullContent,
+                    status: done ? "done" : "streaming",
+                  }
                 : m,
             ),
           );
@@ -380,10 +390,10 @@ const SimpleChatApp = () => {
 
   const handleDeleteChat = async (id, event) => {
     event?.stopPropagation();
-    
+
     try {
       await deleteFetcher(`/api/conversations/${id}`);
-      
+
       setChatHistory((prev) => prev.filter((c) => c.id !== id));
       if (activeChatId === id) {
         setActiveChatId(null);
@@ -446,7 +456,7 @@ const SimpleChatApp = () => {
           borderColor: "divider",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center"
+          alignItems: "center",
         }}
       >
         <Box
@@ -476,7 +486,7 @@ const SimpleChatApp = () => {
               </Typography>
             )}
             <Tooltip title="Mở lịch sử chat" placement="right">
-              <IconButton onClick={() => setHistoryOpen(prev => !prev)}>
+              <IconButton onClick={() => setHistoryOpen((prev) => !prev)}>
                 <IconMenu2 size={20} />
               </IconButton>
             </Tooltip>
@@ -484,7 +494,16 @@ const SimpleChatApp = () => {
         </Box>
         {/* Sidebar Header */}
         {historyOpen ? (
-          <Box sx={{mt: 2, height: "100%", width: "90%", display: "flex", flexDirection: "column", gap: 1}}>
+          <Box
+            sx={{
+              mt: 2,
+              height: "100%",
+              width: "90%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<IconPlus size={18} />}
@@ -685,7 +704,6 @@ const SimpleChatApp = () => {
               gap: 0.75,
             }}
           >
-            
             <Tooltip title="Cuộc trò chuyện mới" placement="right">
               <IconButton onClick={handleNewChat}>
                 <IconPlus size={20} />
@@ -815,7 +833,10 @@ const SimpleChatApp = () => {
                         }}
                       >
                         {isStreamingThis ? (
-                          <CircularProgress size={14} sx={{ color: "#4FC3F7" }} />
+                          <CircularProgress
+                            size={14}
+                            sx={{ color: "#4FC3F7" }}
+                          />
                         ) : (
                           <IconSparkles size={16} style={{ color: "white" }} />
                         )}
@@ -1129,11 +1150,12 @@ const SimpleChatApp = () => {
                 borderRadius: 2,
                 ml: 1,
                 flexShrink: 0,
-                boxShadow: isDark && input.trim() 
-                  ? "0 0 12px rgba(25, 118, 210, 0.7), 0 0 20px rgba(25, 118, 210, 0.4)" 
-                  : isDark && !input.trim()
-                    ? "0 0 8px rgba(100, 100, 100, 0.3)"
-                    : "none",
+                boxShadow:
+                  isDark && input.trim()
+                    ? "0 0 12px rgba(25, 118, 210, 0.7), 0 0 20px rgba(25, 118, 210, 0.4)"
+                    : isDark && !input.trim()
+                      ? "0 0 8px rgba(100, 100, 100, 0.3)"
+                      : "none",
                 transition: "all 0.3s ease",
               }}
             >
