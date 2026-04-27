@@ -6,7 +6,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from api.vector import search_by_text
-from database.qdrant import get_async_qdrant_client
 from database.models.user import User
 from dependencies import get_current_user
 from dependencies.database import get_db
@@ -16,7 +15,7 @@ from services.chat import get_chat_service_with_db
 from services.embedding import EmbeddingService, get_embedding_service
 from services.query_classifier import QueryClassifier, get_query_classifier
 from services.rerank import RerankService, get_rerank_service
-from services.vector import VectorService
+from services.vector import VectorService, get_vector_service
 
 router = APIRouter(
     prefix="/chat",
@@ -30,12 +29,12 @@ async def context_chat_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    vector: VectorService = Depends(get_vector_service),
+    embedding: EmbeddingService = Depends(get_embedding_service),
+    reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
     chat = await get_chat_service_with_db(db)
-    vector: VectorService = VectorService(get_async_qdrant_client())
-    embedding: EmbeddingService = get_embedding_service()
-    reranker: RerankService = get_rerank_service()
-    classifier: QueryClassifier = get_query_classifier()
     
     classification = classifier.classify(request.query)
     if not classification.needs_context:
@@ -80,12 +79,12 @@ async def chat_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    vector: VectorService = Depends(get_vector_service),
+    embedding: EmbeddingService = Depends(get_embedding_service),
+    reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
     chat = await get_chat_service_with_db(db)
-    vector: VectorService = VectorService(get_async_qdrant_client())
-    embedding: EmbeddingService = get_embedding_service()
-    reranker: RerankService = get_rerank_service()
-    classifier: QueryClassifier = get_query_classifier()
     
     classification = classifier.classify(request.query)
     if not classification.needs_context:
@@ -131,14 +130,14 @@ async def chat_stream_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    vector: VectorService = Depends(get_vector_service),
+    embedding: EmbeddingService = Depends(get_embedding_service),
+    reranker: RerankService = Depends(get_rerank_service),
+    classifier: QueryClassifier = Depends(get_query_classifier),
 ):
     logger.info(f"[chat/stream] Received request: query={request.query!r}, collection={request.collection_name}")
 
     chat = await get_chat_service_with_db(db)
-    vector: VectorService = VectorService(get_async_qdrant_client())
-    embedding: EmbeddingService = get_embedding_service()
-    reranker: RerankService = get_rerank_service()
-    classifier: QueryClassifier = get_query_classifier()
 
     try:
         classification = classifier.classify(request.query)

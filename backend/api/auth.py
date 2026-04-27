@@ -18,6 +18,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 REMEMBER_ME_COOKIE_NAME = "remember_me"
 
 
+def get_auth_service(db: AsyncSession = Depends(get_global_db)) -> AuthService:
+    """Dependency injection cho AuthService (dùng global db)"""
+    return AuthService(db)
+
+
+def get_auth_service_session(db: AsyncSession = Depends(get_db)) -> AuthService:
+    """Dependency injection cho AuthService (dùng session db)"""
+    return AuthService(db)
+
+
 def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool) -> None:
     cookie_kwargs = dict(
         key=settings.REFRESH_COOKIE_NAME,
@@ -38,14 +48,13 @@ def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool
 async def login(
     login_data: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_global_db)
+    service: AuthService = Depends(get_auth_service)
 ):
     """
     Đăng nhập với username, password và tenant_code
     """
-    auth_service = AuthService(db)
     try:
-        user, tenant = await auth_service.authenticate_user(
+        user, tenant = await service.authenticate_user(
             login_data.username, 
             login_data.password,
             login_data.tenant_code
@@ -53,12 +62,12 @@ async def login(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    access_token = await auth_service.create_access_token(
+    access_token = await service.create_access_token(
         user,
         tenant,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    refresh_token = await auth_service.create_refresh_token(
+    refresh_token = await service.create_refresh_token(
         user,
         tenant,
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
@@ -80,7 +89,7 @@ async def login(
     )
 
     # Get user info with roles and permissions (dùng service)
-    user_dict = await auth_service.get_user_info_dict(user)
+    user_dict = await service.get_user_info_dict(user)
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -92,16 +101,15 @@ async def login(
 async def refresh_access_token(
         request: Request,
         response: Response,
-        db: AsyncSession = Depends(get_db)
+        service: AuthService = Depends(get_auth_service_session)
 ):
-    auth_service = AuthService(db)
     try:
         # Get refresh token from cookie
         refresh_token = request.cookies.get("refresh_token")
         if not refresh_token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token found")
         
-        new_access_token, new_refresh_token = await auth_service.refresh_tokens(refresh_token)
+        new_access_token, new_refresh_token = await service.refresh_tokens(refresh_token)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
@@ -109,8 +117,8 @@ async def refresh_access_token(
     set_refresh_cookie(response, new_refresh_token, remember_me)
 
     # Lấy user từ refresh token
-    user = await auth_service.get_user_from_refresh_token(refresh_token)
-    user_dict = await auth_service.get_user_info_dict(user)
+    user = await service.get_user_from_refresh_token(refresh_token)
+    user_dict = await service.get_user_info_dict(user)
     return TokenResponse(
         access_token=new_access_token,
         token_type="bearer",
@@ -122,15 +130,14 @@ async def refresh_access_token(
 async def change_password(
     change_data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_global_db)
+    service: AuthService = Depends(get_auth_service)
 ):
     """
     Đổi mật khẩu cho user hiện tại
     Sử dụng get_global_db để tránh tenant filtering khi update password (đặc biệt cho root user)
     """
-    auth_service = AuthService(db)
     try:
-        await auth_service.change_password(
+        await service.change_password(
             current_user, 
             change_data.current_password, 
             change_data.new_password
@@ -163,15 +170,13 @@ async def logout(response: Response):
 @router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(
     reset_data: SimpleResetPasswordRequest,
-    db: AsyncSession = Depends(get_db)
+    service: AuthService = Depends(get_auth_service_session)
 ):
     """
     Reset password đơn giản với username và new_password
     """
-    auth_service = AuthService(db)
     try:
-        await auth_service.simple_reset_password(reset_data.username, reset_data.new_password)
+        await service.simple_reset_password(reset_data.username, reset_data.new_password)
         return MessageResponse(message=f"Password has been reset successfully for user: {reset_data.username}")
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    

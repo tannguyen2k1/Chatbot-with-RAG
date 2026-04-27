@@ -12,16 +12,21 @@ from services.rbac import RBACService
 router = APIRouter(prefix="/tenant", tags=["Tenant Management"])
 
 
+def get_rbac_service(db: AsyncSession = Depends(get_global_db)) -> RBACService:
+    """Dependency injection cho RBACService"""
+    return RBACService(db)
+
+
 @router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     tenant_data: TenantCreate,
     db: AsyncSession = Depends(get_global_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    rbac_service: RBACService = Depends(get_rbac_service)
 ):
     """Tạo tenant mới"""
     
     # Kiểm tra quyền
-    rbac_service = RBACService(db)
     await rbac_service.ensure_permission(current_user.id, "tenant", "create")
     
     # Kiểm tra tenant_code unique
@@ -70,12 +75,12 @@ async def list_tenants(
     search: str = Query("", alias="search"),
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    rbac_service: RBACService = Depends(get_rbac_service)
 ):
     """Lấy danh sách tenants với phân trang và tìm kiếm"""
     
     # Kiểm tra quyền
-    rbac_service = RBACService(db)
     await rbac_service.ensure_permission(current_user.id, "tenant", "view")
     
     # Tính offset
@@ -125,12 +130,12 @@ async def get_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    rbac_service: RBACService = Depends(get_rbac_service)
 ):
     """Lấy thông tin tenant theo ID"""
     
     # Kiểm tra quyền
-    rbac_service = RBACService(db)
     await rbac_service.ensure_permission(current_user.id, "tenant", "view")
     
     # Kiểm tra quyền truy cập
@@ -159,12 +164,12 @@ async def update_tenant(
     tenant_data: TenantUpdate,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    rbac_service: RBACService = Depends(get_rbac_service)
 ):
     """Cập nhật thông tin tenant"""
     
     # Kiểm tra quyền
-    rbac_service = RBACService(db)
     await rbac_service.ensure_permission(current_user.id, "tenant", "update")
     
     # Kiểm tra quyền truy cập
@@ -225,12 +230,12 @@ async def delete_tenant(
     tenant_id: int,
     db: AsyncSession = Depends(get_global_db),
     current_tenant: Optional[Tenant] = Depends(get_current_tenant),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    rbac_service: RBACService = Depends(get_rbac_service)
 ):
     """Xóa tenant vĩnh viễn (hard delete)"""
     
     # Kiểm tra quyền
-    rbac_service = RBACService(db)
     await rbac_service.ensure_permission(current_user.id, "tenant", "delete")
     
     # Kiểm tra quyền truy cập

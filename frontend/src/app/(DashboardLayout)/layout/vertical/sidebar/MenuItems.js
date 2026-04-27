@@ -10,7 +10,7 @@ import {
 const Menuitems = [
   {
     navlabel: true,
-    subheader: "Home",
+    subheader: "Applications",
   },
 
   {
@@ -20,6 +20,14 @@ const Menuitems = [
     href: "/home",
     chipColor: "secondary",
   },
+  {
+    id: uniqueId(),
+    title: "Demo",
+    icon: IconHome,
+    href: "/apps/demos",
+    chipColor: "secondary",
+  },
+  
   {
     navlabel: true,
     subheader: "Systems",

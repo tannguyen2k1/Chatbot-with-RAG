@@ -9,15 +9,20 @@ from services.rbac_helper import ensure_permission_global
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+
+def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
+    """Dependency injection cho UserService"""
+    return UserService(db)
+
+
 # Endpoint: User tự cập nhật thông tin cá nhân
 @router.put("/me", response_model=UserResponse)
 async def update_my_profile(
     update_data: UserUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user)
 ):
     """User tự cập nhật thông tin cá nhân (email, phone, full_name)"""
-    service = UserService(db)
     try:
         return await service.update_user_for(current_user.id, current_user.id, update_data)
     except PermissionError as e:
@@ -28,11 +33,10 @@ async def update_my_profile(
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant_id_from_token)
 ):
-    service = UserService(db)
     try:
         return await service.create_user_for(current_user.id, user_data, tenant_id)
     except PermissionError as e:
@@ -44,11 +48,10 @@ async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query("", description="Search by username or email"),
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant_id_from_token)
 ):
-    service = UserService(db)
     try:
         return await service.list_users_for(current_user.id, page, page_size, search, tenant_id)
     except PermissionError as e:
@@ -58,10 +61,9 @@ async def list_users(
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user)
 ):
-    service = UserService(db)
     try:
         return await service.get_user_for(current_user.id, user_id)
     except PermissionError as e:
@@ -72,10 +74,9 @@ async def get_user(
 async def update_user(
     user_id: int,
     update_data: UserUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user)
 ):
-    service = UserService(db)
     try:
         return await service.update_user_for(current_user.id, user_id, update_data)
     except PermissionError as e:
@@ -85,10 +86,9 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(
     user_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user)
 ):
-    service = UserService(db)
     try:
         return await service.delete_user_for(current_user.id, user_id)
     except PermissionError as e:
@@ -100,14 +100,11 @@ async def delete_user(
 async def reset_user_password(
     user_id: int,
     reset_data: UserResetPassword,
-    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user)
 ):
     """Reset password cho user (chỉ admin/root có quyền)"""
-    # Kiểm tra quyền reset password
     await ensure_permission_global(current_user.id, "user", "reset-password")
-    
-    service = UserService(db)
     try:
         return await service.reset_password_for(current_user.id, user_id, reset_data.new_password)
     except PermissionError as e:
