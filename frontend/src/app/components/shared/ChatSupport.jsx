@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import { flushSync } from "react-dom";
 import {
   Box,
   Fab,
@@ -14,6 +15,7 @@ import {
   InputAdornment,
   CircularProgress,
 } from "@mui/material";
+import ReactMarkdown from "react-markdown";
 import {
   IconMessageCircle,
   IconX,
@@ -21,7 +23,7 @@ import {
   IconRobot,
   IconUser,
 } from "@tabler/icons-react";
-import { postFetcher, getFetcher } from "@/app/api/globalFetcher";
+import { getFetcher, getCurrentAccessToken } from "@/app/api/globalFetcher";
 
 const ChatSupport = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,6 +32,7 @@ const ChatSupport = () => {
   const [chatConfig, setChatConfig] = useState(null);
   const [chatHistory, setChatHistory] = useState([
     {
+      id: "welcome-msg",
       role: "assistant",
       content: "Xin chào! Tôi có thể giúp gì cho bạn hôm nay?",
     },
@@ -62,44 +65,74 @@ const ChatSupport = () => {
     if (!chatConfig?.collection_name) {
       setChatHistory((prev) => [
         ...prev,
-        { role: "assistant", content: "Collections chua duoc set" },
+        { id: `assistant-${Date.now()}`, role: "assistant", content: "Collections chưa được setup" },
       ]);
       return;
     }
 
-    const userMessage = message;
-    setChatHistory((prev) => [...prev, { role: "user", content: userMessage }]);
+    const userMessageText = message;
+    const userMessage = { id: `user-${Date.now()}`, role: "user", content: userMessageText };
+    const assistantId = `assistant-${Date.now()}`;
+    const assistantMessage = { id: assistantId, role: "assistant", content: "", isStreaming: true };
+
+    setChatHistory((prev) => [...prev, userMessage, assistantMessage]);
     setMessage("");
     setLoading(true);
 
     try {
-      const response = await postFetcher("/api/chat/ask", {
-        query: userMessage,
-        collection_name: chatConfig.collection_name,
-        limit: chatConfig.limit || 3,
-        use_reranker: chatConfig.use_reranker ?? true,
-        rerank_top_k: chatConfig.rerank_top_k || 30,
+      const token = getCurrentAccessToken();
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch("/api/chat/stream", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query: userMessageText,
+          collection_name: chatConfig.collection_name,
+          limit: chatConfig.limit || 3,
+          use_reranker: chatConfig.use_reranker ?? true,
+          rerank_top_k: chatConfig.rerank_top_k || 30,
+        }),
       });
 
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: response.answer || "Xin lỗi, tôi gặp lỗi khi trả lời.",
-        },
-      ]);
+      if (!response.ok) {
+        throw new Error(response.statusText || "Stream request failed");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = "";
+      let chunkCount = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunkCount++;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
+
+        setChatHistory((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, content: fullResponse, isStreaming: false }
+              : m,
+          ),
+        );
+      }
     } catch (err) {
       console.error("Chat error:", err);
       const errMsg = err.message || "";
       if (errMsg.includes("collection") || errMsg.includes("Collection")) {
         setChatHistory((prev) => [
-          ...prev,
-          { role: "assistant", content: "Collections chua duoc set" },
+          ...prev.slice(0, -1),
+          { id: assistantId, role: "assistant", content: "Collections chưa được setup" },
         ]);
       } else {
         setChatHistory((prev) => [
-          ...prev,
-          { role: "assistant", content: "Rất tiếc, đã có lỗi xảy ra khi kết nối tới máy chủ." },
+          ...prev.slice(0, -1),
+          { id: assistantId, role: "assistant", content: "Rất tiếc, đã có lỗi xảy ra khi kết nối tới máy chủ." },
         ]);
       }
     } finally {
@@ -193,9 +226,9 @@ const ChatSupport = () => {
               "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(0,0,0,0.1)", borderRadius: 2 },
             }}
           >
-            {chatHistory.map((msg, index) => (
+            {chatHistory.map((msg) => (
               <Box
-                key={index}
+                key={msg.id || `msg-${msg.role}-${msg.content.slice(0, 20)}`}
                 sx={{
                   display: "flex",
                   justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
@@ -204,7 +237,7 @@ const ChatSupport = () => {
                 }}
               >
                 {msg.role === "assistant" && (
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.light" }}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: "white", color: "primary.main"  }}>
                     <IconRobot size={16} />
                   </Avatar>
                 )}
@@ -218,7 +251,18 @@ const ChatSupport = () => {
                     boxShadow: "none",
                   }}
                 >
-                  <Typography variant="body2">{msg.content}</Typography>
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <Typography variant="body2" sx={{ m: 0 }}>{children}</Typography>
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                  {msg.isStreaming && (
+                    <CircularProgress size={12} sx={{ ml: 1 }} />
+                  )}
                 </Paper>
                 {msg.role === "user" && (
                   <Avatar sx={{ width: 28, height: 28, bgcolor: "secondary.main" }}>
@@ -227,28 +271,6 @@ const ChatSupport = () => {
                 )}
               </Box>
             ))}
-            {loading && (
-              <Box sx={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 1 }}>
-                <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.light" }}>
-                  <IconRobot size={16} />
-                </Avatar>
-                <Paper
-                  sx={{
-                    p: 1.5,
-                    borderRadius: "20px 20px 20px 5px",
-                    bgcolor: "grey.100",
-                    color: "text.secondary",
-                    boxShadow: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <CircularProgress size={16} thickness={5} />
-                  <Typography variant="body2">AI đang trả lời...</Typography>
-                </Paper>
-              </Box>
-            )}
           </Box>
 
           {/* Footer Input */}

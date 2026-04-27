@@ -49,9 +49,9 @@ class ChatService:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         return system_prompt.format(context=context, query=query)
 
-    async def generate_answer(self, query: str, context: str) -> str:
+    async def generate_answer(self, query: str, context: str, system_prompt: str = None) -> str:
         client = self._build_client()
-        prompt = self.generate_prompt_preview(query, context)
+        prompt = self.generate_prompt_preview(query, context, system_prompt)
 
         try:
             response = await client.chat.complete_async(
