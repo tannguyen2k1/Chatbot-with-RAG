@@ -5,3 +5,4 @@ from .demo import *
 from .user import *
 from .audit_log import *
 from .config import *
+from .conversation import *

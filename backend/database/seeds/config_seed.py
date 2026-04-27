@@ -11,7 +11,7 @@ async def seed_default_configs(db: AsyncSession) -> None:
         {"key": "chat.limit", "value": "3", "description": "Số lượng đoạn văn tối đa dùng làm ngữ cảnh", "group_name": "chat"},
         {"key": "chat.use_reranker", "value": "true", "description": "Sử dụng Reranker để cải thiện kết quả tìm kiếm", "group_name": "chat"},
         {"key": "chat.rerank_top_k", "value": "20", "description": "Số lượng kết quả lấy từ Qdrant để đưa vào Reranker", "group_name": "chat"},
-        {"key": "chat.system_prompt", "value": """Bạn là một trợ lý AI thông minh của công ty VIETCIS.
+        {"key": "chat.system_prompt", "value": """Bạn là một trợ lý AI thông minh.
             Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
             Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
             [TÀI LIỆU CUNG CẤP]:

@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     MISTRAL_API_KEY: Optional[str] = None
 
     # Chat System Prompt
-    CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh của công ty VIETCIS.
+    CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh.
             Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
             Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
             [TÀI LIỆU CUNG CẤP]:
