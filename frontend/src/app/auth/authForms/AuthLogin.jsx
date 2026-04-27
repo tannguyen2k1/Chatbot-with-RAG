@@ -20,7 +20,7 @@ import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLab
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [tenantCode, setTenantCode] = useState("root");
+  const [tenantCode, setTenantCode] = useState("default");
   const [rememberDevice, setRememberDevice] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -43,7 +43,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     setLoading(true);
     try {
       await login(username.trim(), password, rememberDevice, tenantCode.trim());
-      router.push("/apps/chats");
+      router.push("/");
     } catch {
       // snackbar shown in AuthContext
     } finally {

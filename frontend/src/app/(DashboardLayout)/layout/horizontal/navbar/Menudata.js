@@ -478,13 +478,13 @@ const Menuitems = [
             id: uniqueId(),
             title: "Login",
             icon: IconLogin,
-            href: "/auth/auth1/login",
+            href: "/auth/login",
             children: [
               {
                 id: uniqueId(),
                 title: "Side Login",
                 icon: IconPoint,
-                href: "/auth/auth1/login",
+                href: "/auth/login",
               },
               {
                 id: uniqueId(),

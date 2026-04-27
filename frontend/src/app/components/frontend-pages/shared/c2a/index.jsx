@@ -62,7 +62,7 @@ const C2a = () => {
                                     flexWrap: "wrap",
                                     mb: 3
                                 }}>
-                                <Button variant="contained" size="large" href="/auth/auth1/login">Member Login</Button>
+                                <Button variant="contained" size="large" href="/auth/login">Member Login</Button>
                                 <Button variant="outlined" size="large" href="/auth/auth1/register">Register as Member</Button>
                             </Stack>
                             <Typography sx={{

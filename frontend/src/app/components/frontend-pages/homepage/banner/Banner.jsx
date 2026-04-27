@@ -137,7 +137,7 @@ const Banner = () => {
                                 mb: 4,
                                 justifyContent: "center"
                             }}>
-                            <Button color="primary" size="large" variant="contained" href="/auth/auth1/login"> Log In</Button>
+                            <Button color="primary" size="large" variant="contained" href="/auth/login"> Log In</Button>
                             <Button
                                 variant="text"
                                 color="inherit"

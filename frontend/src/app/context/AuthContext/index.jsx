@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(null);
       setGlobalAccessToken(null);
       setUser(null);
-      router.push("/auth/auth1/login");
+      router.push("/auth/login");
       if (showMessage) showSnackbar("Đã đăng xuất", "info");
     }
   };
