@@ -5,7 +5,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from database.models.user import User
 
-from api.vector import get_vector_service
 from dependencies import get_current_user
 from schemas.ingestion import IngestDBRequest, IngestResponse
 from schemas.vector import PointUpsert
@@ -13,7 +12,7 @@ from services.chunking import chunking_service
 from services.embedding import EmbeddingService, get_embedding_service
 from services.ingestion import ingestion_service
 from services.rbac_helper import ensure_permission_global
-from services.vector import VectorService
+from services.vector import VectorService, get_vector_service
 
 router = APIRouter(
     prefix="/ingestion",

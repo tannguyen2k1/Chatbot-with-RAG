@@ -3,10 +3,8 @@ Vector Database API Endpoints
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from qdrant_client import AsyncQdrantClient
 from database.models.user import User
 
-from database.qdrant import get_async_qdrant_client
 from dependencies import get_current_user
 from schemas.vector import (
     CollectionCreate,
@@ -18,19 +16,13 @@ from schemas.vector import (
 )
 from services.embedding import EmbeddingService, get_embedding_service
 from services.rerank import RerankService, get_rerank_service
-from services.vector import VectorService
+from services.vector import VectorService, get_vector_service
 
 router = APIRouter(
     prefix="/vectors",
     tags=["Vector Database"],
     dependencies=[Depends(get_current_user)],
 )
-
-
-def get_vector_service(
-    client: AsyncQdrantClient = Depends(get_async_qdrant_client),
-) -> VectorService:
-    return VectorService(client)
 
 
 @router.get("/health")

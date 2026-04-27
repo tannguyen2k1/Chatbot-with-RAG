@@ -38,12 +38,33 @@ DISTANCE_MAP = {
     "Dot": Distance.DOT,
 }
 
+_vector_service: "VectorService | None" = None
+_async_qdrant_client: "AsyncQdrantClient | None" = None
+
+
+def get_async_qdrant_client_singleton() -> AsyncQdrantClient:
+    """Lấy singleton async Qdrant client"""
+    global _async_qdrant_client
+    if _async_qdrant_client is None:
+        from database.qdrant import create_async_qdrant_client
+        _async_qdrant_client = create_async_qdrant_client()
+    return _async_qdrant_client
+
 
 class VectorService:
     """Service layer cho Qdrant vector database"""
 
+    _instance: "VectorService | None" = None
+
     def __init__(self, client: AsyncQdrantClient):
         self.client = client
+
+    @classmethod
+    def get_instance(cls) -> "VectorService":
+        """Get singleton instance"""
+        if cls._instance is None:
+            cls._instance = cls(get_async_qdrant_client_singleton())
+        return cls._instance
 
     # ==================== Collections ====================
 
@@ -303,3 +324,8 @@ class VectorService:
             )
 
         return VectorSearchResponse(results=results, count=len(results))
+
+
+def get_vector_service() -> VectorService:
+    """Dependency injection cho FastAPI"""
+    return VectorService.get_instance()

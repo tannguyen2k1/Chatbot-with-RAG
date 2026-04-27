@@ -7,15 +7,20 @@ from services import AuditLogService, PermissionError
 
 router = APIRouter(prefix="/audit-logs", tags=["AuditLog"])
 
+
+def get_audit_log_service(db: AsyncSession = Depends(get_db)) -> AuditLogService:
+    """Dependency injection cho AuditLogService"""
+    return AuditLogService(db)
+
+
 @router.get("", summary="Lấy danh sách audit logs", response_model=PaginatedAuditLogResponse)
 async def get_audit_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: str = Query(None, alias="search"),
-    db: AsyncSession = Depends(get_db),
+    service: AuditLogService = Depends(get_audit_log_service),
     current_user: User = Depends(get_current_user)
 ):
-    service = AuditLogService(db)
     try:
         return await service.get_all_audit_logs_for(current_user.id, page=page, page_size=page_size, search=search)
     except PermissionError as e:
