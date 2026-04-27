@@ -419,7 +419,7 @@ async def add_message_stream(
         context_sources=0,
     )
     db.add(user_message)
-    await db.flush()
+    await db.commit()  # Commit immediately to ensure user message is saved
 
     logger.info(f"[chat/stream] Added message to conversation {conversation.id}")
 
