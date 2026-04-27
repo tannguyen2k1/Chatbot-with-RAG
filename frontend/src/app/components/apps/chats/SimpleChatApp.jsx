@@ -152,6 +152,8 @@ const SimpleChatApp = () => {
     
     try {
       const conv = await getFetcher(`/api/conversations/${conversationId}`);
+      console.log("[fetchMessages] Response:", conv);
+      console.log("[fetchMessages] Messages count:", conv.messages?.length);
       const formattedMessages = conv.messages.map(msg => ({
         id: String(msg.id),
         role: msg.role,

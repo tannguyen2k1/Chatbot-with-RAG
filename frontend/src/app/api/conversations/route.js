@@ -40,32 +40,16 @@ export async function POST(req) {
     const body = await req.json();
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-    // Create conversation with title only
-    const convResponse = await fetch(`${baseUrl}/api/conversations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-      },
-      body: JSON.stringify({ title: body.title }),
-    });
-
-    if (!convResponse.ok) {
-      const errorText = await convResponse.text();
-      return new Response(errorText, { status: convResponse.status });
-    }
-
-    const convData = await convResponse.json();
-
-    // If there's a query, add message and stream
+    // If there's a query, create conversation with message and stream
     if (body.query) {
-      const streamResponse = await fetch(`${baseUrl}/api/conversations/${convData.id}/messages`, {
+      const streamResponse = await fetch(`${baseUrl}/api/conversations/new-with-message`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: authHeader,
         },
         body: JSON.stringify({
+          title: body.title,
           query: body.query,
           collection_name: body.collection_name,
           limit: body.limit,
@@ -85,12 +69,28 @@ export async function POST(req) {
         status: 200,
         headers: {
           "Content-Type": streamResponse.headers.get("Content-Type") || "text/plain; charset=utf-8",
-          "X-Conversation-Id": String(convData.id),
+          "X-Conversation-Id": streamResponse.headers.get("X-Conversation-Id") || "",
           "X-Context-Sources": streamResponse.headers.get("X-Context-Sources") || "0",
         },
       });
     }
 
+    // Create conversation with title only (no message)
+    const convResponse = await fetch(`${baseUrl}/api/conversations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({ title: body.title }),
+    });
+
+    if (!convResponse.ok) {
+      const errorText = await convResponse.text();
+      return new Response(errorText, { status: convResponse.status });
+    }
+
+    const convData = await convResponse.json();
     return Response.json(convData);
   } catch (error) {
     return new Response(
