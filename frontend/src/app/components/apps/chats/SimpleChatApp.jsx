@@ -120,6 +120,7 @@ const SimpleChatApp = () => {
   const abortRef = useRef(null);
   const inputRef = useRef(null);
   const isStreamingRef = useRef(false);
+  const syncingFromHistoryRef = useRef(false);
 
   const isDark = theme.palette.mode === "dark";
 
@@ -154,6 +155,7 @@ const SimpleChatApp = () => {
 
   useEffect(() => {
     if (isStreamingRef.current) return;
+    syncingFromHistoryRef.current = true;
     const chat = chatHistory.find((c) => c.id === activeChatId);
     if (chat) {
       setMessages(chat.messages || []);
@@ -162,6 +164,7 @@ const SimpleChatApp = () => {
       setMessages([]);
       setContextSources(0);
     }
+    setTimeout(() => { syncingFromHistoryRef.current = false; }, 0);
   }, [activeChatId, chatHistory]);
 
   // Auto-select first chat on mount if exists
@@ -322,19 +325,18 @@ const SimpleChatApp = () => {
   };
 
   useEffect(() => {
-    if (activeChatId && messages.length > 0) {
-      const hasDone = messages.some(
-        (m) => m.role === "assistant" && m.status === "done",
+    if (!activeChatId || messages.length === 0 || syncingFromHistoryRef.current) return;
+    const hasDone = messages.some(
+      (m) => m.role === "assistant" && m.status === "done",
+    );
+    if (hasDone) {
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === activeChatId
+            ? { ...c, messages: messages, contextSources }
+            : c,
+        ),
       );
-      if (hasDone) {
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.id === activeChatId
-              ? { ...c, messages: messages, contextSources }
-              : c,
-          ),
-        );
-      }
     }
   }, [messages, contextSources, activeChatId]);
 
