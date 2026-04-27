@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
 logger = logging.getLogger(__name__)
 
-from api.vector import get_vector_service, search_by_text
+from api.vector import search_by_text
+from database.qdrant import get_async_qdrant_client
 from database.models.user import User
 from dependencies import get_current_user
+from dependencies.database import get_db
 from schemas.chat import ChatResponse, ContextChatRequest, ContextChatResponse
 from schemas.vector import TextSearchRequest
-from services.chat import ChatService, get_chat_service
+from services.chat import get_chat_service_with_db
 from services.embedding import EmbeddingService, get_embedding_service
 from services.query_classifier import QueryClassifier, get_query_classifier
 from services.rerank import RerankService, get_rerank_service
@@ -22,16 +25,18 @@ router = APIRouter(
 )
 
 
-@router.post("/context", response_model=ContextChatResponse, summary="Xay dung Context cho LLM")
+@router.post("/context", response_model=ContextChatResponse, summary="Xây dựng Context cho LLM")
 async def context_chat_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
-    chat: ChatService = Depends(get_chat_service),
-    vector: VectorService = Depends(get_vector_service),
-    embedding: EmbeddingService = Depends(get_embedding_service),
-    reranker: RerankService = Depends(get_rerank_service),
-    classifier: QueryClassifier = Depends(get_query_classifier),
+    db: AsyncSession = Depends(get_db),
 ):
+    chat = await get_chat_service_with_db(db)
+    vector: VectorService = VectorService(get_async_qdrant_client())
+    embedding: EmbeddingService = get_embedding_service()
+    reranker: RerankService = get_rerank_service()
+    classifier: QueryClassifier = get_query_classifier()
+    
     classification = classifier.classify(request.query)
     if not classification.needs_context:
         return ContextChatResponse(
@@ -59,7 +64,8 @@ async def context_chat_endpoint(
     )
 
     context_str = chat.build_context(vector_response.results)
-    prompt_preview = chat.generate_prompt_preview(request.query, context_str)
+    system_prompt = await chat.get_system_prompt()
+    prompt_preview = chat.generate_prompt_preview(request.query, context_str, system_prompt)
 
     return ContextChatResponse(
         query=request.query,
@@ -69,19 +75,23 @@ async def context_chat_endpoint(
     )
 
 
-@router.post("/ask", response_model=ChatResponse, summary="Tro chuyen voi AI")
+@router.post("/ask", response_model=ChatResponse, summary="Trò chuyện với AI")
 async def chat_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
-    chat: ChatService = Depends(get_chat_service),
-    vector: VectorService = Depends(get_vector_service),
-    embedding: EmbeddingService = Depends(get_embedding_service),
-    reranker: RerankService = Depends(get_rerank_service),
-    classifier: QueryClassifier = Depends(get_query_classifier),
+    db: AsyncSession = Depends(get_db),
 ):
+    chat = await get_chat_service_with_db(db)
+    vector: VectorService = VectorService(get_async_qdrant_client())
+    embedding: EmbeddingService = get_embedding_service()
+    reranker: RerankService = get_rerank_service()
+    classifier: QueryClassifier = get_query_classifier()
+    
     classification = classifier.classify(request.query)
     if not classification.needs_context:
-        answer = await chat.generate_simple_answer(request.query)
+        context = ""
+        system_prompt = await chat.get_system_prompt()
+        answer = await chat.generate_answer(request.query, context, system_prompt)
         return ChatResponse(
             query=request.query,
             answer=answer,
@@ -106,7 +116,8 @@ async def chat_endpoint(
     )
 
     context_str = chat.build_context(vector_response.results)
-    answer = await chat.generate_answer(request.query, context_str)
+    system_prompt = await chat.get_system_prompt()
+    answer = await chat.generate_answer(request.query, context_str, system_prompt)
 
     return ChatResponse(
         query=request.query,
@@ -115,17 +126,19 @@ async def chat_endpoint(
     )
 
 
-@router.post("/ask/stream", summary="Tro chuyen voi AI theo dang streaming")
+@router.post("/ask/stream", summary="Trò chuyện với AI theo dạng streaming")
 async def chat_stream_endpoint(
     request: ContextChatRequest,
     current_user: User = Depends(get_current_user),
-    chat: ChatService = Depends(get_chat_service),
-    vector: VectorService = Depends(get_vector_service),
-    embedding: EmbeddingService = Depends(get_embedding_service),
-    reranker: RerankService = Depends(get_rerank_service),
-    classifier: QueryClassifier = Depends(get_query_classifier),
+    db: AsyncSession = Depends(get_db),
 ):
     logger.info(f"[chat/stream] Received request: query={request.query!r}, collection={request.collection_name}")
+
+    chat = await get_chat_service_with_db(db)
+    vector: VectorService = VectorService(get_async_qdrant_client())
+    embedding: EmbeddingService = get_embedding_service()
+    reranker: RerankService = get_rerank_service()
+    classifier: QueryClassifier = get_query_classifier()
 
     try:
         classification = classifier.classify(request.query)
@@ -138,9 +151,16 @@ async def chat_stream_endpoint(
         )
 
     if not classification.needs_context:
+        context = ""
+        system_prompt = await chat.get_system_prompt()
         headers = {"X-Context-Sources": "0"}
+
+        async def stream_generator():
+            async for chunk in chat.stream_answer(request.query, context, system_prompt):
+                yield chunk
+
         return StreamingResponse(
-            chat.stream_simple_answer(request.query),
+            stream_generator(),
             media_type="text/plain; charset=utf-8",
             headers=headers,
         )
@@ -163,9 +183,10 @@ async def chat_stream_endpoint(
     )
 
     context_str = chat.build_context(vector_response.results)
+    system_prompt = await chat.get_system_prompt()
 
     async def stream_generator():
-        async for chunk in chat.stream_answer(request.query, context_str):
+        async for chunk in chat.stream_answer(request.query, context_str, system_prompt):
             yield chunk
 
     headers = {"X-Context-Sources": str(vector_response.count)}
