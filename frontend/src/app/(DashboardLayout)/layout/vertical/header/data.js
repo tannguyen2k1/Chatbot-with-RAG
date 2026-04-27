@@ -126,7 +126,7 @@ const pageLinks = [
     title: "Pricing Page",
   },
   {
-    href: "/auth/auth1/login",
+    href: "/auth/login",
     title: "Authentication Design",
   },
   {

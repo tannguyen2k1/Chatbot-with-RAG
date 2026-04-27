@@ -42,7 +42,7 @@ export async function refreshTokenIfNeeded(error) {
       // Redirect to login once
       if (!hasRedirectedToLogin) {
         hasRedirectedToLogin = true;
-        window.location.href = '/auth/auth1/login';
+        window.location.href = '/auth/login';
       }
       return null;
     } finally {

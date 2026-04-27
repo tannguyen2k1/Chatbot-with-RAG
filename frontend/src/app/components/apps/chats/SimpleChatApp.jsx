@@ -738,17 +738,6 @@ const SimpleChatApp = () => {
             <Typography variant="body1" fontWeight={700}>
               AI Assistant
             </Typography>
-            {contextSources > 0 && historyOpen && (
-              <Chip
-                label={`${contextSources} nguon`}
-                size="small"
-                sx={{
-                  height: 20,
-                  fontSize: 11,
-                  bgcolor: isDark ? "grey.800" : "grey.200",
-                }}
-              />
-            )}
           </Box>
           <Box sx={{ display: "flex", gap: 0.5 }}>
             <Tooltip title="Xóa cuộc trò chuyện">

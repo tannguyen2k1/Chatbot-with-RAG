@@ -6,7 +6,7 @@ import { Grid } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import PageContainer from "@/app/components/container/PageContainer";
-import AuthLogin from "../../authForms/AuthLogin";
+import AuthLogin from "../authForms/AuthLogin";
 
 export default function Login() {
   return (

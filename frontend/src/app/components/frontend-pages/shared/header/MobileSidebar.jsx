@@ -36,7 +36,7 @@ const MobileSidebar = () => {
                 <Button color="inherit" href="#" sx={{
                     justifyContent: 'start'
                 }}>Support</Button>
-                <Button color="primary" variant="contained" href="/auth/auth1/login">Get Started</Button>
+                <Button color="primary" variant="contained" href="/auth/login">Get Started</Button>
             </Stack>
         </Box>
     </>);

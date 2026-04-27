@@ -61,7 +61,7 @@ const C2a2 = () => {
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{
                 mt: 3
               }}>
-                <StyledButton variant="contained" color="inherit" href="/auth/auth1/login">
+                <StyledButton variant="contained" color="inherit" href="/auth/login">
                   Login
                 </StyledButton>
                 <StyledButton2 variant="outlined" color="inherit" href="/auth/auth1/register">
