@@ -142,8 +142,14 @@ const SimpleChatApp = () => {
     fetchConfig();
   }, []);
 
+  // Debounce save to localStorage
+  const prevHistoryRef = useRef(null);
   useEffect(() => {
-    saveHistory(chatHistory);
+    const serialized = JSON.stringify(chatHistory);
+    if (serialized !== prevHistoryRef.current) {
+      prevHistoryRef.current = serialized;
+      saveHistory(chatHistory);
+    }
   }, [chatHistory]);
 
   useEffect(() => {
@@ -819,7 +825,7 @@ const SimpleChatApp = () => {
                         }}
                       >
                         {isStreamingThis ? (
-                          <CircularProgress size={14} sx={{ color: "white" }} />
+                          <CircularProgress size={14} sx={{ color: "#4FC3F7" }} />
                         ) : (
                           <IconSparkles size={16} style={{ color: "white" }} />
                         )}
@@ -1031,8 +1037,8 @@ const SimpleChatApp = () => {
                                 width: 6,
                                 height: 6,
                                 borderRadius: "50%",
-                                bgcolor: "primary.main",
-                                opacity: 0.6,
+                                bgcolor: isDark ? "#4FC3F7" : "primary.main",
+                                opacity: 0.8,
                                 animation: `bounce 1.4s ease-in-out ${i * 0.16}s infinite both`,
                                 "@keyframes bounce": {
                                   "0%, 80%, 100%": {
@@ -1125,7 +1131,7 @@ const SimpleChatApp = () => {
                   ? "error.main"
                   : input.trim()
                     ? "primary.main"
-                    : "grey.500",
+                    : "grey.700",
                 color: "white",
                 "&:hover": {
                   bgcolor: isStreaming ? "error.dark" : "primary.dark",
@@ -1133,6 +1139,12 @@ const SimpleChatApp = () => {
                 borderRadius: 2,
                 ml: 1,
                 flexShrink: 0,
+                boxShadow: isDark && input.trim() 
+                  ? "0 0 12px rgba(25, 118, 210, 0.7), 0 0 20px rgba(25, 118, 210, 0.4)" 
+                  : isDark && !input.trim()
+                    ? "0 0 8px rgba(100, 100, 100, 0.3)"
+                    : "none",
+                transition: "all 0.3s ease",
               }}
             >
               {isStreaming ? (

@@ -46,6 +46,16 @@ class Settings(BaseSettings):
     # LLM Settings
     MISTRAL_API_KEY: Optional[str] = None
 
+    # Chat System Prompt
+    CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh của công ty VIETCIS.
+            Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
+            Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
+            [TÀI LIỆU CUNG CẤP]:
+            {context}
+            [CÂU HỎI CỦA NGƯỜI DÙNG]:
+            {query}
+            Câu trả lời của bạn:"""
+
     @property
     def cors_allow_origins_list(self) -> list[str]:
         return [x.strip() for x in self.CORS_ALLOW_ORIGINS.split(",") if x.strip()]

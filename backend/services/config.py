@@ -150,8 +150,11 @@ class ConfigService:
         if data.collection_name is not None:
             # Sync key name with seed data: chat.collection_name
             await self.upsert_config("chat.collection_name", data.collection_name, "Collection mặc định", "chat")
+        if data.system_prompt is not None:
+            await self.upsert_config("chat.system_prompt", data.system_prompt, "System prompt cho AI chat", "chat")
             
         return {"message": "Lưu cấu hình thành công"}
+    
     async def get_chat_config_for(self, current_user_id: int) -> dict:
         """Get consolidated chat configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "view")
@@ -159,11 +162,21 @@ class ConfigService:
         configs = await self.get_configs_by_group("chat")
         config_dict = {cfg.key: cfg.value for cfg in configs}
         
+        default_prompt = """Bạn là một trợ lý AI thông minh.
+            Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
+            Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
+            [TÀI LIỆU CUNG CẤP]:
+            {context}
+            [CÂU HỎI CỦA NGƯỜI DÙNG]:
+            {query}
+            Câu trả lời của bạn:"""
+        
         return {
             "limit": int(config_dict.get("chat.limit", 3)),
             "use_reranker": config_dict.get("chat.use_reranker", "true").lower() == "true",
             "rerank_top_k": int(config_dict.get("chat.rerank_top_k", 30)),
-            "collection_name": config_dict.get("chat.collection_name", "default")
+            "collection_name": config_dict.get("chat.collection_name", "default"),
+            "system_prompt": config_dict.get("chat.system_prompt", default_prompt)
         }
     async def update_general_config_for(self, current_user_id: int, data) -> dict:
         """Update general application configs with permission check"""

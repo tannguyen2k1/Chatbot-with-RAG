@@ -50,6 +50,7 @@ import {
   IconSun,
   IconDeviceDesktop,
   IconPlus,
+  IconBrain,
 } from "@tabler/icons-react";
 import { AuthContext } from "@/app/context/AuthContext";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
@@ -104,6 +105,12 @@ const SettingsDialog = ({ open, onClose }) => {
     use_reranker: true,
     rerank_top_k: 30,
   });
+
+  // System Prompt state
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [editingPrompt, setEditingPrompt] = useState(false);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [promptError, setPromptError] = useState("");
 
   const isInitialGeneral = useRef(true);
   const isInitialChat = useRef(true);
@@ -169,6 +176,9 @@ const SettingsDialog = ({ open, onClose }) => {
       });
       if (data.collection_name) {
         setSelectedCollection(data.collection_name);
+      }
+      if (data.system_prompt) {
+        setSystemPrompt(data.system_prompt);
       }
     } catch (err) {
       console.error("Failed to fetch chat config:", err);
@@ -291,6 +301,31 @@ const SettingsDialog = ({ open, onClose }) => {
       showSnackbar("Đã lưu cấu hình", "success");
     } catch (err) {
       showSnackbar(err.message || "Lỗi khi lưu cấu hình", "error");
+    }
+  };
+
+  const handleSaveSystemPrompt = async () => {
+    if (!systemPrompt.trim()) {
+      setPromptError("System prompt không được để trống");
+      return;
+    }
+    if (!systemPrompt.includes("{context}") || !systemPrompt.includes("{query}")) {
+      setPromptError("Prompt phải chứa {context} và {query}");
+      return;
+    }
+    
+    setSavingPrompt(true);
+    setPromptError("");
+    try {
+      await putFetcher("/api/configs/chat", {
+        system_prompt: systemPrompt,
+      });
+      setEditingPrompt(false);
+      showSnackbar("Đã lưu system prompt", "success");
+    } catch (err) {
+      setPromptError(err.message || "Lỗi khi lưu system prompt");
+    } finally {
+      setSavingPrompt(false);
     }
   };
 
@@ -526,6 +561,103 @@ const SettingsDialog = ({ open, onClose }) => {
                   </Select>
                 </FormControl>
               )}
+
+              <Divider />
+
+              {/* System Prompt */}
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <IconBrain size={18} />
+                    System Prompt
+                  </Typography>
+                  {!editingPrompt ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setEditingPrompt(true)}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Chỉnh sửa
+                    </Button>
+                  ) : (
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setEditingPrompt(false);
+                          setPromptError("");
+                          fetchChatConfig();
+                        }}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={handleSaveSystemPrompt}
+                        disabled={savingPrompt}
+                        startIcon={savingPrompt ? <CircularProgress size={14} color="inherit" /> : null}
+                        sx={{ textTransform: "none" }}
+                      >
+                        {savingPrompt ? "Đang lưu..." : "Lưu"}
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+
+                {promptError && (
+                  <Alert severity="error" sx={{ mb: 1 }}>
+                    {promptError}
+                  </Alert>
+                )}
+
+                <Alert severity="info" sx={{ mb: 1 }}>
+                  Sử dụng <code>{'{context}'}</code> cho ngữ cảnh và <code>{'{query}'}</code> cho câu hỏi
+                </Alert>
+
+                {editingPrompt ? (
+                  <TextField
+                    multiline
+                    rows={6}
+                    fullWidth
+                    value={systemPrompt}
+                    onChange={(e) => {
+                      setSystemPrompt(e.target.value);
+                      setPromptError("");
+                    }}
+                    placeholder="Nhập system prompt..."
+                    sx={{
+                      "& .MuiInputBase-root": {
+                        fontFamily: "monospace",
+                        fontSize: "0.85rem",
+                      }
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: "grey.100",
+                      borderRadius: 1,
+                      fontFamily: "monospace",
+                      fontSize: "0.8rem",
+                      whiteSpace: "pre-wrap",
+                      maxHeight: 200,
+                      overflow: "auto",
+                      border: 1,
+                      borderColor: "divider",
+                      ...(theme.palette.mode === "dark" && {
+                        bgcolor: "grey.900",
+                        color: "grey.300",
+                      }),
+                    }}
+                  >
+                    {systemPrompt || "Chưa có system prompt"}
+                  </Box>
+                )}
+              </Box>
             </Box>
           </TabPanel>
 

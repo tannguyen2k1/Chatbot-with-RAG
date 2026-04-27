@@ -25,6 +25,15 @@ class ChatConfigUpdate(BaseModel):
     limit: Optional[int] = None
     use_reranker: Optional[bool] = None
     rerank_top_k: Optional[int] = None
+    system_prompt: Optional[str] = None
+
+
+class ChatConfigResponse(BaseModel):
+    collection_name: str
+    limit: int
+    use_reranker: bool
+    rerank_top_k: int
+    system_prompt: str
 
 
 class GeneralConfigUpdate(BaseModel):
