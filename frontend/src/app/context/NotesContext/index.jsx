@@ -68,7 +68,6 @@ export const NotesProvider = ({ children }) => {
     const deleteNote = async (id) => {
         try {
             const response = await mutate(deleteFetcher('/api/notes', { id }));
-            console.log(response.data);
         } catch (error) {
             console.error('Error deleting note:', error);
         }

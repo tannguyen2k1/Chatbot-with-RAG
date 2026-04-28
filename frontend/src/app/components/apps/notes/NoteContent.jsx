@@ -45,7 +45,6 @@ const NoteContent = ({ toggleNoteSidebar }) => {
   const handleColorChange = (color) => {
     const titleToUse = isEditing ? updatedTitle : initialTitle;
     updateNote(selectedNoteId, titleToUse, color);
-    console.log(color);
   };
 
   // Function to save changes on blur event

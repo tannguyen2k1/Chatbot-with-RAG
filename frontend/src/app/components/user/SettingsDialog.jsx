@@ -36,6 +36,7 @@ import {
   postFetcher,
   putFetcher,
   deleteFetcher,
+  patchFetcher,
 } from "@/app/api/globalFetcher";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -69,7 +70,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
   </Box>
 );
 
-const SettingsDialog = ({ open, onClose }) => {
+const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
   const theme = useTheme();
   const { user } = useContext(AuthContext);
   const { setActiveMode, setIsLanguage, setIsFontSize } = useContext(CustomizerContext);
@@ -98,6 +99,21 @@ const SettingsDialog = ({ open, onClose }) => {
   const [deletingCollection, setDeletingCollection] = useState(false);
 
   const showSnackbar = useSnackbar();
+
+  // Generic Confirmation Dialog State
+  const [genericConfirm, setGenericConfirm] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    loading: false,
+    confirmColor: "primary"
+  });
+
+  // Archive state
+  const [archivedDialogOpen, setArchivedDialogOpen] = useState(false);
+  const [archivedChats, setArchivedChats] = useState([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
 
   // Chat config
   const [chatConfig, setChatConfig] = useState({
@@ -284,9 +300,70 @@ const SettingsDialog = ({ open, onClose }) => {
   };
 
   const confirmDeleteAllChats = () => {
-    if (window.confirm("Bạn có chắc muốn xóa tất cả đoạn chat? Hành động này không thể hoàn tác.")) {
-      localStorage.removeItem("ai_chat_history");
-      window.location.reload();
+    setGenericConfirm({
+      open: true,
+      title: "Xóa tất cả đoạn chat",
+      message: "Bạn có chắc chắn muốn xóa vĩnh viễn tất cả đoạn chat chưa lưu trữ? Các đoạn đã lưu trữ sẽ không bị ảnh hưởng. Hành động này không thể hoàn tác.",
+      confirmColor: "error",
+      onConfirm: async () => {
+        setGenericConfirm(prev => ({ ...prev, loading: true }));
+        try {
+          await deleteFetcher("/api/conversations/delete-all");
+          showSnackbar("Đã xóa tất cả đoạn chat chưa lưu trữ", "success");
+          if (onRefresh) onRefresh();
+          if (onClearChat) onClearChat();
+        } catch (err) {
+          showSnackbar(err.message || "Lỗi khi xóa", "error");
+        } finally {
+          setGenericConfirm(prev => ({ ...prev, loading: false, open: false }));
+        }
+      }
+    });
+  };
+
+  const handleArchiveAll = () => {
+    setGenericConfirm({
+      open: true,
+      title: "Lưu trữ tất cả đoạn chat",
+      message: "Bạn có chắc chắn muốn đánh dấu tất cả đoạn chat hiện tại là đã lưu trữ? Chúng sẽ bị ẩn khỏi danh sách chính.",
+      confirmColor: "warning",
+      onConfirm: async () => {
+        setGenericConfirm(prev => ({ ...prev, loading: true }));
+        try {
+          await patchFetcher("/api/conversations/archive-all");
+          showSnackbar("Đã lưu trữ tất cả đoạn chat", "success");
+          if (onRefresh) onRefresh();
+          if (onClearChat) onClearChat();
+        } catch (err) {
+          showSnackbar(err.message || "Lỗi khi lưu trữ", "error");
+        } finally {
+          setGenericConfirm(prev => ({ ...prev, loading: false, open: false }));
+        }
+      }
+    });
+  };
+
+  const handleViewArchived = async () => {
+    setArchivedDialogOpen(true);
+    setLoadingArchived(true);
+    try {
+      const data = await getFetcher("/api/conversations/archived");
+      setArchivedChats(data);
+    } catch (err) {
+      showSnackbar(err.message || "Lỗi khi tải danh sách", "error");
+    } finally {
+      setLoadingArchived(false);
+    }
+  };
+
+  const handleUnarchive = async (id) => {
+    try {
+      await patchFetcher(`/api/conversations/${id}/archive`);
+      setArchivedChats((prev) => prev.filter((c) => c.id !== id));
+      showSnackbar("Đã khôi phục đoạn chat", "success");
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      showSnackbar(err.message || "Lỗi khi khôi phục", "error");
     }
   };
 
@@ -687,7 +764,7 @@ const SettingsDialog = ({ open, onClose }) => {
                     secondary="Xem danh sách đoạn chat đã lưu trữ"
                   />
                   <ListItemSecondaryAction>
-                    <Button size="small" variant="outlined">
+                    <Button size="small" variant="outlined" onClick={handleViewArchived}>
                       Xem
                     </Button>
                   </ListItemSecondaryAction>
@@ -715,6 +792,7 @@ const SettingsDialog = ({ open, onClose }) => {
                       size="small"
                       variant="outlined"
                       color="warning"
+                      onClick={handleArchiveAll}
                     >
                       Lưu trữ
                     </Button>
@@ -842,6 +920,91 @@ const SettingsDialog = ({ open, onClose }) => {
             startIcon={deletingCollection ? <CircularProgress size={16} color="inherit" /> : <IconTrash size={16} />}
           >
             {deletingCollection ? "Đang xóa..." : "Xóa"}
+          </Button>
+        </DialogActionsMUI>
+      </DialogMUI>
+
+      {/* Archived Chats Dialog */}
+      <DialogMUI
+        open={archivedDialogOpen}
+        onClose={() => setArchivedDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitleMUI sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconArchive size={20} />
+            Đoạn chat đã lưu trữ
+          </Box>
+          <IconButton size="small" onClick={() => setArchivedDialogOpen(false)}>
+            <IconX size={18} />
+          </IconButton>
+        </DialogTitleMUI>
+        <DialogContentMUI dividers sx={{ minHeight: 200 }}>
+          {loadingArchived ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : archivedChats.length === 0 ? (
+            <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+              Không có đoạn chat nào đã lưu trữ
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {archivedChats.map((chat) => (
+                <ListItem key={chat.id} divider>
+                  <ListItemText
+                    primary={chat.title}
+                    secondary={new Date(chat.updated_at || chat.created_at).toLocaleDateString("vi-VN")}
+                  />
+                  <ListItemSecondaryAction>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleUnarchive(chat.id)}
+                    >
+                      Khôi phục
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContentMUI>
+      </DialogMUI>
+
+      {/* Generic Confirmation Dialog */}
+      <DialogMUI 
+        open={genericConfirm.open} 
+        onClose={() => !genericConfirm.loading && setGenericConfirm(p => ({ ...p, open: false }))} 
+        maxWidth="xs" 
+        fullWidth
+      >
+        <DialogTitleMUI sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconBrain size={20} color={genericConfirm.confirmColor === "error" ? "error" : "primary"} />
+          {genericConfirm.title}
+        </DialogTitleMUI>
+        <DialogContentMUI>
+          <Typography>
+            {genericConfirm.message}
+          </Typography>
+        </DialogContentMUI>
+        <DialogActionsMUI>
+          <Button 
+            onClick={() => setGenericConfirm(p => ({ ...p, open: false }))} 
+            disabled={genericConfirm.loading}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color={genericConfirm.confirmColor}
+            onClick={genericConfirm.onConfirm}
+            disabled={genericConfirm.loading}
+            startIcon={genericConfirm.loading ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            {genericConfirm.loading ? "Đang xử lý..." : "Xác nhận"}
           </Button>
         </DialogActionsMUI>
       </DialogMUI>

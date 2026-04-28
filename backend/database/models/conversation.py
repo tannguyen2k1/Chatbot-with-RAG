@@ -10,7 +10,8 @@ class Conversation(BaseModel):
 
     user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="New Chat")
-    is_deleted: Mapped[int] = mapped_column(Integer, default=0)  # Soft delete
+    is_deleted: Mapped[int] = mapped_column(Integer, default=0)   # Soft delete
+    is_archived: Mapped[int] = mapped_column(Integer, default=0)  # Archive (ẩn khỏi main list)
 
     # Relationship
     messages: Mapped[List["Message"]] = relationship(

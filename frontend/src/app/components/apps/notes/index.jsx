@@ -30,7 +30,6 @@ const NotesApp = () => {
   useEffect(() => {
     const isPageRefreshed = sessionStorage.getItem("isPageRefreshed");
     if (isPageRefreshed === "true") {
-      console.log("page refreshed");
       sessionStorage.removeItem("isPageRefreshed");
       handleResetTickets();
     }

@@ -499,12 +499,10 @@ const resetEmailData = [...EmailData];
 
 export async function DELETE(req) {
   const { emailId } = await req.json(); // Extract email ID from the request data
-  console.log(emailId);
   const email = EmailData.find((email) => email.id === emailId); // Find the index of the email with the specified ID
   if (email) {
     let remainingEmails = EmailData.filter((email) => email.id !== emailId);
     EmailData = remainingEmails;
-    console.log(EmailData, "dekh le bhai");
     return NextResponse.json({ status: 200, msg: "success", data: EmailData });
   } else {
     return NextResponse.json({ status: 4000, msg: "Email not found" });

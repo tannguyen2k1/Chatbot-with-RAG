@@ -32,6 +32,11 @@ import {
   Switch,
   FormControlLabel,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -84,6 +89,7 @@ const SimpleChatApp = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", message: "", onConfirm: null });
 
   const [chatConfig, setChatConfig] = useState({
     collection_name: null,
@@ -108,12 +114,18 @@ const SimpleChatApp = () => {
 
     try {
       const history = await getFetcher("/api/conversations");
-      const formatted = history.map((conv) => ({
-        id: conv.id,
-        title: conv.title,
-        createdAt: conv.created_at,
-        updatedAt: conv.updated_at,
-      }));
+      const formatted = history
+        .map((conv) => ({
+          id: conv.id,
+          title: conv.title,
+          createdAt: conv.created_at,
+          updatedAt: conv.updated_at,
+        }))
+        .sort((a, b) => {
+          const ta = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+          const tb = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+          return tb - ta; // mới nhất lên trên
+        });
       setChatHistory(formatted);
     } catch (err) {
       console.error("Failed to fetch chat history", err);
@@ -125,6 +137,13 @@ const SimpleChatApp = () => {
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+
+  // Reload chat history when settings dialog closes (e.g. after archive/unarchive)
+  useEffect(() => {
+    if (!settingsOpen) {
+      fetchHistory();
+    }
+  }, [settingsOpen, fetchHistory]);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -365,10 +384,35 @@ const SimpleChatApp = () => {
     setInput(savedInput);
   };
 
+  const openConfirm = (title, message, onConfirm) =>
+    setConfirmDialog({ open: true, title, message, onConfirm });
+
+  const closeConfirm = () =>
+    setConfirmDialog({ open: false, title: "", message: "", onConfirm: null });
+
   const handleClear = () => {
-    if (isStreaming) abortRef.current?.abort();
-    setMessages([]);
-    setContextSources(0);
+    if (!activeChatId) return; // chat mới chưa có gì
+    openConfirm(
+      "Xóa cuộc trò chuyện",
+      "Bạn có chắc muốn xóa cuộc trò chuyện này không? Hành động này không thể hoàn tác.",
+      async () => {
+        if (isStreaming) abortRef.current?.abort();
+        try {
+          await deleteFetcher(`/api/conversations/${activeChatId}`);
+          setChatHistory((prev) => prev.filter((c) => c.id !== activeChatId));
+        } catch (err) {
+          console.error("Failed to delete conversation", err);
+          setErrorMessage("Không thể xóa cuộc trò chuyện");
+          setErrorSnackbar(true);
+          return;
+        }
+        setActiveChatId(null);
+        setMessages([]);
+        setContextSources(0);
+        setInput("");
+        inputRef.current?.focus();
+      },
+    );
   };
 
   const handleKeyDown = (event) => {
@@ -391,23 +435,27 @@ const SimpleChatApp = () => {
     inputRef.current?.focus();
   };
 
-  const handleDeleteChat = async (id, event) => {
+  const handleDeleteChat = (id, event) => {
     event?.stopPropagation();
-
-    try {
-      await deleteFetcher(`/api/conversations/${id}`);
-
-      setChatHistory((prev) => prev.filter((c) => c.id !== id));
-      if (activeChatId === id) {
-        setActiveChatId(null);
-        setMessages([]);
-        setContextSources(0);
-      }
-    } catch (err) {
-      console.error("Failed to delete conversation", err);
-      setErrorMessage("Không thể xóa cuộc trò chuyện");
-      setErrorSnackbar(true);
-    }
+    openConfirm(
+      "Xóa cuộc trò chuyện",
+      "Bạn có chắc muốn xóa cuộc trò chuyện này không? Hành động này không thể hoàn tác.",
+      async () => {
+        try {
+          await deleteFetcher(`/api/conversations/${id}`);
+          setChatHistory((prev) => prev.filter((c) => c.id !== id));
+          if (activeChatId === id) {
+            setActiveChatId(null);
+            setMessages([]);
+            setContextSources(0);
+          }
+        } catch (err) {
+          console.error("Failed to delete conversation", err);
+          setErrorMessage("Không thể xóa cuộc trò chuyện");
+          setErrorSnackbar(true);
+        }
+      },
+    );
   };
 
   const handleCopyMessage = async (content, id) => {
@@ -1193,7 +1241,45 @@ const SimpleChatApp = () => {
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        onRefresh={fetchHistory}
+        onClearChat={() => {
+          setActiveChatId(null);
+          setMessages([]);
+          setContextSources(0);
+          setInput("");
+          inputRef.current?.focus();
+        }}
       />
+
+      {/* Confirm delete dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={closeConfirm}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{confirmDialog.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={closeConfirm} sx={{ textTransform: "none" }}>
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            sx={{ textTransform: "none" }}
+            onClick={async () => {
+              closeConfirm();
+              await confirmDialog.onConfirm?.();
+            }}
+          >
+            Xóa
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

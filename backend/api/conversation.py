@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, nullslast
 from sqlalchemy.orm import selectinload
 from typing import List
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,11 @@ def generate_title(first_message: str, max_chars: int = 40) -> str:
     return clean[: max_chars - 3] + "..."
 
 
-@router.get("", response_model=List[ConversationListResponse], summary="Lấy danh sách cuộc hội thoại")
+@router.get(
+    "",
+    response_model=List[ConversationListResponse],
+    summary="Lấy danh sách cuộc hội thoại",
+)
 async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -70,10 +75,15 @@ async def list_conversations(
     # Query chính
     query = (
         select(Conversation, message_count_subq.c.count)
-        .outerjoin(message_count_subq, Conversation.id == message_count_subq.c.conversation_id)
+        .outerjoin(
+            message_count_subq, Conversation.id == message_count_subq.c.conversation_id
+        )
         .where(Conversation.user_id == current_user.id)
         .where(Conversation.is_deleted == 0)
-        .order_by(desc(Conversation.updated_at))
+        .where(Conversation.is_archived == 0)
+        .order_by(
+            nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at)
+        )
     )
 
     result = await db.execute(query)
@@ -94,6 +104,7 @@ async def list_conversations(
             title=conv.title,
             user_id=conv.user_id,
             is_deleted=conv.is_deleted,
+            is_archived=conv.is_archived,
             created_at=conv.created_at,
             updated_at=conv.updated_at,
             message_count=count or 0,
@@ -101,6 +112,142 @@ async def list_conversations(
         )
         for conv, count in rows
     ]
+
+
+@router.get(
+    "/archived",
+    response_model=List[ConversationListResponse],
+    summary="Danh sách đoạn chat đã lưu trữ",
+)
+async def list_archived_conversations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lấy danh sách tất cả cuộc hội thoại đã được archive"""
+    message_count_subq = (
+        select(Message.conversation_id, func.count(Message.id).label("count"))
+        .group_by(Message.conversation_id)
+        .subquery()
+    )
+    query = (
+        select(Conversation, message_count_subq.c.count)
+        .outerjoin(
+            message_count_subq, Conversation.id == message_count_subq.c.conversation_id
+        )
+        .where(Conversation.user_id == current_user.id)
+        .where(Conversation.is_deleted == 0)
+        .where(Conversation.is_archived == 1)
+        .order_by(
+            nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at)
+        )
+    )
+    result = await db.execute(query)
+    rows = result.all()
+
+    # Lấy last message content để hiển thị (tương tự list_conversations)
+    last_msg_subq = (
+        select(
+            Message.conversation_id,
+            func.max(Message.created_at).label("last_time"),
+        )
+        .group_by(Message.conversation_id)
+        .subquery()
+    )
+    last_msg_query = (
+        select(Message.conversation_id, Message.content)
+        .join(last_msg_subq, Message.conversation_id == last_msg_subq.c.conversation_id)
+        .where(Message.created_at == last_msg_subq.c.last_time)
+    )
+    last_msg_result = await db.execute(last_msg_query)
+    last_messages = {row[0]: row[1] for row in last_msg_result.all()}
+
+    return [
+        ConversationListResponse(
+            id=conv.id,
+            title=conv.title,
+            user_id=conv.user_id,
+            is_deleted=conv.is_deleted,
+            is_archived=conv.is_archived,
+            created_at=conv.created_at,
+            updated_at=conv.updated_at,
+            message_count=count or 0,
+            last_message=last_messages.get(conv.id),
+        )
+        for conv, count in rows
+    ]
+
+
+@router.patch("/archive-all", summary="Archive tất cả đoạn chat hiện tại")
+async def archive_all_conversations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Archive toàn bộ cuộc hội thoại chưa bị xóa của user"""
+    from sqlalchemy import update as sql_update
+
+    await db.execute(
+        sql_update(Conversation)
+        .where(Conversation.user_id == current_user.id)
+        .where(Conversation.is_deleted == 0)
+        .where(Conversation.is_archived == 0)
+        .values(is_archived=1, updated_at=datetime.now(timezone.utc))
+    )
+    await db.commit()
+    return {"message": "All conversations archived successfully"}
+
+
+@router.delete(
+    "/archived/delete-all", summary="Xóa vĩnh viễn tất cả đoạn chat đã lưu trữ"
+)
+async def delete_all_archived_conversations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hard delete tất cả conversation đã archive của user"""
+    from sqlalchemy import delete as sql_delete
+
+    await db.execute(
+        sql_delete(Message).where(
+            Message.conversation_id.in_(
+                select(Conversation.id)
+                .where(Conversation.user_id == current_user.id)
+                .where(Conversation.is_archived == 1)
+            )
+        )
+    )
+    await db.execute(
+        sql_delete(Conversation)
+        .where(Conversation.user_id == current_user.id)
+        .where(Conversation.is_archived == 1)
+    )
+    await db.commit()
+    return {"message": "All archived conversations deleted permanently"}
+
+
+@router.delete("/delete-all", summary="Xóa vĩnh viễn tất cả đoạn chat không lưu trữ")
+async def delete_all_unarchived_conversations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hard delete tất cả conversation chưa archive của user"""
+    from sqlalchemy import delete as sql_delete
+
+    await db.execute(
+        sql_delete(Message).where(
+            Message.conversation_id.in_(
+                select(Conversation.id)
+                .where(Conversation.user_id == current_user.id)
+                .where(Conversation.is_archived == 0)
+            )
+        )
+    )
+    await db.execute(
+        sql_delete(Conversation)
+        .where(Conversation.user_id == current_user.id)
+        .where(Conversation.is_archived == 0)
+    )
+    await db.commit()
+    return {"message": "All unarchived conversations deleted permanently"}
 
 
 @router.get("/{conversation_id}", summary="Lấy chi tiết cuộc hội thoại")
@@ -123,15 +270,20 @@ async def get_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     # Load messages separately
-    msg_query = select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at)
+    msg_query = (
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at)
+    )
     msg_result = await db.execute(msg_query)
     messages = msg_result.scalars().all()
 
     return ConversationResponse(
         id=conversation.id,
-        user_id=conversation.user_id,
         title=conversation.title,
+        user_id=conversation.user_id,
         is_deleted=conversation.is_deleted,
+        is_archived=conversation.is_archived,
         created_at=conversation.created_at,
         updated_at=conversation.updated_at,
         messages=[
@@ -168,6 +320,7 @@ async def create_conversation(
         "user_id": conversation.user_id,
         "title": conversation.title,
         "is_deleted": conversation.is_deleted,
+        "is_archived": conversation.is_archived,
         "created_at": conversation.created_at,
         "updated_at": conversation.updated_at,
         "messages": [],
@@ -197,7 +350,40 @@ async def delete_conversation(
     return {"message": "Conversation deleted successfully"}
 
 
-@router.put("/{conversation_id}/title", response_model=ConversationResponse, summary="Cập nhật tiêu đề cuộc hội thoại")
+@router.patch(
+    "/{conversation_id}/archive", summary="Archive / Unarchive cuộc hội thoại"
+)
+async def toggle_archive_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggle trạng thái archive của một cuộc hội thoại"""
+    query = select(Conversation).where(
+        Conversation.id == conversation_id,
+        Conversation.user_id == current_user.id,
+        Conversation.is_deleted == 0,
+    )
+    result = await db.execute(query)
+    conversation = result.scalar_one_or_none()
+
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    conversation.is_archived = 0 if conversation.is_archived else 1
+    await db.commit()
+    action = "archived" if conversation.is_archived else "unarchived"
+    return {
+        "message": f"Conversation {action} successfully",
+        "is_archived": conversation.is_archived,
+    }
+
+
+@router.put(
+    "/{conversation_id}/title",
+    response_model=ConversationResponse,
+    summary="Cập nhật tiêu đề cuộc hội thoại",
+)
 async def update_conversation_title(
     conversation_id: int,
     update_data: ConversationUpdate,
@@ -230,7 +416,10 @@ async def update_conversation_title(
 # Streaming Chat API - Tạo conversation mới với message đầu tiên
 # =============================================================================
 
-@router.post("/new-with-message", summary="Tạo conversation mới và bắt đầu chat (streaming)")
+
+@router.post(
+    "/new-with-message", summary="Tạo conversation mới và bắt đầu chat (streaming)"
+)
 async def create_conversation_with_message(
     request: CreateConversationWithMessageRequest,
     current_user: User = Depends(get_current_user),
@@ -263,7 +452,9 @@ async def create_conversation_with_message(
     db.add(user_message)
     await db.commit()
 
-    logger.info(f"[chat/stream] Created conversation {conversation.id} with first message")
+    logger.info(
+        f"[chat/stream] Created conversation {conversation.id} with first message"
+    )
 
     chat = await get_chat_service_with_db(db)
 
@@ -273,8 +464,8 @@ async def create_conversation_with_message(
         logger.error(f"[chat/stream] Classification error: {e}")
         from fastapi.responses import StreamingResponse
 
-        async def error_stream():
-            yield f"Lỗi khi phân loại câu hỏi: {str(e)}"
+        async def error_stream(err=e):
+            yield f"Lỗi khi phân loại câu hỏi: {str(err)}"
 
         return StreamingResponse(
             error_stream(),
@@ -301,12 +492,15 @@ async def create_conversation_with_message(
             await db.flush()
 
             try:
-                async for chunk in chat.stream_answer(request.query, context, system_prompt):
+                async for chunk in chat.stream_answer(
+                    request.query, context, system_prompt
+                ):
                     answer_content += chunk
                     yield chunk
 
-                # Lưu complete answer
+                # Lưu complete answer và cập nhật thời gian conversation
                 assistant_msg.content = answer_content
+                conversation.updated_at = datetime.now(timezone.utc)
                 await db.commit()
             except Exception as e:
                 logger.error(f"[chat/stream] Error in stream: {e}")
@@ -356,12 +550,15 @@ async def create_conversation_with_message(
         await db.flush()
 
         try:
-            async for chunk in chat.stream_answer(request.query, context_str, system_prompt):
+            async for chunk in chat.stream_answer(
+                request.query, context_str, system_prompt
+            ):
                 answer_content += chunk
                 yield chunk
 
-            # Lưu complete answer
+            # Lưu complete answer và cập nhật thời gian conversation
             assistant_msg.content = answer_content
+            conversation.updated_at = datetime.now(timezone.utc)
             await db.commit()
         except Exception as e:
             logger.error(f"[chat/stream] Error in stream: {e}")
@@ -384,7 +581,10 @@ async def create_conversation_with_message(
 # Streaming Chat API - Thêm message vào conversation có sẵn
 # =============================================================================
 
-@router.post("/{conversation_id}/messages", summary="Thêm message và bắt đầu chat (streaming)")
+
+@router.post(
+    "/{conversation_id}/messages", summary="Thêm message và bắt đầu chat (streaming)"
+)
 async def add_message_stream(
     conversation_id: int,
     request: AddMessageRequest,
@@ -431,8 +631,8 @@ async def add_message_stream(
         logger.error(f"[chat/stream] Classification error: {e}")
         from fastapi.responses import StreamingResponse
 
-        async def error_stream():
-            yield f"Lỗi khi phân loại câu hỏi: {str(e)}"
+        async def error_stream(err=e):
+            yield f"Lỗi khi phân loại câu hỏi: {str(err)}"
 
         return StreamingResponse(
             error_stream(),
@@ -459,12 +659,15 @@ async def add_message_stream(
             await db.flush()
 
             try:
-                async for chunk in chat.stream_answer(request.query, context, system_prompt):
+                async for chunk in chat.stream_answer(
+                    request.query, context, system_prompt
+                ):
                     answer_content += chunk
                     yield chunk
 
-                # Lưu complete answer
+                # Lưu complete answer và cập nhật thời gian conversation
                 assistant_msg.content = answer_content
+                conversation.updated_at = datetime.now(timezone.utc)
                 await db.commit()
             except Exception as e:
                 logger.error(f"[chat/stream] Error in stream: {e}")
@@ -514,12 +717,15 @@ async def add_message_stream(
         await db.flush()
 
         try:
-            async for chunk in chat.stream_answer(request.query, context_str, system_prompt):
+            async for chunk in chat.stream_answer(
+                request.query, context_str, system_prompt
+            ):
                 answer_content += chunk
                 yield chunk
 
-            # Lưu complete answer
+            # Lưu complete answer và cập nhật thời gian conversation
             assistant_msg.content = answer_content
+            conversation.updated_at = datetime.now(timezone.utc)
             await db.commit()
         except Exception as e:
             logger.error(f"[chat/stream] Error in stream: {e}")
