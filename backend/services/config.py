@@ -148,11 +148,16 @@ class ConfigService:
         if data.rerank_top_k is not None:
             await self.upsert_config("chat.rerank_top_k", str(data.rerank_top_k), "Số kết quả rerank", "chat")
         if data.collection_name is not None:
-            # Sync key name with seed data: chat.collection_name
             await self.upsert_config("chat.collection_name", data.collection_name, "Collection mặc định", "chat")
         if data.system_prompt is not None:
             await self.upsert_config("chat.system_prompt", data.system_prompt, "System prompt cho AI chat", "chat")
-            
+        if data.use_bm25 is not None:
+            await self.upsert_config("chat.use_bm25", "true" if data.use_bm25 else "false", "Sử dụng BM25", "chat")
+        if data.bm25_top_k is not None:
+            await self.upsert_config("chat.bm25_top_k", str(data.bm25_top_k), "Số kết quả BM25 để merge", "chat")
+        if data.bm25_weight is not None:
+            await self.upsert_config("chat.bm25_weight", str(data.bm25_weight), "Trọng số BM25 khi merge", "chat")
+
         return {"message": "Lưu cấu hình thành công"}
     
     async def get_chat_config_for(self, current_user_id: int) -> dict:
@@ -176,7 +181,10 @@ class ConfigService:
             "use_reranker": config_dict.get("chat.use_reranker", "true").lower() == "true",
             "rerank_top_k": int(config_dict.get("chat.rerank_top_k", 30)),
             "collection_name": config_dict.get("chat.collection_name", "default"),
-            "system_prompt": config_dict.get("chat.system_prompt", default_prompt)
+            "system_prompt": config_dict.get("chat.system_prompt", default_prompt),
+            "use_bm25": config_dict.get("chat.use_bm25", "true").lower() == "true",
+            "bm25_top_k": int(config_dict.get("chat.bm25_top_k", 30)),
+            "bm25_weight": float(config_dict.get("chat.bm25_weight", 0.3)),
         }
     async def update_general_config_for(self, current_user_id: int, data) -> dict:
         """Update general application configs with permission check"""

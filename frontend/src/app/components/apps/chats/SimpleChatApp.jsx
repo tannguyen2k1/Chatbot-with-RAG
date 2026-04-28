@@ -96,6 +96,9 @@ const SimpleChatApp = () => {
     limit: 3,
     use_reranker: true,
     rerank_top_k: 30,
+    use_bm25: true,
+    bm25_top_k: 30,
+    bm25_weight: 0.3,
   });
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -154,6 +157,9 @@ const SimpleChatApp = () => {
           limit: config.limit || 3,
           use_reranker: config.use_reranker ?? true,
           rerank_top_k: config.rerank_top_k || 30,
+          use_bm25: config.use_bm25 ?? true,
+          bm25_top_k: config.bm25_top_k || 30,
+          bm25_weight: config.bm25_weight ?? 0.3,
         });
       } catch (err) {
         console.error("Failed to fetch chat config", err);

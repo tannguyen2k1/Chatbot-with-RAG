@@ -29,6 +29,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Slider,
 } from "@mui/material";
 import { useState, useContext, useEffect, useRef } from "react";
 import {
@@ -120,6 +121,9 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
     limit: 3,
     use_reranker: true,
     rerank_top_k: 30,
+    use_bm25: true,
+    bm25_top_k: 30,
+    bm25_weight: 0.3,
   });
 
   // System Prompt state
@@ -189,6 +193,9 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
         limit: data.limit || 3,
         use_reranker: data.use_reranker ?? true,
         rerank_top_k: data.rerank_top_k || 30,
+        use_bm25: data.use_bm25 ?? true,
+        bm25_top_k: data.bm25_top_k || 30,
+        bm25_weight: data.bm25_weight ?? 0.3,
       });
       if (data.collection_name) {
         setSelectedCollection(data.collection_name);
@@ -390,7 +397,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
       setPromptError("Prompt phải chứa {context} và {query}");
       return;
     }
-    
+
     setSavingPrompt(true);
     setPromptError("");
     try {
@@ -411,7 +418,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="sm"
+        maxWidth="lg"
         fullWidth
         PaperProps={{ sx: { borderRadius: 3, minHeight: 480 } }}
       >
@@ -453,34 +460,29 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
         <DialogContent sx={{ p: 2 }}>
           {/* TAB 1: Chung */}
           <TabPanel value={tab} index={0}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {/* Giao diện */}
               <Box>
-                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
-                  <IconPalette size={18} /> Giao diện
+                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+                  <IconPalette size={13} /> Giao diện
                 </Typography>
-                <Box sx={{ pl: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Chế độ hiển thị
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    {[
-                      { value: "light", label: "Sáng", icon: <IconSun size={18} /> },
-                      { value: "dark", label: "Tối", icon: <IconMoon size={18} /> },
-                      { value: "system", label: "Hệ thống", icon: <IconDeviceDesktop size={18} /> },
-                    ].map((opt) => (
-                      <Button
-                        key={opt.value}
-                        variant={settings.theme === opt.value ? "contained" : "outlined"}
-                        size="small"
-                        startIcon={opt.icon}
-                        onClick={() => setSettings({ ...settings, theme: opt.value })}
-                        sx={{ flex: 1, textTransform: "none" }}
-                      >
-                        {opt.label}
-                      </Button>
-                    ))}
-                  </Box>
+                <Box sx={{ display: "flex", gap: 0.75 }}>
+                  {[
+                    { value: "light", label: "Sáng", icon: <IconSun size={15} /> },
+                    { value: "dark", label: "Tối", icon: <IconMoon size={15} /> },
+                    { value: "system", label: "Hệ thống", icon: <IconDeviceDesktop size={15} /> },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={settings.theme === opt.value ? "contained" : "outlined"}
+                      size="small"
+                      startIcon={opt.icon}
+                      onClick={() => setSettings({ ...settings, theme: opt.value })}
+                      sx={{ flex: 1, textTransform: "none", fontSize: "0.8rem" }}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
                 </Box>
               </Box>
 
@@ -488,86 +490,72 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
 
               {/* Ngôn ngữ */}
               <Box>
-                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
-                  <IconLanguage size={18} /> Ngôn ngữ
+                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+                  <IconLanguage size={13} /> Ngôn ngữ
                 </Typography>
-                <Box sx={{ pl: 2 }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Ngôn ngữ giao diện</InputLabel>
-                    <Select
-                      value={settings.language}
-                      label="Ngôn ngữ giao diện"
-                      onChange={handleChange("language")}
-                    >
-                      <MenuItem value="vi">Tiếng Việt</MenuItem>
-                      <MenuItem value="en">English</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={settings.language}
+                    onChange={handleChange("language")}
+                    sx={{ "& .MuiSelect-select": { py: 0.75 } }}
+                  >
+                    <MenuItem value="vi" sx={{ fontSize: "0.8rem" }}>Tiếng Việt</MenuItem>
+                    <MenuItem value="en" sx={{ fontSize: "0.8rem" }}>English</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
 
               <Divider />
 
               {/* Cỡ chữ */}
               <Box>
-                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
+                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, mb: 1 }}>
                   Cỡ chữ
                 </Typography>
-                <Box sx={{ pl: 2 }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Cỡ chữ</InputLabel>
-                    <Select
-                      value={settings.fontSize}
-                      label="Cỡ chữ"
-                      onChange={handleChange("fontSize")}
-                    >
-                      <MenuItem value="small">Nhỏ</MenuItem>
-                      <MenuItem value="medium">Vừa</MenuItem>
-                      <MenuItem value="large">Lớn</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={settings.fontSize}
+                    onChange={handleChange("fontSize")}
+                    sx={{ "& .MuiSelect-select": { py: 0.75 } }}
+                  >
+                    <MenuItem value="small" sx={{ fontSize: "0.8rem" }}>Nhỏ</MenuItem>
+                    <MenuItem value="medium" sx={{ fontSize: "0.8rem" }}>Vừa</MenuItem>
+                    <MenuItem value="large" sx={{ fontSize: "0.8rem" }}>Lớn</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
             </Box>
           </TabPanel>
 
           {/* TAB 2: Cau hinh */}
           <TabPanel value={tab} index={1}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {errorCollections && (
-                <Alert severity="error" onClose={() => setErrorCollections("")}>
+                <Alert severity="error" onClose={() => setErrorCollections("")} sx={{ py: 0.5 }}>
                   {errorCollections}
                 </Alert>
               )}
 
               {/* Collection selection */}
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={600}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
                     Collection
                   </Typography>
-                  <Button
-                    size="small"
-                    startIcon={<IconPlus size={14} />}
-                    onClick={() => setCreateDialogOpen(true)}
-                    sx={{ textTransform: "none" }}
-                  >
-                    Tạo mới
-                  </Button>
                 </Box>
 
                 {loadingCollections ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                    <CircularProgress size={24} />
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+                    <CircularProgress size={20} />
                   </Box>
                 ) : (
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Chọn collection</InputLabel>
+                  <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
+                    <FormControl size="small" sx={{ flex: 1 }}>
                       <Select
                         value={selectedCollection}
-                        label="Chọn collection"
+                        renderValue={(v) => <Typography variant="body2">{v}</Typography>}
                         onChange={(e) => setSelectedCollection(e.target.value)}
+                        sx={{ "& .MuiSelect-select": { py: 0.75 } }}
                       >
                         {collections.map((col) => (
                           <MenuItem key={col} value={col}>
@@ -577,16 +565,25 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
                       </Select>
                     </FormControl>
                     <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<IconPlus size={13} />}
+                      onClick={() => setCreateDialogOpen(true)}
+                      sx={{ textTransform: "none", flexShrink: 0, px: 1, py: 0.5, fontSize: "0.75rem" }}
+                    >
+                      Tạo mới
+                    </Button>
+                    <Button
+                      size="small"
                       variant="outlined"
                       color="error"
-                      size="small"
                       onClick={() => {
                         setCollectionToDelete(selectedCollection);
                         setConfirmDialogOpen(true);
                       }}
                       disabled={deletingCollection}
-                      startIcon={deletingCollection ? <CircularProgress size={14} /> : <IconTrash size={14} />}
-                      sx={{ whiteSpace: "nowrap", minWidth: "auto" }}
+                      startIcon={deletingCollection ? <CircularProgress size={12} /> : <IconTrash size={13} />}
+                      sx={{ whiteSpace: "nowrap", flexShrink: 0, px: 1, py: 0.5, fontSize: "0.75rem" }}
                     >
                       Xóa
                     </Button>
@@ -596,77 +593,141 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
 
               <Divider />
 
-              <Typography variant="subtitle2" fontWeight={600}>
-                Tìm kiếm
-              </Typography>
+              {/* Tìm kiếm */}
+              <Box>
+                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 1 }}>
+                  Tìm kiếm
+                </Typography>
 
-              <FormControl fullWidth size="small">
-                <InputLabel>Số tài liệu tìm kiếm</InputLabel>
-                <Select
-                  value={chatConfig.limit}
-                  label="Số tài liệu tìm kiếm"
-                  onChange={(e) => setChatConfig({ ...chatConfig, limit: e.target.value })}
-                >
-                  <MenuItem value={1}>1</MenuItem>
-                  <MenuItem value={3}>3</MenuItem>
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                </Select>
-              </FormControl>
+                {/* Số tài liệu */}
+                <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ minWidth: 70 }}>
+                    Số tài liệu
+                  </Typography>
+                  <Slider
+                    size="small"
+                    value={chatConfig.limit}
+                    min={1}
+                    max={10}
+                    step={1}
+                    onChange={(_, v) => setChatConfig({ ...chatConfig, limit: v })}
+                    sx={{ flex: 1, minWidth: 120 }}
+                  />
+                  <Typography variant="body2" sx={{ minWidth: 24, textAlign: "right", fontWeight: 600 }}>
+                    {chatConfig.limit}
+                  </Typography>
+                </Box>
 
-              <FormControlLabel
-                control={
+                <Divider sx={{ my: 1 }} />
+
+                {/* BM25 */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    BM25
+                  </Typography>
                   <Switch
+                    size="small"
+                    checked={chatConfig.use_bm25}
+                    onChange={(e) => setChatConfig({ ...chatConfig, use_bm25: e.target.checked })}
+                  />
+                </Box>
+                {chatConfig.use_bm25 && (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 70 }}>
+                        Top BM25
+                      </Typography>
+                      <Slider
+                        size="small"
+                        value={chatConfig.bm25_top_k}
+                        min={5}
+                        max={chatConfig.use_reranker ? chatConfig.rerank_top_k : 50}
+                        step={5}
+                        onChange={(_, v) => setChatConfig({ ...chatConfig, bm25_top_k: v })}
+                        sx={{ flex: 1, minWidth: 120 }}
+                      />
+                      <Typography variant="body2" sx={{ minWidth: 24, textAlign: "right", fontWeight: 600 }}>
+                        {chatConfig.bm25_top_k}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 70 }}>
+                        Weight
+                      </Typography>
+                      <Slider
+                        size="small"
+                        value={Math.round(chatConfig.bm25_weight * 100)}
+                        min={10}
+                        max={90}
+                        step={1}
+                        onChange={(_, v) => setChatConfig({ ...chatConfig, bm25_weight: v / 100 })}
+                        sx={{ flex: 1, minWidth: 120 }}
+                      />
+                      <Typography variant="body2" sx={{ minWidth: 32, textAlign: "right", fontWeight: 600 }}>
+                        {Math.round(chatConfig.bm25_weight * 100)}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Reranker */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Reranker
+                  </Typography>
+                  <Switch
+                    size="small"
                     checked={chatConfig.use_reranker}
                     onChange={(e) => setChatConfig({ ...chatConfig, use_reranker: e.target.checked })}
                   />
-                }
-                label="Sử dụng Reranker"
-              />
-
-              {chatConfig.use_reranker && (
-                <FormControl fullWidth size="small">
-                  <InputLabel>Số kết quả rerank</InputLabel>
-                  <Select
-                    value={chatConfig.rerank_top_k}
-                    label="Số kết quả rerank"
-                    onChange={(e) => setChatConfig({ ...chatConfig, rerank_top_k: e.target.value })}
-                  >
-                    <MenuItem value={10}>10</MenuItem>
-                    <MenuItem value={30}>30</MenuItem>
-                    <MenuItem value={50}>50</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
+                </Box>
+                {chatConfig.use_reranker && (
+                  <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 70 }}>
+                      Top K
+                    </Typography>
+                    <Slider
+                      size="small"
+                      value={chatConfig.rerank_top_k}
+                      min={10}
+                      max={50}
+                      step={5}
+                      onChange={(_, v) => setChatConfig({ ...chatConfig, rerank_top_k: v })}
+                      sx={{ flex: 1, minWidth: 120 }}
+                    />
+                    <Typography variant="body2" sx={{ minWidth: 24, textAlign: "right", fontWeight: 600 }}>
+                      {chatConfig.rerank_top_k}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
 
               <Divider />
 
               {/* System Prompt */}
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <IconBrain size={18} />
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <IconBrain size={13} />
                     System Prompt
                   </Typography>
                   {!editingPrompt ? (
                     <Button
                       size="small"
-                      variant="outlined"
+                      variant="text"
                       onClick={() => setEditingPrompt(true)}
-                      sx={{ textTransform: "none" }}
+                      sx={{ textTransform: "none", fontSize: "0.75rem", p: 0.25 }}
                     >
                       Chỉnh sửa
                     </Button>
                   ) : (
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Button
                         size="small"
-                        onClick={() => {
-                          setEditingPrompt(false);
-                          setPromptError("");
-                          fetchChatConfig();
-                        }}
-                        sx={{ textTransform: "none" }}
+                        onClick={() => { setEditingPrompt(false); setPromptError(""); fetchChatConfig(); }}
+                        sx={{ textTransform: "none", fontSize: "0.75rem", p: 0.5 }}
                       >
                         Hủy
                       </Button>
@@ -675,60 +736,43 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
                         variant="contained"
                         onClick={handleSaveSystemPrompt}
                         disabled={savingPrompt}
-                        startIcon={savingPrompt ? <CircularProgress size={14} color="inherit" /> : null}
-                        sx={{ textTransform: "none" }}
+                        startIcon={savingPrompt ? <CircularProgress size={12} color="inherit" /> : null}
+                        sx={{ textTransform: "none", fontSize: "0.75rem", p: 0.5 }}
                       >
-                        {savingPrompt ? "Đang lưu..." : "Lưu"}
+                        Lưu
                       </Button>
                     </Box>
                   )}
                 </Box>
 
-                {promptError && (
-                  <Alert severity="error" sx={{ mb: 1 }}>
-                    {promptError}
-                  </Alert>
-                )}
-
-                <Alert severity="info" sx={{ mb: 1 }}>
-                  Sử dụng <code>{'{context}'}</code> cho ngữ cảnh và <code>{'{query}'}</code> cho câu hỏi
-                </Alert>
+                {promptError && <Alert severity="error" sx={{ py: 0.5, mb: 0.5 }}>{promptError}</Alert>}
 
                 {editingPrompt ? (
                   <TextField
                     multiline
-                    rows={6}
+                    rows={4}
                     fullWidth
                     value={systemPrompt}
-                    onChange={(e) => {
-                      setSystemPrompt(e.target.value);
-                      setPromptError("");
-                    }}
+                    onChange={(e) => { setSystemPrompt(e.target.value); setPromptError(""); }}
                     placeholder="Nhập system prompt..."
                     sx={{
-                      "& .MuiInputBase-root": {
-                        fontFamily: "monospace",
-                        fontSize: "0.85rem",
-                      }
+                      "& .MuiInputBase-root": { fontFamily: "monospace", fontSize: "0.8rem" },
                     }}
                   />
                 ) : (
                   <Box
                     sx={{
-                      p: 2,
+                      p: 1.25,
                       bgcolor: "grey.100",
                       borderRadius: 1,
                       fontFamily: "monospace",
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                       whiteSpace: "pre-wrap",
-                      maxHeight: 200,
+                      maxHeight: 120,
                       overflow: "auto",
                       border: 1,
                       borderColor: "divider",
-                      ...(theme.palette.mode === "dark" && {
-                        bgcolor: "grey.900",
-                        color: "grey.300",
-                      }),
+                      ...(theme.palette.mode === "dark" && { bgcolor: "grey.900", color: "grey.300" }),
                     }}
                   >
                     {systemPrompt || "Chưa có system prompt"}
@@ -740,7 +784,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
 
           {/* TAB 3: Kiem soat du lieu */}
           <TabPanel value={tab} index={2}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               <Typography variant="body2" color="text.secondary">
                 Quản lý dữ liệu đoạn chat của bạn
               </Typography>
@@ -847,54 +891,54 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
               {createError}
             </Alert>
           )}
-              <TextField
-                autoFocus
-                fullWidth
-                label="Tên collection"
-                value={newCollectionName}
-                onChange={(e) => {
-                  setNewCollectionName(e.target.value);
-                  setCreateError("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleCreateCollection()}
-                placeholder="VD: documents, knowledge_base"
-                size="small"
-                helperText="Chỉ chứa chữ cái, số, gạch dưới (_) và gạch ngang (-)"
-                sx={{ mb: 2, marginTop:"10px" }}
-              />
-              <TextField
-                fullWidth
-                label="Vector size"
-                type="number"
-                value={newCollectionVectorSize}
-                onChange={(e) => setNewCollectionVectorSize(Number(e.target.value))}
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <FormControl fullWidth size="small">
-                <InputLabel>Distance</InputLabel>
-                <Select
-                  value={newCollectionDistance}
-                  label="Distance"
-                  onChange={(e) => setNewCollectionDistance(e.target.value)}
-                >
-                  <MenuItem value="Cosine">Cosine</MenuItem>
-                  <MenuItem value="Euclid">Euclid</MenuItem>
-                  <MenuItem value="Dot">Dot</MenuItem>
-                </Select>
-              </FormControl>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Tên collection"
+            value={newCollectionName}
+            onChange={(e) => {
+              setNewCollectionName(e.target.value);
+              setCreateError("");
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleCreateCollection()}
+            placeholder="VD: documents, knowledge_base"
+            size="small"
+            helperText="Chỉ chứa chữ cái, số, gạch dưới (_) và gạch ngang (-)"
+            sx={{ mb: 2, marginTop: "10px" }}
+          />
+          <TextField
+            fullWidth
+            label="Vector size"
+            type="number"
+            value={newCollectionVectorSize}
+            onChange={(e) => setNewCollectionVectorSize(Number(e.target.value))}
+            size="small"
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Distance</InputLabel>
+            <Select
+              value={newCollectionDistance}
+              label="Distance"
+              onChange={(e) => setNewCollectionDistance(e.target.value)}
+            >
+              <MenuItem value="Cosine">Cosine</MenuItem>
+              <MenuItem value="Euclid">Euclid</MenuItem>
+              <MenuItem value="Dot">Dot</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContentMUI>
         <DialogActionsMUI>
-            <Button onClick={() => setCreateDialogOpen(false)}>Hủy</Button>
-            <Button
-              variant="contained"
-              onClick={handleCreateCollection}
-              disabled={creatingCollection}
-              startIcon={creatingCollection ? <CircularProgress size={16} /> : null}
-            >
-              {creatingCollection ? "Đang tạo..." : "Tạo"}
-            </Button>
-          </DialogActionsMUI>
+          <Button onClick={() => setCreateDialogOpen(false)}>Hủy</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateCollection}
+            disabled={creatingCollection}
+            startIcon={creatingCollection ? <CircularProgress size={16} /> : null}
+          >
+            {creatingCollection ? "Đang tạo..." : "Tạo"}
+          </Button>
+        </DialogActionsMUI>
       </DialogMUI>
 
       {/* Delete Collection Confirm Dialog */}
@@ -975,10 +1019,10 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
       </DialogMUI>
 
       {/* Generic Confirmation Dialog */}
-      <DialogMUI 
-        open={genericConfirm.open} 
-        onClose={() => !genericConfirm.loading && setGenericConfirm(p => ({ ...p, open: false }))} 
-        maxWidth="xs" 
+      <DialogMUI
+        open={genericConfirm.open}
+        onClose={() => !genericConfirm.loading && setGenericConfirm(p => ({ ...p, open: false }))}
+        maxWidth="xs"
         fullWidth
       >
         <DialogTitleMUI sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -991,8 +1035,8 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
           </Typography>
         </DialogContentMUI>
         <DialogActionsMUI>
-          <Button 
-            onClick={() => setGenericConfirm(p => ({ ...p, open: false }))} 
+          <Button
+            onClick={() => setGenericConfirm(p => ({ ...p, open: false }))}
             disabled={genericConfirm.loading}
           >
             Hủy
@@ -1014,3 +1058,4 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
 };
 
 export default SettingsDialog;
+

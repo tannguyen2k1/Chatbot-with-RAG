@@ -51,6 +51,9 @@ async def context_chat_endpoint(
         use_reranker=request.use_reranker,
         rerank_top_k=request.rerank_top_k,
         score_threshold=request.score_threshold,
+        use_bm25=request.use_bm25,
+        bm25_top_k=request.bm25_top_k,
+        bm25_weight=request.bm25_weight,
     )
 
     vector_response = await search_by_text(
@@ -103,6 +106,9 @@ async def chat_endpoint(
         use_reranker=request.use_reranker,
         rerank_top_k=request.rerank_top_k,
         score_threshold=request.score_threshold,
+        use_bm25=request.use_bm25,
+        bm25_top_k=request.bm25_top_k,
+        bm25_weight=request.bm25_weight,
     )
 
     vector_response = await search_by_text(
@@ -170,6 +176,9 @@ async def chat_stream_endpoint(
         use_reranker=request.use_reranker,
         rerank_top_k=request.rerank_top_k,
         score_threshold=request.score_threshold,
+        use_bm25=request.use_bm25,
+        bm25_top_k=request.bm25_top_k,
+        bm25_weight=request.bm25_weight,
     )
 
     vector_response = await search_by_text(

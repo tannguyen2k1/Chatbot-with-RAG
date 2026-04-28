@@ -8,7 +8,6 @@ Cung cấp các thao tác:
 """
 
 from typing import Optional, Any
-from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
     Distance,
@@ -27,8 +26,9 @@ from schemas.vector import (
     VectorSearchResponse,
     TextSearchRequest,
 )
-from services.embedding import EmbeddingService, get_embedding_service
-from services.rerank import RerankService, get_rerank_service
+from services.embedding import EmbeddingService
+from services.rerank import RerankService
+from services.bm25 import get_bm25_service
 from .rbac_helper import ensure_permission_global
 
 
@@ -294,36 +294,105 @@ class VectorService:
         )
         return VectorSearchResponse(results=results, count=len(results))
 
-    async def search_by_text_for(
-        self,
-        current_user_id: int,
-        collection_name: str,
-        search_req: TextSearchRequest,
-        embedding: EmbeddingService,
-        reranker: RerankService,
-    ) -> VectorSearchResponse:
-        """Tìm kiếm bằng text với permission check"""
-        await ensure_permission_global(current_user_id, "vector", "view")
-        query_vector = embedding.encode_single(search_req.query, is_query=True)
-        fetch_limit = search_req.rerank_top_k if search_req.use_reranker else search_req.limit
+def _merge_bm25_scores(
+    vec_results: list[SearchResult],
+    search_req: TextSearchRequest,
+    collection_name: str,
+) -> dict[str | int, SearchResult]:
+    """
+    Merge BM25 scores vào vector results bằng normalized weighted average.
 
-        results = await self.search(
-            collection_name=collection_name,
-            vector=query_vector,
-            limit=fetch_limit,
-            score_threshold=None if search_req.use_reranker else search_req.score_threshold,
-            filter_conditions=search_req.filter,
+    Args:
+        vec_results: Kết quả từ vector search (dùng làm corpus cho BM25)
+        search_req: Search request chứa bm25 params
+        collection_name: Tên collection (dùng để lấy BM25 service)
+
+    Returns:
+        Dict mapping id -> SearchResult với score đã được merge
+    """
+    merged: dict[str | int, SearchResult] = {r.id: r for r in vec_results}
+
+    if not search_req.use_bm25 or not vec_results:
+        return merged
+
+    bm25_service = get_bm25_service(collection_name)
+    bm25_service.build(
+        texts=[r.payload.get("_text", "") for r in vec_results],
+        ids=[r.id for r in vec_results],
+        payloads=[r.payload for r in vec_results],
+    )
+
+    bm25_raw = bm25_service.search(
+        search_req.query,
+        top_k=min(search_req.bm25_top_k, len(vec_results)),
+        score_threshold=None,
+    )
+
+    if not bm25_raw:
+        return merged
+
+    bm25_scores = {r["id"]: r["score"] for r in bm25_raw}
+
+    max_vec = max(r.score for r in vec_results)
+    max_bm25 = max(bm25_scores.values())
+    max_vec = max(max_vec, 1e-9)
+    max_bm25 = max(max_bm25, 1e-9)
+
+    for r in merged.values():
+        vec_norm = r.score / max_vec
+        bm25_norm = bm25_scores.get(r.id, 0.0) / max_bm25
+        r.score = (1 - search_req.bm25_weight) * vec_norm + search_req.bm25_weight * bm25_norm
+
+    return merged
+
+
+async def search_by_text_for(
+    self,
+    current_user_id: int,
+    collection_name: str,
+    search_req: TextSearchRequest,
+    embedding: EmbeddingService,
+    reranker: RerankService,
+) -> VectorSearchResponse:
+    """
+    Hybrid search: BM25 + Vector DB song song -> Weighted merge -> Rerank -> Top-k.
+
+    Flow:
+      Query
+      ├── BM25 -> top_k_lexical (use_bm25, bm25_top_k, bm25_weight)
+      └── Vector DB -> top_k_semantic
+               |
+            Merge (weighted score: vec*(1-bm25_weight) + bm25*bm25_weight)
+               |
+            Rerank
+               |
+            Top-k final
+    """
+    await ensure_permission_global(current_user_id, "vector", "view")
+
+    query_vector = embedding.encode_single(search_req.query, is_query=True)
+    fetch_limit = search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)
+
+    vec_results = await self.search(
+        collection_name=collection_name,
+        vector=query_vector,
+        limit=fetch_limit,
+        score_threshold=None if search_req.use_reranker else search_req.score_threshold,
+        filter_conditions=search_req.filter,
+    )
+
+    merged_results = _merge_bm25_scores(vec_results, search_req, collection_name)
+    sorted_results = sorted(merged_results.values(), key=lambda r: r.score, reverse=True)
+
+    if search_req.use_reranker and sorted_results:
+        sorted_results = reranker.rerank_results(
+            query=search_req.query,
+            results=sorted_results,
+            top_k=search_req.limit,
+            score_threshold=search_req.score_threshold,
         )
 
-        if search_req.use_reranker and results:
-            results = reranker.rerank_results(
-                query=search_req.query,
-                results=results,
-                top_k=search_req.limit,
-                score_threshold=search_req.score_threshold,
-            )
-
-        return VectorSearchResponse(results=results, count=len(results))
+    return VectorSearchResponse(results=sorted_results, count=len(sorted_results))
 
 
 def get_vector_service() -> VectorService:

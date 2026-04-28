@@ -77,6 +77,9 @@ class TextSearchRequest(BaseModel):
     )
     use_reranker: bool = Field(default=True, description="Sử dụng Reranker để sắp xếp lại chính xác hơn")
     rerank_top_k: int = Field(default=50, description="Số lượng kết quả lấy từ Qdrant để đưa vào Reranker")
+    use_bm25: bool = Field(default=True, description="Sử dụng BM25 để tìm kiếm keyword song song")
+    bm25_top_k: int = Field(default=30, description="Số kết quả lấy từ BM25 để merge")
+    bm25_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Trọng số BM25 khi merge với vector")
 
 
 class SearchResult(BaseModel):
