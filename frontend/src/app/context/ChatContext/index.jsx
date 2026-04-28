@@ -13,13 +13,13 @@ export const ChatContext = createContext({
   loading: true,
   error: "",
   activeChatId: null,
-  setChatContent: () => {},
-  setChatSearch: () => {},
-  setSelectedChat: () => {},
-  setActiveChatId: () => {},
-  sendMessage: () => {},
-  setLoading: () => {},
-  setError: () => {},
+  setChatContent: () => { },
+  setChatSearch: () => { },
+  setSelectedChat: () => { },
+  setActiveChatId: () => { },
+  sendMessage: () => { },
+  setLoading: () => { },
+  setError: () => { },
 });
 
 // Create the provider component
@@ -52,7 +52,6 @@ export const ChatProvider = ({ children }) => {
     } else if (Chatserror) {
       setError(Chatserror);
       setLoading(isChatsLoading);
-      console.log("Failed to fetch the data");
     } else {
       setLoading(isChatsLoading);
     }
