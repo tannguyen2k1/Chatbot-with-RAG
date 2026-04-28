@@ -1,4 +1,5 @@
 from enum import Enum
+from pydantic import Field
 from pydantic_settings import BaseSettings
 from typing import TYPE_CHECKING, Optional
 
@@ -18,8 +19,8 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = ""
     JWT_REFRESH_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10000000
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 10000000
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080
     CORS_ALLOW_ORIGINS: str = "https://vtms.localhost,http://localhost:3000,http://127.0.0.1:3000,http://localhost,capacitor://localhost,ionic://localhost,null"
     CORS_ALLOW_ORIGIN_REGEX: str = r"^(null|https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+)(:\d+)?|(capacitor|ionic|file)://.*)$"
     REFRESH_COOKIE_NAME: str = "refresh_token"
@@ -55,6 +56,16 @@ class Settings(BaseSettings):
             [CÂU HỎI CỦA NGƯỜI DÙNG]:
             {query}
             Câu trả lời của bạn:"""
+
+    # Conversation History Settings
+    CONVERSATION_HISTORY_MAX_MESSAGES: int = Field(
+        default=10,
+        description="Số lượng message lịch sử (user + assistant) đưa vào LLM. 0 = không dùng lịch sử.",
+    )
+    CONVERSATION_HISTORY_INCLUDE_SYSTEM: bool = Field(
+        default=True,
+        description="Đưa system prompt vào mỗi turn hay chỉ lần đầu (True = mỗi turn, False = chỉ lần đầu)",
+    )
 
     @property
     def cors_allow_origins_list(self) -> list[str]:

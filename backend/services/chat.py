@@ -1,4 +1,4 @@
-from typing import AsyncIterator, List
+from typing import AsyncIterator, List, Optional
 
 from mistralai import Mistral
 
@@ -49,31 +49,76 @@ class ChatService:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         return system_prompt.format(context=context, query=query)
 
-    async def generate_answer(self, query: str, context: str, system_prompt: str = None) -> str:
+    def _build_messages(
+        self,
+        query: str,
+        context: str,
+        system_prompt: str,
+        conversation_history: Optional[List[dict]] = None,
+    ) -> List[dict]:
+        max_messages = settings.CONVERSATION_HISTORY_MAX_MESSAGES
+        include_system = settings.CONVERSATION_HISTORY_INCLUDE_SYSTEM
+
+        messages = []
+
+        if include_system:
+            messages.append({"role": "system", "content": system_prompt.format(context=context, query="{query}")})
+
+        if conversation_history and max_messages > 0:
+            for entry in conversation_history[-max_messages:]:
+                role = entry.get("role", "user")
+                content = entry.get("content", "")
+                if role == "user":
+                    messages.append({"role": "user", "content": content})
+                else:
+                    messages.append({"role": "assistant", "content": content})
+
+        current_query = system_prompt.format(context=context, query=query)
+        messages.append({"role": "user", "content": current_query})
+
+        return messages
+
+    async def generate_answer(
+        self,
+        query: str,
+        context: str,
+        system_prompt: str = None,
+        conversation_history: Optional[List[dict]] = None,
+    ) -> str:
         client = self._build_client()
-        prompt = self.generate_prompt_preview(query, context, system_prompt)
+        if not system_prompt:
+            system_prompt = DEFAULT_SYSTEM_PROMPT
+        messages = self._build_messages(query, context, system_prompt, conversation_history)
 
         try:
             response = await client.chat.complete_async(
                 model="mistral-large-latest",
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
             )
             return response.choices[0].message.content
         except AttributeError:
             response = client.chat.complete(
                 model="mistral-large-latest",
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
             )
             return response.choices[0].message.content
 
-    async def stream_answer(self, query: str, context: str, system_prompt: str = None) -> AsyncIterator[str]:
+    async def stream_answer(
+        self,
+        query: str,
+        context: str,
+        system_prompt: str = None,
+        conversation_history: Optional[List[dict]] = None,
+    ) -> AsyncIterator[str]:
         client = self._build_client()
-        prompt = self.generate_prompt_preview(query, context, system_prompt)
+        if not system_prompt:
+            system_prompt = DEFAULT_SYSTEM_PROMPT
+        messages = self._build_messages(query, context, system_prompt, conversation_history)
 
         try:
             stream = await client.chat.stream_async(
                 model="mistral-large-latest",
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
             )
             async for event in stream:
                 for choice in event.data.choices:
@@ -83,7 +128,7 @@ class ChatService:
         except AttributeError:
             stream = client.chat.stream(
                 model="mistral-large-latest",
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
             )
             for event in stream:
                 for choice in event.data.choices:
@@ -95,7 +140,7 @@ class ChatService:
         """Lấy system prompt từ database theo tenant, fallback về default"""
         if not self.db:
             return DEFAULT_SYSTEM_PROMPT
-        
+
         try:
             from services.config import ConfigService
             config_service = ConfigService(self.db)
@@ -104,7 +149,7 @@ class ChatService:
                 return config.value
         except Exception:
             pass
-        
+
         return DEFAULT_SYSTEM_PROMPT
 
 

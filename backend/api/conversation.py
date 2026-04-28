@@ -19,7 +19,6 @@ from schemas.conversation import (
     CreateConversationWithMessageRequest,
     AddMessageRequest,
 )
-from schemas.chat import ChatResponse
 from dependencies import get_current_user
 from dependencies.database import get_db
 from services.chat import get_chat_service_with_db
@@ -45,11 +44,34 @@ def generate_title(first_message: str, max_chars: int = 40) -> str:
     return clean[: max_chars - 3] + "..."
 
 
-@router.get(
-    "",
-    response_model=List[ConversationListResponse],
-    summary="Lấy danh sách cuộc hội thoại",
+async def _load_conversation_history(
+    db: AsyncSession, conversation_id: int
+) -> List[dict]:
+    """Load conversation history (user + assistant messages) for passing to LLM."""
+    from sqlalchemy import select
+
+    msg_query = (
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at)
+    )
+    result = await db.execute(msg_query)
+    messages = result.scalars().all()
+
+    history = []
+    for m in messages:
+        if m.role in ("user", "assistant") and m.content:
+            history.append({"role": m.role, "content": m.content})
+    return history
+
+
+router = APIRouter(
+    prefix="/conversations",
+    tags=["Conversations"],
+    dependencies=[Depends(get_current_user)],
 )
+
+
 async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -493,12 +515,11 @@ async def create_conversation_with_message(
 
             try:
                 async for chunk in chat.stream_answer(
-                    request.query, context, system_prompt
+                    request.query, context, system_prompt, conversation_history=None
                 ):
                     answer_content += chunk
                     yield chunk
 
-                # Lưu complete answer và cập nhật thời gian conversation
                 assistant_msg.content = answer_content
                 conversation.updated_at = datetime.now(timezone.utc)
                 await db.commit()
@@ -554,12 +575,11 @@ async def create_conversation_with_message(
 
         try:
             async for chunk in chat.stream_answer(
-                request.query, context_str, system_prompt
+                request.query, context_str, system_prompt, conversation_history=None
             ):
                 answer_content += chunk
                 yield chunk
 
-            # Lưu complete answer và cập nhật thời gian conversation
             assistant_msg.content = answer_content
             conversation.updated_at = datetime.now(timezone.utc)
             await db.commit()
@@ -626,6 +646,9 @@ async def add_message_stream(
 
     logger.info(f"[chat/stream] Added message to conversation {conversation.id}")
 
+    # Load conversation history from DB before calling LLM
+    conversation_history = await _load_conversation_history(db, conversation.id)
+
     chat = await get_chat_service_with_db(db)
 
     try:
@@ -663,12 +686,14 @@ async def add_message_stream(
 
             try:
                 async for chunk in chat.stream_answer(
-                    request.query, context, system_prompt
+                    request.query,
+                    context,
+                    system_prompt,
+                    conversation_history=conversation_history,
                 ):
                     answer_content += chunk
                     yield chunk
 
-                # Lưu complete answer và cập nhật thời gian conversation
                 assistant_msg.content = answer_content
                 conversation.updated_at = datetime.now(timezone.utc)
                 await db.commit()
@@ -724,12 +749,14 @@ async def add_message_stream(
 
         try:
             async for chunk in chat.stream_answer(
-                request.query, context_str, system_prompt
+                request.query,
+                context_str,
+                system_prompt,
+                conversation_history=conversation_history,
             ):
                 answer_content += chunk
                 yield chunk
 
-            # Lưu complete answer và cập nhật thời gian conversation
             assistant_msg.content = answer_content
             conversation.updated_at = datetime.now(timezone.utc)
             await db.commit()
