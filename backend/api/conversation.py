@@ -65,13 +65,13 @@ async def _load_conversation_history(
     return history
 
 
-router = APIRouter(
-    prefix="/conversations",
-    tags=["Conversations"],
-    dependencies=[Depends(get_current_user)],
+
+
+@router.get(
+    "",
+    response_model=List[ConversationListResponse],
+    summary="Danh sách đoạn chat",
 )
-
-
 async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
