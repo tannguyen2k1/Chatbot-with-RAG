@@ -33,3 +33,5 @@ scikit-learn
 joblib
 seaborn
 matplotlib
+rank-bm25
+rapidfuzz

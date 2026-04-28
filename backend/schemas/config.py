@@ -25,6 +25,9 @@ class ChatConfigUpdate(BaseModel):
     limit: Optional[int] = None
     use_reranker: Optional[bool] = None
     rerank_top_k: Optional[int] = None
+    use_bm25: Optional[bool] = None
+    bm25_top_k: Optional[int] = None
+    bm25_weight: Optional[float] = None
     system_prompt: Optional[str] = None
 
 
@@ -33,6 +36,9 @@ class ChatConfigResponse(BaseModel):
     limit: int
     use_reranker: bool
     rerank_top_k: int
+    use_bm25: bool
+    bm25_top_k: int
+    bm25_weight: float
     system_prompt: str
 
 
