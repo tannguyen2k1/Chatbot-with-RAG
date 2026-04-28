@@ -319,16 +319,19 @@ const SimpleChatApp = () => {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? {
-                    ...m,
-                    content: fullContent,
-                    status: done ? "done" : "streaming",
-                  }
+                ? { ...m, content: fullContent, status: "streaming" }
                 : m,
             ),
           );
         }
       }
+
+      // Stream kết thúc → đổi status thành "done" để tắt spinner
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, status: "done" } : m,
+        ),
+      );
     } catch (streamError) {
       if (streamError.name !== "AbortError") {
         const errMsg = streamError.message || "Khong nhan duoc phan hoi tu AI.";
@@ -658,6 +661,7 @@ const SimpleChatApp = () => {
               anchorEl={userAnchor}
               open={Boolean(userAnchor)}
               onClose={() => setUserAnchor(null)}
+              disableAutoFocusItem
               transformOrigin={{ horizontal: "left", vertical: "bottom" }}
               anchorOrigin={{ horizontal: "left", vertical: "top" }}
               PaperProps={{ sx: { minWidth: 180, borderRadius: 2 } }}
