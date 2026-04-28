@@ -294,6 +294,55 @@ class VectorService:
         )
         return VectorSearchResponse(results=results, count=len(results))
 
+    async def search_by_text_for(
+        self,
+        current_user_id: int,
+        collection_name: str,
+        search_req: TextSearchRequest,
+        embedding: EmbeddingService,
+        reranker: RerankService,
+    ) -> VectorSearchResponse:
+        """
+        Hybrid search: BM25 + Vector DB song song -> Weighted merge -> Rerank -> Top-k.
+
+        Flow:
+          Query
+          ├── BM25 -> top_k_lexical (use_bm25, bm25_top_k, bm25_weight)
+          └── Vector DB -> top_k_semantic
+                   |
+                Merge (weighted score: vec*(1-bm25_weight) + bm25*bm25_weight)
+                   |
+                Rerank
+                   |
+                Top-k final
+        """
+        await ensure_permission_global(current_user_id, "vector", "view")
+
+        query_vector = embedding.encode_single(search_req.query, is_query=True)
+        fetch_limit = search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)
+
+        vec_results = await self.search(
+            collection_name=collection_name,
+            vector=query_vector,
+            limit=fetch_limit,
+            score_threshold=None if search_req.use_reranker else search_req.score_threshold,
+            filter_conditions=search_req.filter,
+        )
+
+        merged_results = _merge_bm25_scores(vec_results, search_req, collection_name)
+        sorted_results = sorted(merged_results.values(), key=lambda r: r.score, reverse=True)
+
+        if search_req.use_reranker and sorted_results:
+            sorted_results = reranker.rerank_results(
+                query=search_req.query,
+                results=sorted_results,
+                top_k=search_req.limit,
+                score_threshold=search_req.score_threshold,
+            )
+
+        return VectorSearchResponse(results=sorted_results, count=len(sorted_results))
+
+
 def _merge_bm25_scores(
     vec_results: list[SearchResult],
     search_req: TextSearchRequest,
@@ -344,55 +393,6 @@ def _merge_bm25_scores(
         r.score = (1 - search_req.bm25_weight) * vec_norm + search_req.bm25_weight * bm25_norm
 
     return merged
-
-
-async def search_by_text_for(
-    self,
-    current_user_id: int,
-    collection_name: str,
-    search_req: TextSearchRequest,
-    embedding: EmbeddingService,
-    reranker: RerankService,
-) -> VectorSearchResponse:
-    """
-    Hybrid search: BM25 + Vector DB song song -> Weighted merge -> Rerank -> Top-k.
-
-    Flow:
-      Query
-      ├── BM25 -> top_k_lexical (use_bm25, bm25_top_k, bm25_weight)
-      └── Vector DB -> top_k_semantic
-               |
-            Merge (weighted score: vec*(1-bm25_weight) + bm25*bm25_weight)
-               |
-            Rerank
-               |
-            Top-k final
-    """
-    await ensure_permission_global(current_user_id, "vector", "view")
-
-    query_vector = embedding.encode_single(search_req.query, is_query=True)
-    fetch_limit = search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)
-
-    vec_results = await self.search(
-        collection_name=collection_name,
-        vector=query_vector,
-        limit=fetch_limit,
-        score_threshold=None if search_req.use_reranker else search_req.score_threshold,
-        filter_conditions=search_req.filter,
-    )
-
-    merged_results = _merge_bm25_scores(vec_results, search_req, collection_name)
-    sorted_results = sorted(merged_results.values(), key=lambda r: r.score, reverse=True)
-
-    if search_req.use_reranker and sorted_results:
-        sorted_results = reranker.rerank_results(
-            query=search_req.query,
-            results=sorted_results,
-            top_k=search_req.limit,
-            score_threshold=search_req.score_threshold,
-        )
-
-    return VectorSearchResponse(results=sorted_results, count=len(sorted_results))
 
 
 def get_vector_service() -> VectorService:
