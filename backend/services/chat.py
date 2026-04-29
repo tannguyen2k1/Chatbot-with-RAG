@@ -21,9 +21,9 @@ class ChatService:
         self.db = db
 
     def _build_client(self) -> Mistral:
-        api_key = settings.MISTRAL_API_KEY
+        api_key = settings.LLM_API_KEY
         if not api_key:
-            raise ValueError("Do not find MISTRAL_API_KEY in .env file")
+            raise ValueError("Do not find LLM_API_KEY in .env file")
         return Mistral(api_key=api_key)
 
     def build_context(self, results: List[SearchResult]) -> str:
@@ -92,13 +92,13 @@ class ChatService:
 
         try:
             response = await client.chat.complete_async(
-                model="mistral-large-latest",
+                model=settings.LLM_MODEL_NAME,
                 messages=messages,
             )
             return response.choices[0].message.content
         except AttributeError:
             response = client.chat.complete(
-                model="mistral-large-latest",
+                model=settings.LLM_MODEL_NAME,
                 messages=messages,
             )
             return response.choices[0].message.content
@@ -117,7 +117,7 @@ class ChatService:
 
         try:
             stream = await client.chat.stream_async(
-                model="mistral-large-latest",
+                model=settings.LLM_MODEL_NAME,
                 messages=messages,
             )
             async for event in stream:
@@ -127,7 +127,7 @@ class ChatService:
                         yield content
         except AttributeError:
             stream = client.chat.stream(
-                model="mistral-large-latest",
+                model=settings.LLM_MODEL_NAME,
                 messages=messages,
             )
             for event in stream:
