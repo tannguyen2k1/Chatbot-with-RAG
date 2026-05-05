@@ -21,9 +21,9 @@ class ChatService:
         self.db = db
 
     def _build_client(self) -> Mistral:
-        api_key = settings.LLM_API_KEY
+        api_key = settings.MISTRAL_API_KEY
         if not api_key:
-            raise ValueError("Do not find LLM_API_KEY in .env file")
+            raise ValueError("Do not find MISTRAL_API_KEY in .env file")
         return Mistral(api_key=api_key)
 
     def build_context(self, results: List[SearchResult]) -> str:
@@ -44,7 +44,9 @@ class ChatService:
 
         return context_text.strip()
 
-    def generate_prompt_preview(self, query: str, context: str, system_prompt: str = None) -> str:
+    def generate_prompt_preview(
+        self, query: str, context: str, system_prompt: str = None
+    ) -> str:
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         return system_prompt.format(context=context, query=query)
@@ -61,7 +63,12 @@ class ChatService:
         messages = []
 
         if history_include_system:
-            messages.append({"role": "system", "content": system_prompt.format(context=context, query="{query}")})
+            messages.append(
+                {
+                    "role": "system",
+                    "content": system_prompt.format(context=context, query="{query}"),
+                }
+            )
 
         if conversation_history and history_max_messages > 0:
             for entry in conversation_history[-history_max_messages:]:
@@ -72,7 +79,11 @@ class ChatService:
                 else:
                     messages.append({"role": "assistant", "content": content})
 
-        current_query = system_prompt.format(context=context, query=query) if history_include_system else query
+        current_query = (
+            system_prompt.format(context=context, query=query)
+            if history_include_system
+            else query
+        )
         messages.append({"role": "user", "content": current_query})
 
         return messages
@@ -89,17 +100,24 @@ class ChatService:
         client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
-        messages = self._build_messages(query, context, system_prompt, conversation_history, history_max_messages, history_include_system)
+        messages = self._build_messages(
+            query,
+            context,
+            system_prompt,
+            conversation_history,
+            history_max_messages,
+            history_include_system,
+        )
 
         try:
             response = await client.chat.complete_async(
-                model=settings.LLM_MODEL_NAME,
+                model=settings.MISTRAL_MODEL_NAME,
                 messages=messages,
             )
             return response.choices[0].message.content
         except AttributeError:
             response = client.chat.complete(
-                model=settings.LLM_MODEL_NAME,
+                model=settings.MISTRAL_MODEL_NAME,
                 messages=messages,
             )
             return response.choices[0].message.content
@@ -116,11 +134,18 @@ class ChatService:
         client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
-        messages = self._build_messages(query, context, system_prompt, conversation_history, history_max_messages, history_include_system)
+        messages = self._build_messages(
+            query,
+            context,
+            system_prompt,
+            conversation_history,
+            history_max_messages,
+            history_include_system,
+        )
 
         try:
             stream = await client.chat.stream_async(
-                model=settings.LLM_MODEL_NAME,
+                model=settings.MISTRAL_MODEL_NAME,
                 messages=messages,
             )
             async for event in stream:
@@ -130,7 +155,7 @@ class ChatService:
                         yield content
         except AttributeError:
             stream = client.chat.stream(
-                model=settings.LLM_MODEL_NAME,
+                model=settings.MISTRAL_MODEL_NAME,
                 messages=messages,
             )
             for event in stream:
@@ -146,6 +171,7 @@ class ChatService:
 
         try:
             from services.config import ConfigService
+
             config_service = ConfigService(self.db)
             config = await config_service.get_config_by_key("chat.system_prompt")
             if config and config.value:
