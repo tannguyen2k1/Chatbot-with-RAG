@@ -6,6 +6,8 @@ from typing import List
 from datetime import datetime, timezone
 import logging
 
+from config.settings import settings
+
 logger = logging.getLogger(__name__)
 
 from database.models.user import User
@@ -27,6 +29,7 @@ from services.embedding import EmbeddingService, get_embedding_service
 from services.rerank import RerankService, get_rerank_service
 from services.query_classifier import QueryClassifier, get_query_classifier
 from services.vector import VectorService, get_vector_service
+from services.reflection import ReflectionService, get_reflection_service
 from schemas.vector import TextSearchRequest
 
 router = APIRouter(
@@ -617,6 +620,7 @@ async def add_message_stream(
     embedding: EmbeddingService = Depends(get_embedding_service),
     reranker: RerankService = Depends(get_rerank_service),
     classifier: QueryClassifier = Depends(get_query_classifier),
+    reflection: ReflectionService = Depends(get_reflection_service),
 ):
     """
     Thêm message vào cuộc hội thoại có sẵn.
@@ -713,8 +717,26 @@ async def add_message_stream(
             },
         )
 
+    # --- Reflection: rewrite ambiguous query using history ---
+    reflected_query = request.query
+    if settings.REFLECTION_ENABLED and len(conversation_history) > 0:
+        reflection_service = reflection
+        try:
+            reflected_query = await reflection_service.reflect_async(
+                conversation_history=conversation_history,
+                last_query=request.query,
+                max_items=settings.REFLECTION_MAX_HISTORY,
+            )
+            logger.info(
+                f"[Reflection] conv={conversation.id} "
+                f"original='{request.query}' reflected='{reflected_query}'"
+            )
+        except Exception as e:
+            logger.warning(f"[Reflection] Failed, falling back to original: {e}")
+            reflected_query = request.query
+
     search_req = TextSearchRequest(
-        query=request.query,
+        query=reflected_query,
         limit=request.limit,
         use_reranker=request.use_reranker,
         rerank_top_k=request.rerank_top_k,
@@ -749,7 +771,7 @@ async def add_message_stream(
 
         try:
             async for chunk in chat.stream_answer(
-                request.query,
+                reflected_query,
                 context_str,
                 system_prompt,
                 conversation_history=conversation_history,
