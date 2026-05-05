@@ -71,7 +71,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
   </Box>
 );
 
-const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
+const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigChange }) => {
   const theme = useTheme();
   const { user } = useContext(AuthContext);
   const { setActiveMode, setIsLanguage, setIsFontSize } = useContext(CustomizerContext);
@@ -124,6 +124,11 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
     use_bm25: true,
     bm25_top_k: 30,
     bm25_weight: 0.3,
+    reflection_enabled: true,
+    reflection_max_history: 20,
+    conversation_history_enabled: true,
+    conversation_history_max_messages: 10,
+    conversation_history_include_system: true,
   });
 
   // System Prompt state
@@ -196,6 +201,11 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
         use_bm25: data.use_bm25 ?? true,
         bm25_top_k: data.bm25_top_k || 30,
         bm25_weight: data.bm25_weight ?? 0.3,
+        reflection_enabled: data.reflection_enabled ?? true,
+        reflection_max_history: data.reflection_max_history || 20,
+        conversation_history_enabled: data.conversation_history_enabled ?? true,
+        conversation_history_max_messages: data.conversation_history_max_messages || 10,
+        conversation_history_include_system: data.conversation_history_include_system ?? true,
       });
       if (data.collection_name) {
         setSelectedCollection(data.collection_name);
@@ -381,7 +391,18 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
         limit: chatConfig.limit,
         rerank_top_k: chatConfig.rerank_top_k,
         use_reranker: chatConfig.use_reranker,
+        use_bm25: chatConfig.use_bm25,
+        bm25_top_k: chatConfig.bm25_top_k,
+        bm25_weight: chatConfig.bm25_weight,
+        reflection_enabled: chatConfig.reflection_enabled,
+        reflection_max_history: chatConfig.reflection_max_history,
+        conversation_history_enabled: chatConfig.conversation_history_enabled,
+        conversation_history_max_messages: chatConfig.conversation_history_max_messages,
+        conversation_history_include_system: chatConfig.conversation_history_include_system,
       });
+      if (onChatConfigChange) {
+        onChatConfigChange({ ...chatConfig, collection_name: selectedCollection });
+      }
       showSnackbar("Đã lưu cấu hình", "success");
     } catch (err) {
       showSnackbar(err.message || "Lỗi khi lưu cấu hình", "error");
@@ -405,6 +426,9 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
         system_prompt: systemPrompt,
       });
       setEditingPrompt(false);
+      if (onChatConfigChange) {
+        onChatConfigChange({ ...chatConfig, collection_name: selectedCollection, system_prompt: systemPrompt });
+      }
       showSnackbar("Đã lưu system prompt", "success");
     } catch (err) {
       setPromptError(err.message || "Lỗi khi lưu system prompt");
@@ -701,6 +725,108 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat }) => {
                       {chatConfig.rerank_top_k}
                     </Typography>
                   </Box>
+                )}
+              </Box>
+
+              <Divider />
+
+              {/* Hội thoại */}
+              <Box>
+                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.5 }}>
+                  Hội thoại
+                </Typography>
+
+                {/* Reflection */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>Reflection</Typography>
+                    <Typography variant="caption" color="text.secondary">Viết lại câu hỏi mơ hồ dựa trên lịch sử chat</Typography>
+                  </Box>
+                  <Switch
+                    size="small"
+                    checked={chatConfig.reflection_enabled}
+                    onChange={(e) => setChatConfig({ ...chatConfig, reflection_enabled: e.target.checked })}
+                  />
+                </Box>
+                {chatConfig.reflection_enabled && (
+                  <Box sx={{ pl: 0.5, mb: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120 }}>
+                        Số tin nhắn gần nhất
+                      </Typography>
+                      <Slider
+                        size="small"
+                        value={chatConfig.reflection_max_history}
+                        min={1}
+                        max={50}
+                        step={1}
+                        onChange={(_, v) => setChatConfig({ ...chatConfig, reflection_max_history: v })}
+                        sx={{ flex: 1, minWidth: 120 }}
+                      />
+                      <Typography variant="body2" sx={{ minWidth: 28, textAlign: "right", fontWeight: 600 }}>
+                        {chatConfig.reflection_max_history}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Lịch sử hội thoại */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>Lịch sử hội thoại</Typography>
+                    <Typography variant="caption" color="text.secondary">Đưa tin nhắn cũ vào LLM để duy trì ngữ cảnh</Typography>
+                  </Box>
+                  <Switch
+                    size="small"
+                    checked={chatConfig.conversation_history_enabled}
+                    onChange={(e) =>
+                      setChatConfig({
+                        ...chatConfig,
+                        conversation_history_enabled: e.target.checked,
+                        conversation_history_max_messages: e.target.checked && chatConfig.conversation_history_max_messages === 0 ? 10 : chatConfig.conversation_history_max_messages,
+                      })
+                    }
+                  />
+                </Box>
+                {chatConfig.conversation_history_enabled && (
+                  <>
+                    <Box sx={{ pl: 0.5, mb: 1 }}>
+                      <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120 }}>
+                          Số tin nhắn gần nhất
+                        </Typography>
+                        <Slider
+                          size="small"
+                          value={chatConfig.conversation_history_max_messages}
+                          min={1}
+                          max={20}
+                          step={1}
+                          onChange={(_, v) =>
+                            setChatConfig({ ...chatConfig, conversation_history_max_messages: v })
+                          }
+                          sx={{ flex: 1, minWidth: 120 }}
+                        />
+                        <Typography variant="body2" sx={{ minWidth: 28, textAlign: "right", fontWeight: 600 }}>
+                          {chatConfig.conversation_history_max_messages}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={500}>Context mỗi tin nhắn</Typography>
+                        <Typography variant="caption" color="text.secondary">Đưa system prompt vào mỗi turn</Typography>
+                      </Box>
+                      <Switch
+                        size="small"
+                        checked={chatConfig.conversation_history_include_system}
+                        onChange={(e) =>
+                          setChatConfig({ ...chatConfig, conversation_history_include_system: e.target.checked })
+                        }
+                      />
+                    </Box>
+                  </>
                 )}
               </Box>
 

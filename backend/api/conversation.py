@@ -6,10 +6,6 @@ from typing import List
 from datetime import datetime, timezone
 import logging
 
-from config.settings import settings
-
-logger = logging.getLogger(__name__)
-
 from database.models.user import User
 from database.models.conversation import Conversation, Message
 from schemas.conversation import (
@@ -31,6 +27,9 @@ from services.query_classifier import QueryClassifier, get_query_classifier
 from services.vector import VectorService, get_vector_service
 from services.reflection import ReflectionService, get_reflection_service
 from schemas.vector import TextSearchRequest
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/conversations",
@@ -66,8 +65,6 @@ async def _load_conversation_history(
         if m.role in ("user", "assistant") and m.content:
             history.append({"role": m.role, "content": m.content})
     return history
-
-
 
 
 @router.get(
@@ -518,7 +515,12 @@ async def create_conversation_with_message(
 
             try:
                 async for chunk in chat.stream_answer(
-                    request.query, context, system_prompt, conversation_history=None
+                    request.query,
+                    context,
+                    system_prompt,
+                    conversation_history=None,
+                    history_max_messages=0,
+                    history_include_system=True,
                 ):
                     answer_content += chunk
                     yield chunk
@@ -578,7 +580,12 @@ async def create_conversation_with_message(
 
         try:
             async for chunk in chat.stream_answer(
-                request.query, context_str, system_prompt, conversation_history=None
+                request.query,
+                context_str,
+                system_prompt,
+                conversation_history=None,
+                history_max_messages=0,
+                history_include_system=True,
             ):
                 answer_content += chunk
                 yield chunk
@@ -694,6 +701,10 @@ async def add_message_stream(
                     context,
                     system_prompt,
                     conversation_history=conversation_history,
+                    history_max_messages=request.conversation_history_max_messages
+                    if request.conversation_history_enabled
+                    else 0,
+                    history_include_system=request.conversation_history_include_system,
                 ):
                     answer_content += chunk
                     yield chunk
@@ -719,13 +730,13 @@ async def add_message_stream(
 
     # --- Reflection: rewrite ambiguous query using history ---
     reflected_query = request.query
-    if settings.REFLECTION_ENABLED and len(conversation_history) > 0:
+    if request.reflection_enabled and len(conversation_history) > 0:
         reflection_service = reflection
         try:
             reflected_query = await reflection_service.reflect_async(
                 conversation_history=conversation_history,
                 last_query=request.query,
-                max_items=settings.REFLECTION_MAX_HISTORY,
+                max_items=request.reflection_max_history,
             )
             logger.info(
                 f"[Reflection] conv={conversation.id} "
@@ -775,6 +786,10 @@ async def add_message_stream(
                 context_str,
                 system_prompt,
                 conversation_history=conversation_history,
+                history_max_messages=request.conversation_history_max_messages
+                if request.conversation_history_enabled
+                else 0,
+                history_include_system=request.conversation_history_include_system,
             ):
                 answer_content += chunk
                 yield chunk

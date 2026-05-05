@@ -55,17 +55,16 @@ class ChatService:
         context: str,
         system_prompt: str,
         conversation_history: Optional[List[dict]] = None,
+        history_max_messages: int = 10,
+        history_include_system: bool = True,
     ) -> List[dict]:
-        max_messages = settings.CONVERSATION_HISTORY_MAX_MESSAGES
-        include_system = settings.CONVERSATION_HISTORY_INCLUDE_SYSTEM
-
         messages = []
 
-        if include_system:
+        if history_include_system:
             messages.append({"role": "system", "content": system_prompt.format(context=context, query="{query}")})
 
-        if conversation_history and max_messages > 0:
-            for entry in conversation_history[-max_messages:]:
+        if conversation_history and history_max_messages > 0:
+            for entry in conversation_history[-history_max_messages:]:
                 role = entry.get("role", "user")
                 content = entry.get("content", "")
                 if role == "user":
@@ -73,7 +72,7 @@ class ChatService:
                 else:
                     messages.append({"role": "assistant", "content": content})
 
-        current_query = system_prompt.format(context=context, query=query)
+        current_query = system_prompt.format(context=context, query=query) if history_include_system else query
         messages.append({"role": "user", "content": current_query})
 
         return messages
@@ -84,11 +83,13 @@ class ChatService:
         context: str,
         system_prompt: str = None,
         conversation_history: Optional[List[dict]] = None,
+        history_max_messages: int = 10,
+        history_include_system: bool = True,
     ) -> str:
         client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
-        messages = self._build_messages(query, context, system_prompt, conversation_history)
+        messages = self._build_messages(query, context, system_prompt, conversation_history, history_max_messages, history_include_system)
 
         try:
             response = await client.chat.complete_async(
@@ -109,11 +110,13 @@ class ChatService:
         context: str,
         system_prompt: str = None,
         conversation_history: Optional[List[dict]] = None,
+        history_max_messages: int = 10,
+        history_include_system: bool = True,
     ) -> AsyncIterator[str]:
         client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
-        messages = self._build_messages(query, context, system_prompt, conversation_history)
+        messages = self._build_messages(query, context, system_prompt, conversation_history, history_max_messages, history_include_system)
 
         try:
             stream = await client.chat.stream_async(

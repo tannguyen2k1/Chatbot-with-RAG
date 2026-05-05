@@ -58,26 +58,6 @@ class Settings(BaseSettings):
             {query}
             Câu trả lời của bạn:"""
 
-    # Query Reflection Settings
-    REFLECTION_ENABLED: bool = Field(
-        default=True,
-        description="Bật/tắt query reflection trước khi vector search.",
-    )
-    REFLECTION_MAX_HISTORY: int = Field(
-        default=100,
-        description="Số lượng message gần nhất đưa vào reflection prompt.",
-    )
-
-    # Conversation History Settings
-    CONVERSATION_HISTORY_MAX_MESSAGES: int = Field(
-        default=10,
-        description="Số lượng message lịch sử (user + assistant) đưa vào LLM. 0 = không dùng lịch sử.",
-    )
-    CONVERSATION_HISTORY_INCLUDE_SYSTEM: bool = Field(
-        default=True,
-        description="Đưa system prompt vào mỗi turn hay chỉ lần đầu (True = mỗi turn, False = chỉ lần đầu)",
-    )
-
     @property
     def cors_allow_origins_list(self) -> list[str]:
         return [x.strip() for x in self.CORS_ALLOW_ORIGINS.split(",") if x.strip()]

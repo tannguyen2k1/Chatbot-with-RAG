@@ -29,6 +29,11 @@ class ChatConfigUpdate(BaseModel):
     bm25_top_k: Optional[int] = None
     bm25_weight: Optional[float] = None
     system_prompt: Optional[str] = None
+    reflection_enabled: Optional[bool] = None
+    reflection_max_history: Optional[int] = None
+    conversation_history_enabled: Optional[bool] = None
+    conversation_history_max_messages: Optional[int] = None
+    conversation_history_include_system: Optional[bool] = None
 
 
 class ChatConfigResponse(BaseModel):
@@ -40,6 +45,11 @@ class ChatConfigResponse(BaseModel):
     bm25_top_k: int
     bm25_weight: float
     system_prompt: str
+    reflection_enabled: bool
+    reflection_max_history: int
+    conversation_history_enabled: bool
+    conversation_history_max_messages: int
+    conversation_history_include_system: bool
 
 
 class GeneralConfigUpdate(BaseModel):

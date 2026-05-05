@@ -157,6 +157,16 @@ class ConfigService:
             await self.upsert_config("chat.bm25_top_k", str(data.bm25_top_k), "Số kết quả BM25 để merge", "chat")
         if data.bm25_weight is not None:
             await self.upsert_config("chat.bm25_weight", str(data.bm25_weight), "Trọng số BM25 khi merge", "chat")
+        if data.reflection_enabled is not None:
+            await self.upsert_config("chat.reflection_enabled", "true" if data.reflection_enabled else "false", "Bật/tắt query reflection", "chat")
+        if data.reflection_max_history is not None:
+            await self.upsert_config("chat.reflection_max_history", str(data.reflection_max_history), "Số tin nhắn gần nhất cho reflection", "chat")
+        if data.conversation_history_enabled is not None:
+            await self.upsert_config("chat.history_enabled", "true" if data.conversation_history_enabled else "false", "Bật/tắt lịch sử hội thoại", "chat")
+        if data.conversation_history_max_messages is not None:
+            await self.upsert_config("chat.history_max_messages", str(data.conversation_history_max_messages), "Số tin nhắn lịch sử đưa vào LLM", "chat")
+        if data.conversation_history_include_system is not None:
+            await self.upsert_config("chat.history_include_system", "true" if data.conversation_history_include_system else "false", "System prompt mỗi turn", "chat")
 
         return {"message": "Lưu cấu hình thành công"}
     
@@ -185,6 +195,11 @@ class ConfigService:
             "use_bm25": config_dict.get("chat.use_bm25", "true").lower() == "true",
             "bm25_top_k": int(config_dict.get("chat.bm25_top_k", 30)),
             "bm25_weight": float(config_dict.get("chat.bm25_weight", 0.3)),
+            "reflection_enabled": config_dict.get("chat.reflection_enabled", "true").lower() == "true",
+            "reflection_max_history": int(config_dict.get("chat.reflection_max_history", 20)),
+            "conversation_history_enabled": config_dict.get("chat.history_enabled", "true").lower() == "true",
+            "conversation_history_max_messages": int(config_dict.get("chat.history_max_messages", 10)),
+            "conversation_history_include_system": config_dict.get("chat.history_include_system", "true").lower() == "true",
         }
     async def update_general_config_for(self, current_user_id: int, data) -> dict:
         """Update general application configs with permission check"""
@@ -211,3 +226,4 @@ class ConfigService:
             "language": config_dict.get("general.language", "vi"),
             "font_size": config_dict.get("general.font_size", "medium")
         }
+
