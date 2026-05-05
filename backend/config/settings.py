@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     CHUNK_MIN_TOKENS_TO_MERGE: int = 40
 
     # LLM Settings
-    LLM_API_KEY: Optional[str] = None
-    LLM_MODEL_NAME: str = "mistral-large-latest"
+    MISTRAL_API_KEY: Optional[str] = None
+    MISTRAL_MODEL_NAME: str = "mistral-large-latest"
 
     # Chat System Prompt
     CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh.

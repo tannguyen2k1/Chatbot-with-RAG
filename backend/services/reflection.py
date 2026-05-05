@@ -41,12 +41,12 @@ QUY TẮC:
 
 class ReflectionService:
     def __init__(self, api_key: Optional[str] = None):
-        self._api_key = api_key or settings.LLM_API_KEY
+        self._api_key = api_key or settings.MISTRAL_API_KEY
         self._model = "mistral-large-latest"
 
     def _build_client(self) -> Mistral:
         if not self._api_key:
-            raise ValueError("Do not find LLM_API_KEY in .env file")
+            raise ValueError("Do not find MISTRAL_API_KEY in .env file")
         return Mistral(api_key=self._api_key)
 
     def _format_history(
