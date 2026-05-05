@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models.user import User
 from schemas.config import (
-    ConfigCreate, 
-    ConfigUpdate, 
-    ConfigResponse, 
-    ChatConfigUpdate, 
-    GeneralConfigUpdate
+    ConfigCreate,
+    ConfigUpdate,
+    ConfigResponse,
+    ChatConfigUpdate,
+    GeneralConfigUpdate,
 )
 from dependencies import get_db, get_current_user
 from services import ConfigService, PermissionError
@@ -32,6 +32,7 @@ async def list_configs(
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+
 
 @router.get("/general", response_model=dict)
 async def get_general_config(

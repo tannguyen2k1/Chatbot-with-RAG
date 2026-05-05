@@ -75,6 +75,11 @@ class CreateConversationWithMessageRequest(BaseModel):
     use_bm25: bool = Field(default=True, description="Sử dụng BM25 để tìm kiếm keyword")
     bm25_top_k: int = Field(default=30, description="Số kết quả lấy từ BM25 để merge")
     bm25_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Trọng số BM25 khi merge với vector search")
+    reflection_enabled: bool = Field(default=True, description="Bật/tắt query reflection")
+    reflection_max_history: int = Field(default=20, description="Số tin nhắn gần nhất đưa vào reflection")
+    conversation_history_enabled: bool = Field(default=True, description="Bật/tắt lịch sử hội thoại")
+    conversation_history_max_messages: int = Field(default=10, description="Số tin nhắn lịch sử đưa vào LLM")
+    conversation_history_include_system: bool = Field(default=True, description="Đưa system prompt vào mỗi turn")
 
 
 class AddMessageRequest(BaseModel):
@@ -88,3 +93,8 @@ class AddMessageRequest(BaseModel):
     use_bm25: bool = Field(default=True, description="Sử dụng BM25 để tìm kiếm keyword")
     bm25_top_k: int = Field(default=30, description="Số kết quả lấy từ BM25 để merge")
     bm25_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Trọng số BM25 khi merge với vector search")
+    reflection_enabled: bool = Field(default=True, description="Bật/tắt query reflection")
+    reflection_max_history: int = Field(default=20, description="Số tin nhắn gần nhất đưa vào reflection")
+    conversation_history_enabled: bool = Field(default=True, description="Bật/tắt lịch sử hội thoại")
+    conversation_history_max_messages: int = Field(default=10, description="Số tin nhắn lịch sử đưa vào LLM")
+    conversation_history_include_system: bool = Field(default=True, description="Đưa system prompt vào mỗi turn")

@@ -91,6 +91,10 @@ const SimpleChatApp = () => {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", message: "", onConfirm: null });
 
+  const handleChatConfigChange = (newConfig) => {
+    setChatConfig(newConfig);
+  };
+
   const [chatConfig, setChatConfig] = useState({
     collection_name: null,
     limit: 3,
@@ -99,6 +103,11 @@ const SimpleChatApp = () => {
     use_bm25: true,
     bm25_top_k: 30,
     bm25_weight: 0.3,
+    reflection_enabled: true,
+    reflection_max_history: 20,
+    conversation_history_enabled: true,
+    conversation_history_max_messages: 10,
+    conversation_history_include_system: true,
   });
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -160,6 +169,11 @@ const SimpleChatApp = () => {
           use_bm25: config.use_bm25 ?? true,
           bm25_top_k: config.bm25_top_k || 30,
           bm25_weight: config.bm25_weight ?? 0.3,
+          reflection_enabled: config.reflection_enabled ?? true,
+          reflection_max_history: config.reflection_max_history || 20,
+          conversation_history_enabled: config.conversation_history_enabled ?? true,
+          conversation_history_max_messages: config.conversation_history_max_messages || 10,
+          conversation_history_include_system: config.conversation_history_include_system ?? true,
         });
       } catch (err) {
         console.error("Failed to fetch chat config", err);
@@ -1248,6 +1262,7 @@ const SimpleChatApp = () => {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onRefresh={fetchHistory}
+        onChatConfigChange={handleChatConfigChange}
         onClearChat={() => {
           setActiveChatId(null);
           setMessages([]);
