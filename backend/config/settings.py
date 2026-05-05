@@ -58,6 +58,16 @@ class Settings(BaseSettings):
             {query}
             Câu trả lời của bạn:"""
 
+    # Query Reflection Settings
+    REFLECTION_ENABLED: bool = Field(
+        default=True,
+        description="Bật/tắt query reflection trước khi vector search.",
+    )
+    REFLECTION_MAX_HISTORY: int = Field(
+        default=100,
+        description="Số lượng message gần nhất đưa vào reflection prompt.",
+    )
+
     # Conversation History Settings
     CONVERSATION_HISTORY_MAX_MESSAGES: int = Field(
         default=10,
