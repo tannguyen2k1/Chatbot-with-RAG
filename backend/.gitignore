@@ -42,3 +42,5 @@ dist/
 build/
 # Trained ML models
 services/models/
+
+.env
