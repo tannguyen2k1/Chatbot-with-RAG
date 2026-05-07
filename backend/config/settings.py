@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     RERANKER_MIN_CANDIDATES: int = 3
     CHUNK_MIN_TOKENS_TO_MERGE: int = 40
 
+    # NER Model (Vietnamese Named Entity Recognition)
+    NER_MODEL_NAME: str = "NlpHUST/ner-vietnamese-electra-base"
+
     # LLM Settings
     MISTRAL_API_KEY: Optional[str] = None
     MISTRAL_MODEL_NAME: str = "mistral-large-latest"

@@ -55,14 +55,16 @@ async def check_qdrant_connection() -> None:
 
 
 def preload_ai_models() -> None:
-    """Pre-load Embedding model và Reranker model vào bộ nhớ."""
+    """Pre-load Embedding model, Reranker model và NER model vào bộ nhớ."""
     try:
         from services.embedding import get_embedding_service
         from services.rerank import get_rerank_service
+        from services.ner import get_ner_service
 
-        print("[AI Models] Đang tải các mô hình ngôn ngữ (Embedding & Reranker)...")
+        print("[AI Models] Đang tải các mô hình ngôn ngữ (Embedding, Reranker, NER)...")
         get_embedding_service()._load_model()
         get_rerank_service()._load_model()
+        get_ner_service()._load_model()
         print("[AI Models] Khởi tạo thành công!")
     except Exception as e:
         print(f"[WARN] Lỗi tải AI Models: {e}")

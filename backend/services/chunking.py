@@ -206,15 +206,31 @@ class ChunkingService:
             return ""
 
         stem = Path(filename).stem
-        stem = re.sub(r"[_\\-.]+", " ", stem)
+        stem = re.sub(r"[-_=\.*~]+", " ", stem)
         return re.sub(r"\s+", " ", stem).strip()
+
+    def _extract_chunk_entities(self, text: str, heading: str = "") -> list[str]:
+        """
+        Extract entities từ chunk text bằng NER model.
+
+        Ưu tiên ORG > PER > LOC. Truncate text nếu quá dài (> 2000 chars).
+        """
+        combined = f"{heading} {text}".strip() if heading else text
+        if len(combined) > 2000:
+            combined = combined[:2000]
+
+        try:
+            from services.ner import get_ner_service
+            entities = get_ner_service().extract_entity_names(combined)
+            return [e for e in entities if len(e) >= 2][:3]
+        except Exception:
+            return []
 
     def group_and_chunk(
         self,
         parsed_elements: List[Dict[str, Any]],
         base_metadata: dict,
         min_tokens_to_merge: int = settings.CHUNK_MIN_TOKENS_TO_MERGE,
-        entity_name: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         vocabulary = self._build_document_vocabulary(parsed_elements)
         sections = []
@@ -258,16 +274,20 @@ class ChunkingService:
                     continue
                 seen.add(content_hash)
 
-                # Sử dụng entity_name truyền vào, hoặc fallback về filename
-                actual_entity = (entity_name or self._fallback_entity_name(base_metadata)).strip()
-                
-                # Text dùng để embed — có ngữ cảnh Entity và heading
+                # Extract entities từ chunk bằng NER
+                chunk_entities = self._extract_chunk_entities(chunk_text, heading)
+
+                # Build prefix: NER entities > heading > filename entity (fallback)
                 prefix_parts = []
-                if actual_entity:
-                    prefix_parts.append(actual_entity)
-                if heading:
+                if chunk_entities:
+                    prefix_parts.extend(chunk_entities)
+                elif heading:
                     prefix_parts.append(heading)
-                    
+                else:
+                    filename_entity = self._fallback_entity_name(base_metadata).strip()
+                    if filename_entity:
+                        prefix_parts.append(filename_entity)
+
                 prefix = " - ".join(prefix_parts)
                 embed_text = f"[{prefix}]\n{chunk_text}" if prefix else chunk_text
 
@@ -277,6 +297,7 @@ class ChunkingService:
                     "metadata": {
                         **base_metadata,
                         "heading": heading,
+                        "chunk_entities": chunk_entities,
                         "chunk_index": len(final_chunks),
                         "split_index": i,
                         "total_splits": len(splits),
