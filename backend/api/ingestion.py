@@ -1,7 +1,5 @@
 import os
 import uuid
-from typing import Optional
-
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from database.models.user import User
 
@@ -25,7 +23,6 @@ router = APIRouter(
 async def ingest_file(
     file: UploadFile = File(...),
     collection_name: str = Query(..., description="Ten collection Qdrant de luu."),
-    entity_name: Optional[str] = Query(None, description="Ten thuc the de tiem vao ngu canh."),
     current_user: User = Depends(get_current_user),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_service: VectorService = Depends(get_vector_service),
@@ -40,7 +37,7 @@ async def ingest_file(
 
     try:
         parsed_elements, metadata = await ingestion_service.ingest_file(file)
-        chunks = chunking_service.group_and_chunk(parsed_elements, metadata, entity_name=entity_name)
+        chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
 
         if chunks:
             batch_size = 500
@@ -85,7 +82,7 @@ async def ingest_db(
         }
 
         parsed_elements, metadata = await ingestion_service.ingest_db_record(request.content, source_metadata)
-        chunks = chunking_service.group_and_chunk(parsed_elements, metadata, entity_name=request.entity_name)
+        chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
 
         if chunks:
             batch_size = 500

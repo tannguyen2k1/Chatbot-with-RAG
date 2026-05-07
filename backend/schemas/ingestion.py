@@ -12,6 +12,5 @@ class IngestDBRequest(BaseModel):
     source_table: str = Field(..., description="Tên bảng nguồn")
     record_id: str = Field(..., description="ID của bản ghi")
     content: str = Field(..., description="Nội dung cần ingest")
-    entity_name: Optional[str] = Field(None, description="Tên thực thể (Ví dụ: tên công ty) để tiêm vào ngữ cảnh.")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadata bổ sung")
     collection_name: str = Field(..., description="Tên collection Qdrant để lưu.")
