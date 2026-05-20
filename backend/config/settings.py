@@ -1,5 +1,4 @@
 from enum import Enum
-from pydantic import Field
 from pydantic_settings import BaseSettings
 from typing import TYPE_CHECKING, Optional
 
@@ -47,9 +46,27 @@ class Settings(BaseSettings):
     # NER Model (Vietnamese Named Entity Recognition)
     NER_MODEL_NAME: str = "NlpHUST/ner-vietnamese-electra-base"
 
-    # LLM Settings
+    # LLM Settings - Strategy Pattern
+    LLM_PROVIDER: str = "mistral"  # "mistral" | "deepseek"
+
+    # Mistral
     MISTRAL_API_KEY: Optional[str] = None
     MISTRAL_MODEL_NAME: str = "mistral-large-latest"
+
+    # DeepSeek
+    DEEPSEEK_API_KEY: Optional[str] = None
+    DEEPSEEK_MODEL_NAME: str = "deepseek-chat"
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+
+    @property
+    def llm_model_name(self) -> str:
+        match self.LLM_PROVIDER:
+            case "mistral":
+                return self.MISTRAL_MODEL_NAME
+            case "deepseek":
+                return self.DEEPSEEK_MODEL_NAME
+            case _:
+                raise ValueError(f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral' hoặc 'deepseek'.")
 
     # Chat System Prompt
     CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh.

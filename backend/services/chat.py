@@ -1,9 +1,8 @@
 from typing import AsyncIterator, List, Optional
 
-from mistralai import Mistral
-
 from config.settings import settings
 from schemas.vector import SearchResult
+from services.llm_provider import LLMProviderBase, get_cached_provider
 
 
 DEFAULT_SYSTEM_PROMPT = """Bạn là một trợ lý AI thông minh.
@@ -17,14 +16,16 @@ DEFAULT_SYSTEM_PROMPT = """Bạn là một trợ lý AI thông minh.
 
 
 class ChatService:
-    def __init__(self, db=None):
+    def __init__(self, db=None, llm_provider: LLMProviderBase | None = None):
         self.db = db
+        self._llm = llm_provider
 
-    def _build_client(self) -> Mistral:
-        api_key = settings.MISTRAL_API_KEY
-        if not api_key:
-            raise ValueError("Do not find MISTRAL_API_KEY in .env file")
-        return Mistral(api_key=api_key)
+    @property
+    def llm(self) -> LLMProviderBase:
+        """Lazy-load LLM provider từ cache (singleton)."""
+        if self._llm is None:
+            self._llm = get_cached_provider()
+        return self._llm
 
     def build_context(self, results: List[SearchResult]) -> str:
         if not results:
@@ -66,7 +67,7 @@ class ChatService:
             messages.append(
                 {
                     "role": "system",
-                    "content": system_prompt.format(context=context, query="{query}"),
+                    "content": system_prompt.format(context=context, query=query),
                 }
             )
 
@@ -79,12 +80,7 @@ class ChatService:
                 else:
                     messages.append({"role": "assistant", "content": content})
 
-        current_query = (
-            system_prompt.format(context=context, query=query)
-            if history_include_system
-            else query
-        )
-        messages.append({"role": "user", "content": current_query})
+        messages.append({"role": "user", "content": query})
 
         return messages
 
@@ -97,7 +93,6 @@ class ChatService:
         history_max_messages: int = 10,
         history_include_system: bool = True,
     ) -> str:
-        client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         messages = self._build_messages(
@@ -109,18 +104,10 @@ class ChatService:
             history_include_system,
         )
 
-        try:
-            response = await client.chat.complete_async(
-                model=settings.MISTRAL_MODEL_NAME,
-                messages=messages,
-            )
-            return response.choices[0].message.content
-        except AttributeError:
-            response = client.chat.complete(
-                model=settings.MISTRAL_MODEL_NAME,
-                messages=messages,
-            )
-            return response.choices[0].message.content
+        return await self.llm.complete_async(
+            model=settings.llm_model_name,
+            messages=messages,
+        )
 
     async def stream_answer(
         self,
@@ -131,7 +118,6 @@ class ChatService:
         history_max_messages: int = 10,
         history_include_system: bool = True,
     ) -> AsyncIterator[str]:
-        client = self._build_client()
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         messages = self._build_messages(
@@ -143,26 +129,11 @@ class ChatService:
             history_include_system,
         )
 
-        try:
-            stream = await client.chat.stream_async(
-                model=settings.MISTRAL_MODEL_NAME,
-                messages=messages,
-            )
-            async for event in stream:
-                for choice in event.data.choices:
-                    content = choice.delta.content
-                    if isinstance(content, str) and content:
-                        yield content
-        except AttributeError:
-            stream = client.chat.stream(
-                model=settings.MISTRAL_MODEL_NAME,
-                messages=messages,
-            )
-            for event in stream:
-                for choice in event.data.choices:
-                    content = choice.delta.content
-                    if isinstance(content, str) and content:
-                        yield content
+        async for chunk in self.llm.stream_async(
+            model=settings.llm_model_name,
+            messages=messages,
+        ):
+            yield chunk
 
     async def get_system_prompt(self) -> str:
         """Lấy system prompt từ database theo tenant, fallback về default"""
