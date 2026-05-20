@@ -28,6 +28,7 @@ unstructured-inference
 pdf2image
 pdfminer.six
 mistralai<2.0.0
+openai>=1.0.0
 sentencepiece
 scikit-learn
 joblib

@@ -12,9 +12,8 @@ Dựa trên conversation history, rewrite câu hỏi ambiguous
 import logging
 from typing import List, Optional
 
-from mistralai import Mistral
-
 from config.settings import settings
+from services.llm_provider import LLMProviderBase, get_cached_provider
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +39,15 @@ QUY TẮC:
 
 
 class ReflectionService:
-    def __init__(self, api_key: Optional[str] = None):
-        self._api_key = api_key or settings.MISTRAL_API_KEY
-        self._model = "mistral-large-latest"
+    def __init__(self, llm_provider: LLMProviderBase | None = None):
+        self._llm = llm_provider
 
-    def _build_client(self) -> Mistral:
-        if not self._api_key:
-            raise ValueError("Do not find MISTRAL_API_KEY in .env file")
-        return Mistral(api_key=self._api_key)
+    @property
+    def llm(self) -> LLMProviderBase:
+        """Lazy-load LLM provider từ cache (singleton)."""
+        if self._llm is None:
+            self._llm = get_cached_provider()
+        return self._llm
 
     def _format_history(
         self, conversation_history: List[dict], max_items: int = 100
@@ -103,12 +103,10 @@ class ReflectionService:
         )
 
         try:
-            client = self._build_client()
-            response = client.chat.complete(
-                model=self._model,
+            reflected = self.llm.complete(
+                model=settings.llm_model_name,
                 messages=[{"role": "user", "content": prompt}],
-            )
-            reflected = response.choices[0].message.content.strip()
+            ).strip()
             logger.info(
                 f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'"
             )
@@ -133,12 +131,12 @@ class ReflectionService:
         )
 
         try:
-            client = self._build_client()
-            response = await client.chat.complete_async(
-                model=self._model,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            reflected = response.choices[0].message.content.strip()
+            reflected = (
+                await self.llm.complete_async(
+                    model=settings.llm_model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            ).strip()
             logger.info(
                 f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'"
             )
