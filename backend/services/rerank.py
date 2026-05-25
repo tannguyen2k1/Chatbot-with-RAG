@@ -1,5 +1,6 @@
 import logging
 import re
+import statistics
 import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -84,13 +85,22 @@ class RerankService:
             boost = self._coverage_boost(query, entity, heading, text)
             final_score = score + boost
 
-            if score_threshold is not None and final_score < score_threshold:
-                continue
-
             original_res.score = final_score
             reranked.append(original_res)
 
-        return sorted(reranked, key=lambda r: r.score, reverse=True)
+        # Auto-filter extreme low-score outliers (very conservative).
+        # Only removes clear noise; keeps at least half to avoid dropping useful context.
+        if score_threshold is None and len(reranked) >= 5:
+            scores = [r.score for r in reranked]
+            mean = statistics.mean(scores)
+            stdev = statistics.stdev(scores) if len(scores) > 1 else 0.0
+            auto_threshold = mean - 0.5 * stdev
+            min_keep = max(1, len(reranked) // 2)
+            filtered = [r for r in reranked if r.score >= auto_threshold]
+            if len(filtered) >= min_keep:
+                reranked = filtered
+
+        return sorted(reranked, key=lambda r: r.score, reverse=True)[:top_k]
 
     def _coverage_boost(self, query: str, entity: str, heading: str, text: str) -> float:
         norm_query = self._normalize_text(query)

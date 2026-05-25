@@ -7,6 +7,7 @@ Cung cấp các thao tác:
 - Similarity search
 """
 
+import math
 from typing import Optional, Any
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
@@ -303,7 +304,7 @@ class VectorService:
         reranker: RerankService,
     ) -> VectorSearchResponse:
         """
-        Hybrid search: BM25 + Vector DB song song -> Weighted merge -> Rerank -> Top-k.
+        Hybrid search: BM25 + Vector DB -> Weighted merge -> Rerank -> MMR -> Top-k.
 
         Flow:
           Query
@@ -312,7 +313,9 @@ class VectorService:
                    |
                 Merge (weighted score: vec*(1-bm25_weight) + bm25*bm25_weight)
                    |
-                Rerank
+                Rerank (CrossEncoder)
+                   |
+                MMR Diversify
                    |
                 Top-k final
         """
@@ -330,17 +333,26 @@ class VectorService:
         )
 
         merged_results = _merge_bm25_scores(vec_results, search_req, collection_name)
-        sorted_results = sorted(merged_results.values(), key=lambda r: r.score, reverse=True)
+        merged_list = sorted(merged_results.values(), key=lambda r: r.score, reverse=True)
 
-        if search_req.use_reranker and sorted_results:
-            sorted_results = reranker.rerank_results(
+        if search_req.use_reranker and merged_list:
+            merged_list = reranker.rerank_results(
                 query=search_req.query,
-                results=sorted_results,
-                top_k=search_req.limit,
+                results=merged_list,
+                top_k=search_req.limit * 3,
                 score_threshold=search_req.score_threshold,
             )
 
-        return VectorSearchResponse(results=sorted_results, count=len(sorted_results))
+        if merged_list:
+            merged_list = mmr_diversify(
+                results=merged_list,
+                query_embedding=query_vector,
+                embedding=embedding,
+                lambda_param=0.7,
+                top_k=search_req.limit,
+            )
+
+        return VectorSearchResponse(results=merged_list, count=len(merged_list))
 
 
 def _merge_bm25_scores(
@@ -348,22 +360,12 @@ def _merge_bm25_scores(
     search_req: TextSearchRequest,
     collection_name: str,
 ) -> dict[str | int, SearchResult]:
-    """
-    Merge BM25 scores vào vector results bằng normalized weighted average.
-
-    Args:
-        vec_results: Kết quả từ vector search (dùng làm corpus cho BM25)
-        search_req: Search request chứa bm25 params
-        collection_name: Tên collection (dùng để lấy BM25 service)
-
-    Returns:
-        Dict mapping id -> SearchResult với score đã được merge
-    """
     merged: dict[str | int, SearchResult] = {r.id: r for r in vec_results}
 
     if not search_req.use_bm25 or not vec_results:
         return merged
 
+    weight = search_req.bm25_weight
     bm25_service = get_bm25_service(collection_name)
     bm25_service.build(
         texts=[r.payload.get("_text", "") for r in vec_results],
@@ -390,9 +392,64 @@ def _merge_bm25_scores(
     for r in merged.values():
         vec_norm = r.score / max_vec
         bm25_norm = bm25_scores.get(r.id, 0.0) / max_bm25
-        r.score = (1 - search_req.bm25_weight) * vec_norm + search_req.bm25_weight * bm25_norm
+        r.score = (1 - weight) * vec_norm + weight * bm25_norm
 
     return merged
+
+
+def _cosine_sim(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(x * x for x in b))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def mmr_diversify(
+    results: list[SearchResult],
+    query_embedding: list[float],
+    embedding: EmbeddingService,
+    lambda_param: float = 0.7,
+    top_k: int = 5,
+) -> list[SearchResult]:
+    """Maximum Marginal Relevance diversification.
+
+    Selects results that are both relevant to the query and diverse from each other.
+    """
+    if not results or len(results) <= top_k:
+        return results
+
+    texts = [r.payload.get("_text", "") for r in results]
+    text_embeddings = embedding.encode_texts(texts, is_query=False)
+
+    query_sims = [_cosine_sim(query_embedding, emb) for emb in text_embeddings]
+
+    selected_indices: list[int] = []
+    remaining = list(range(len(results)))
+
+    for _ in range(top_k):
+        if not remaining:
+            break
+
+        mmr_scores = []
+        for i in remaining:
+            rel = query_sims[i]
+            if selected_indices:
+                div = max(
+                    _cosine_sim(text_embeddings[i], text_embeddings[j])
+                    for j in selected_indices
+                )
+            else:
+                div = 0.0
+            mmr = lambda_param * rel - (1 - lambda_param) * div
+            mmr_scores.append((i, mmr))
+
+        best_idx = max(mmr_scores, key=lambda x: x[1])[0]
+        selected_indices.append(best_idx)
+        remaining.remove(best_idx)
+
+    return [results[i] for i in selected_indices]
 
 
 def get_vector_service() -> VectorService:
