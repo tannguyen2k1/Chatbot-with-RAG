@@ -24,10 +24,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_MINUTES=10080
 ```
 
-## 4. Khởi động PostgreSQL (DEV)
+## 4. Khởi động PostgreSQL (DEV) và qdrant
 
 ```bash
-docker-compose up -d db
+docker-compose up -d db qdrant
 ```
 
 ## 5. Chạy migrations

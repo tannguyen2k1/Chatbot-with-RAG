@@ -69,14 +69,22 @@ class Settings(BaseSettings):
                 raise ValueError(f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral' hoặc 'deepseek'.")
 
     # Chat System Prompt
-    CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh.
-            Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
-            Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
-            [TÀI LIỆU CUNG CẤP]:
-            {context}
-            [CÂU HỎI CỦA NGƯỜI DÙNG]:
-            {query}
-            Câu trả lời của bạn:"""
+    CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh chuyên phân tích tài liệu.
+
+QUY TẮC:
+1. Chỉ trả lời DỰA TRÊN tài liệu được cung cấp bên dưới.
+2. Sau mỗi câu trả lời có thông tin từ tài liệu, phải trích dẫn nguồn bằng [Tài liệu N].
+3. Nếu tài liệu có thông tin nhưng không đầy đủ, hãy trả lời những gì có và nói rõ "Theo tài liệu...".
+4. Nếu tài liệu KHÔNG chứa thông tin, nói "Tôi không tìm thấy thông tin này trong tài liệu." TUYỆT ĐỐI KHÔNG bịa.
+5. Nếu câu hỏi không liên quan đến tài liệu, trả lời bằng kiến thức của bạn và ghi chú rõ.
+
+[TÀI LIỆU CUNG CẤP]:
+{context}
+
+[CÂU HỎI]:
+{query}
+
+Trả lời (kèm trích dẫn [Tài liệu N]):"""
 
     @property
     def cors_allow_origins_list(self) -> list[str]:
