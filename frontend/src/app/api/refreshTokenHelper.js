@@ -1,52 +1,50 @@
-// Token refresh helper for globalFetcher
-import { rawPostFetcher } from './globalFetcher';
+import { rawPostFetcher, setGlobalAccessToken } from "./globalFetcher";
+import { redirectToLogin, resetLoginRedirect } from "../utils/auth/authRedirect";
 
-// Single-flight refresh: ensure only one refresh runs at a time
 let refreshPromise = null;
-let hasRedirectedToLogin = false;
+let onTokensRefreshed = null;
+
+export function setTokenRefreshHandler(handler) {
+  onTokensRefreshed = handler;
+}
 
 export async function refreshTokenIfNeeded(error) {
-  // Only handle 401/expired token errors in browser
   if (!error || !error.message) return null;
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   if (!/401|token|expired|unauthorized/i.test(error.message)) return null;
 
-  // If a refresh is already in progress, wait for it
   if (refreshPromise) {
     try {
       const token = await refreshPromise;
       return token || null;
-    } catch (_) {
+    } catch {
       return null;
     }
   }
 
-  // Start a new refresh request
   refreshPromise = (async () => {
     try {
-      const data = await rawPostFetcher('/api/auth/refresh', {}, {
-        credentials: 'include',
-      });
+      const data = await rawPostFetcher(
+        "/api/auth/refresh",
+        {},
+        { credentials: "include" },
+      );
 
-      if (data && data.access_token) {
-        // Update global access token if available
-        if (window.setGlobalAccessToken) {
-          window.setGlobalAccessToken(data.access_token);
+      if (data?.access_token) {
+        setGlobalAccessToken(data.access_token);
+        if (typeof onTokensRefreshed === "function") {
+          onTokensRefreshed(data.access_token, data.user);
         }
+        resetLoginRedirect();
         return data.access_token;
       }
 
       return null;
     } catch (err) {
-      console.error('Token refresh failed:', err);
-      // Redirect to login once
-      if (!hasRedirectedToLogin) {
-        hasRedirectedToLogin = true;
-        window.location.href = '/auth/login';
-      }
+      console.error("Token refresh failed:", err);
+      redirectToLogin();
       return null;
     } finally {
-      // Clear the promise so subsequent calls can trigger a new refresh
       refreshPromise = null;
     }
   })();
@@ -54,7 +52,7 @@ export async function refreshTokenIfNeeded(error) {
   try {
     const token = await refreshPromise;
     return token || null;
-  } catch (_) {
+  } catch {
     return null;
   }
 }

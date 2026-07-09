@@ -3,7 +3,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { setGlobalAccessToken } from "../../api/globalFetcher";
+import { setTokenRefreshHandler } from "../../api/refreshTokenHelper";
 import { useTenant } from "../TenantContext";
+import { isAuthPath, redirectToLogin, resetLoginRedirect } from "../../utils/auth/authRedirect";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
@@ -30,27 +32,50 @@ export const AuthProvider = ({ children }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("info");
 
-  // Check if user is authenticated on mount
+  // Check session on protected routes
   useEffect(() => {
-    // Skip auth check on auth pages
-    if (pathname && pathname.startsWith("/auth")) {
+    let cancelled = false;
+
+    if (isAuthPath(pathname)) {
       setIsLoading(false);
-      return;
+      if (accessToken && user) {
+        router.replace("/");
+      }
+      return undefined;
     }
 
     const checkAuth = async () => {
+      // Already logged in (e.g. right after login) — don't force refresh again
+      if (accessToken && user) {
+        if (!cancelled) setIsLoading(false);
+        return;
+      }
+
       try {
         const data = await refreshAccessToken();
-        if (data && data.user) setUser(data.user);
+        if (!cancelled && data?.user) setUser(data.user);
       } catch {
-        await logout(false); // Không cần thông báo khi mở trang
+        if (!cancelled) {
+          clearAuthState();
+          redirectToLogin(router, pathname);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
+
     checkAuth();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  const clearAuthState = () => {
+    setAccessToken(null);
+    setGlobalAccessToken(null);
+    setUser(null);
+  };
 
   const showSnackbar = (message, severity = "info") => {
     setSnackbarMessage(message);
@@ -89,6 +114,7 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
       if (data.user) setUser(data.user);
+      resetLoginRedirect();
 
       showSnackbar("Đăng nhập thành công!", "success");
       return data;
@@ -108,10 +134,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      setAccessToken(null);
-      setGlobalAccessToken(null);
-      setUser(null);
-      router.push("/auth/login");
+      clearAuthState();
+      resetLoginRedirect();
+      redirectToLogin(router, pathname);
       if (showMessage) showSnackbar("Đã đăng xuất", "info");
     }
   };
@@ -128,19 +153,21 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
       if (data.user) setUser(data.user);
+      resetLoginRedirect();
 
       return data;
     } catch (error) {
       console.error("Token refresh error:", error);
-      await logout(false);
       throw error;
     }
   };
 
   // Function để cập nhật tokens từ refresh token helper
-  const updateTokensFromRefresh = (accessToken, user) => {
-    setAccessToken(accessToken);
-    if (user) setUser(user);
+  const updateTokensFromRefresh = (token, userData) => {
+    setAccessToken(token);
+    setGlobalAccessToken(token);
+    if (userData) setUser(userData);
+    resetLoginRedirect();
   };
 
   const changePassword = async (passwordData) => {
@@ -222,13 +249,19 @@ export const AuthProvider = ({ children }) => {
     updateTokensFromRefresh,
   };
 
+  // Keep globalFetcher in sync when refresh happens outside AuthContext
+  useEffect(() => {
+    setTokenRefreshHandler(updateTokensFromRefresh);
+    return () => setTokenRefreshHandler(null);
+  }, []);
+
   // Set global getter function khi component mount
   useEffect(() => {
     setGlobalAccessToken(() => accessToken);
   }, [accessToken]);
 
   // Gate rendering until auth check completes (except on auth pages)
-  if (isLoading && !(pathname && pathname.startsWith("/auth"))) {
+  if (isLoading && !isAuthPath(pathname)) {
     return null;
   }
 

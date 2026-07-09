@@ -22,6 +22,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 # Role name cho app (không phải superuser, để RLS hoạt động)
 APP_ROLE = "app_tenant_user"
+# Không có tenant hợp lệ → không row nào khớp policy (tránh bypass superuser)
+NO_TENANT_SENTINEL = "-1"
 
 
 def get_rls_tables():
