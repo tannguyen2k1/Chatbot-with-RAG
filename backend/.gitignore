@@ -37,7 +37,7 @@ alembic/versions/*.pyc
 # Ignore local settings
 settings_local.py
 
-# PyInstaller build output
+# Build output
 dist/
 build/
 # Trained ML models

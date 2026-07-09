@@ -37,7 +37,10 @@ services:
       - qdrant_data:/qdrant/storage
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://backend:8000
     container_name: frontend
     restart: always
     ports:
