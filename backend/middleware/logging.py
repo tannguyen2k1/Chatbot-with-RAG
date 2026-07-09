@@ -46,8 +46,8 @@ async def log_requests(request: Request, call_next):
             user_id = payload.get("sub", "-")
             tenant_id = payload.get("tenant_id", "-")
         except JWTError:
-            user_id = "invalid_token"
-            tenant_id = "invalid_token"
+            user_id = "-"
+            tenant_id = "-"
     # Set user_id và tenant_id vào contextvars cho audit log
     current_user_id.set(user_id)
     current_tenant_id.set(tenant_id)

@@ -1,41 +1,41 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy import text
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from database.database import engine, AsyncSessionLocal
 from database.context import current_tenant_id
-from database.rls import APP_ROLE
+from database.rls import APP_ROLE, NO_TENANT_SENTINEL
 
 # Global session factory (không set RLS variable, không SET ROLE - cho auth operations)
 GlobalAsyncSessionLocal = async_sessionmaker(
     engine,
-    class_=AsyncSession,  # Sử dụng AsyncSession thông thường
+    class_=AsyncSession,
     expire_on_commit=False,
 )
+
+
+def _resolve_tenant_setting(raw_tenant_id: Optional[str]) -> str:
+    """Parse tenant_id từ JWT context; trả sentinel nếu không hợp lệ."""
+    if not raw_tenant_id or raw_tenant_id in ("-", "invalid_token"):
+        return NO_TENANT_SENTINEL
+    try:
+        return str(int(raw_tenant_id))
+    except (ValueError, TypeError):
+        return NO_TENANT_SENTINEL
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Get database session với tenant context.
 
-    Flow:
-    1. SET ROLE app_tenant_user → chuyển sang role không phải superuser (RLS hoạt động)
-    2. SET app.current_tenant_id = X → RLS tự động filter tất cả queries
-    3. Khi session kết thúc → pool event tự RESET ROLE + RESET variable
-
-    Code Python KHÔNG CẦN thêm WHERE tenant_id = X vào bất kỳ câu SQL nào.
+    Luôn SET ROLE app_tenant_user để superuser không bypass RLS.
+    Nếu không có tenant hợp lệ → set sentinel (-1) → không thấy row nào.
     """
     async with AsyncSessionLocal() as session:
-        # Đọc tenant_id từ contextvar (đã được set bởi logging middleware)
-        tenant_id = current_tenant_id.get()
-        if tenant_id and tenant_id != "-":
-            try:
-                tid = int(tenant_id)
-                # SET ROLE → chuyển sang non-superuser để RLS có hiệu lực
-                await session.execute(text(f"SET ROLE {APP_ROLE}"))
-                # SET biến PostgreSQL cho RLS policy
-                await session.execute(text(f"SET app.current_tenant_id = '{tid}'"))
-            except (ValueError, TypeError):
-                pass
+        tenant_setting = _resolve_tenant_setting(current_tenant_id.get())
+        await session.execute(text(f"SET ROLE {APP_ROLE}"))
+        await session.execute(
+            text(f"SET app.current_tenant_id = '{tenant_setting}'")
+        )
         try:
             yield session
         finally:
