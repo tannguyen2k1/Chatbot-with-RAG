@@ -56,6 +56,7 @@ export async function POST(req) {
           use_reranker: body.use_reranker,
           rerank_top_k: body.rerank_top_k,
           score_threshold: body.score_threshold,
+          system_prompt: body.system_prompt,
         }),
       });
 

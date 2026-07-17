@@ -510,24 +510,34 @@ const SimpleChatApp = () => {
     <Box
       sx={{
         display: "flex",
-        height: "100%",
-        width: "100%",
+        height: "100vh",
+        width: "100vw",
         overflow: "hidden",
+        bgcolor: isDark ? "#0a0f1c" : "#f8fafc",
+        backgroundImage: isDark
+          ? "radial-gradient(circle at 15% 50%, rgba(20, 83, 171, 0.15), transparent 25%), radial-gradient(circle at 85% 30%, rgba(131, 38, 204, 0.15), transparent 25%)"
+          : "radial-gradient(circle at 15% 50%, rgba(186, 230, 253, 0.6), transparent 25%), radial-gradient(circle at 85% 30%, rgba(233, 213, 255, 0.6), transparent 25%)",
+        animation: "bg-shift 20s ease-in-out infinite alternate",
+        "@keyframes bg-shift": {
+          "0%": { backgroundPosition: "0% 0%" },
+          "100%": { backgroundPosition: "100% 100%" }
+        },
       }}
     >
       {/* Sidebar: Chat History */}
       <Box
         sx={{
           width: historyOpen ? SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH,
-          flexShrink: 0,
-          transition: "width 0.2s ease-in-out",
-          overflow: "hidden",
-          bgcolor: isDark ? "background.paper" : "grey.50",
+          bgcolor: isDark ? "rgba(15, 23, 42, 0.6)" : "rgba(255, 255, 255, 0.6)",
+          backdropFilter: "blur(12px)",
           borderRight: "1px solid",
-          borderColor: "divider",
+          borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          overflow: "hidden",
+          transition: "width 0.3s ease",
+          flexShrink: 0,
+          boxShadow: isDark ? "none" : "1px 0 10px rgba(0,0,0,0.02)",
         }}
       >
         <Box
@@ -569,10 +579,11 @@ const SimpleChatApp = () => {
             sx={{
               mt: 2,
               height: "100%",
-              width: "90%",
+              width: "100%",
+              px: 2,
               display: "flex",
               flexDirection: "column",
-              gap: 1,
+              gap: 1.5,
             }}
           >
             <Button
@@ -580,24 +591,39 @@ const SimpleChatApp = () => {
               startIcon={<IconPlus size={18} />}
               onClick={handleNewChat}
               sx={{
-                borderRadius: 2,
+                borderRadius: "12px",
                 textTransform: "none",
                 fontWeight: 600,
                 width: "100%",
+                background: "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
+                boxShadow: "0 4px 15px rgba(0, 114, 255, 0.3)",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #00b4e6 0%, #005ce6 100%)",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 6px 20px rgba(0, 114, 255, 0.4)",
+                }
               }}
             >
               Cuộc trò chuyện mới
             </Button>
 
             <Paper
-              variant="outlined"
+              elevation={0}
               sx={{
                 display: "flex",
                 alignItems: "center",
-                px: 1,
-                py: 0.5,
-                borderRadius: 2,
-                bgcolor: isDark ? "grey.800" : "background.paper",
+                px: 1.5,
+                py: 0.75,
+                borderRadius: "12px",
+                bgcolor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                backdropFilter: "blur(10px)",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
+                transition: "all 0.3s ease",
+                "&:focus-within": {
+                  borderColor: "primary.main",
+                  bgcolor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                }
               }}
             >
               <IconSearch
@@ -618,7 +644,7 @@ const SimpleChatApp = () => {
             </Paper>
 
             {/* Chat List */}
-            <Box sx={{ flex: 1, overflowY: "auto", px: 1 }}>
+            <Box sx={{ flex: 1, overflowY: "auto", px: 0 }}>
               {loadingHistory ? (
                 <Box sx={{ p: 2, textAlign: "center" }}>
                   <CircularProgress size={24} />
@@ -654,14 +680,23 @@ const SimpleChatApp = () => {
                         selected={activeChatId === chat.id}
                         onClick={() => handleSelectChat(chat.id)}
                         sx={{
-                          borderRadius: 1.5,
+                          borderRadius: "10px",
                           mb: 0.5,
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            bgcolor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                            transform: "translateX(2px)",
+                          },
                           "&.Mui-selected": {
-                            bgcolor: isDark ? "primary.dark" : "primary.light",
+                            background: isDark 
+                              ? "linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)" 
+                              : "linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(0, 114, 255, 0.1) 100%)",
+                            borderLeft: "3px solid",
+                            borderColor: "primary.main",
                             "&:hover": {
-                              bgcolor: isDark
-                                ? "primary.dark"
-                                : "primary.light",
+                              background: isDark 
+                                ? "linear-gradient(135deg, rgba(0, 198, 255, 0.2) 0%, rgba(0, 114, 255, 0.2) 100%)" 
+                                : "linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)",
                             },
                           },
                         }}
@@ -693,9 +728,16 @@ const SimpleChatApp = () => {
                 alignItems: "center",
                 gap: 1.5,
                 cursor: "pointer",
-                "&:hover": { bgcolor: "action.hover" },
-                borderRadius: 1,
-                mx: 1,
+                borderRadius: "12px",
+                mx: 0,
+                mb: 2,
+                transition: "all 0.3s ease",
+                bgcolor: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                "&:hover": { 
+                  bgcolor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                },
               }}
             >
               <Box
@@ -811,16 +853,17 @@ const SimpleChatApp = () => {
         {/* Header */}
         <Box
           sx={{
-            px: 2,
-            py: 1.5,
+            px: 3,
+            py: 2,
             borderBottom: "1px solid",
-            borderColor: "divider",
-            bgcolor: isDark ? "background.paper" : "background.default",
+            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+            bgcolor: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.4)",
+            backdropFilter: "blur(12px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
-            borderRadius: "0 !important",
+            zIndex: 10,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -843,8 +886,8 @@ const SimpleChatApp = () => {
             flex: 1,
             overflowY: "auto",
             px: 3,
-            py: 2,
-            bgcolor: isDark ? "background.default" : "grey.50",
+            py: 4,
+            bgcolor: "transparent",
           }}
         >
           {messages.length === 0 ? (
@@ -856,18 +899,31 @@ const SimpleChatApp = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 color: "text.secondary",
+                animation: "fadeIn 0.5s ease-out",
+                "@keyframes fadeIn": {
+                  "0%": { opacity: 0 },
+                  "100%": { opacity: 1 }
+                }
               }}
             >
-              <IconSparkles
-                size={48}
-                style={{ marginBottom: 16, color: theme.palette.primary.main }}
-              />
-              <Typography variant="h6" sx={{ mb: 1 }}>
+              <Box sx={{ 
+                animation: "float 3s ease-in-out infinite", 
+                "@keyframes float": { 
+                  "0%, 100%": { transform: "translateY(0)" }, 
+                  "50%": { transform: "translateY(-10px)" } 
+                } 
+              }}>
+                <IconSparkles
+                  size={56}
+                  style={{ marginBottom: 16, color: theme.palette.primary.main, filter: "drop-shadow(0 0 10px rgba(25, 118, 210, 0.4))" }}
+                />
+              </Box>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
                 Bạn muốn hỏi gì?
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ maxWidth: 400, textAlign: "center" }}
+                sx={{ maxWidth: 400, textAlign: "center", opacity: 0.8 }}
               >
                 Nhập câu hỏi và nhấn Gửi để bắt đầu cuộc trò chuyện với AI
                 Assistant.
@@ -926,18 +982,28 @@ const SimpleChatApp = () => {
                       <Box
                         sx={{
                           p: 1.5,
+                          px: 2,
                           borderRadius: isUser
-                            ? "16px 16px 4px 16px"
-                            : "16px 16px 16px 4px",
-                          bgcolor: isUser
-                            ? "primary.main"
+                            ? "20px 20px 4px 20px"
+                            : "20px 20px 20px 4px",
+                          background: isUser
+                            ? "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)"
                             : isErrorThis
-                              ? "error.light"
+                              ? "rgba(239, 68, 68, 0.1)"
                               : isDark
-                                ? "grey.800"
-                                : "background.paper",
+                                ? "rgba(30, 41, 59, 0.7)"
+                                : "rgba(255, 255, 255, 0.8)",
+                          backdropFilter: isUser ? "none" : "blur(12px)",
+                          border: isUser ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"}`,
                           color: isUser ? "white" : "text.primary",
-                          boxShadow: 1,
+                          boxShadow: isUser 
+                            ? "0 4px 15px rgba(0, 114, 255, 0.3)" 
+                            : "0 4px 15px rgba(0,0,0,0.03)",
+                          animation: "slideUpFade 0.4s ease-out forwards",
+                          "@keyframes slideUpFade": {
+                            "0%": { opacity: 0, transform: "translateY(10px)" },
+                            "100%": { opacity: 1, transform: "translateY(0)" }
+                          }
                         }}
                       >
                         {isUser ? (
@@ -1168,24 +1234,35 @@ const SimpleChatApp = () => {
         <Box
           sx={{
             px: 3,
-            py: 2,
-            borderTop: "1px solid",
-            borderColor: "divider",
-            bgcolor: isDark ? "background.paper" : "background.default",
+            py: 3,
+            background: isDark 
+              ? "linear-gradient(to top, rgba(10, 15, 28, 1) 20%, rgba(10, 15, 28, 0))" 
+              : "linear-gradient(to top, rgba(248, 250, 252, 1) 20%, rgba(248, 250, 252, 0))",
             flexShrink: 0,
+            position: "relative",
+            zIndex: 10,
           }}
         >
           <Paper
-            variant="outlined"
+            elevation={isDark ? 0 : 4}
             sx={{
               display: "flex",
               alignItems: "flex-end",
               p: 1,
-              borderRadius: 2,
-              bgcolor: isDark ? "grey.800" : "grey.100",
-              borderColor: isDark ? "divider" : undefined,
+              borderRadius: "24px",
+              bgcolor: isDark ? "rgba(30, 41, 59, 0.7)" : "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(20px)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
               maxWidth: { xs: "100%", sm: "80%" },
               mx: { xs: 0, sm: "auto" },
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              "&:focus-within": {
+                transform: "translateY(-2px)",
+                boxShadow: isDark 
+                  ? "0 10px 30px rgba(0,0,0,0.5)" 
+                  : "0 10px 30px rgba(0,0,0,0.1)",
+                borderColor: "primary.main"
+              }
             }}
           >
             <InputBase
@@ -1210,25 +1287,32 @@ const SimpleChatApp = () => {
                 isStreaming ? handleStop : canSend ? handleSend : undefined
               }
               sx={{
-                bgcolor: isStreaming
-                  ? "error.main"
+                background: isStreaming
+                  ? "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)"
                   : input.trim()
-                    ? "primary.main"
-                    : "grey.700",
-                color: "white",
+                    ? "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)"
+                    : isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                color: input.trim() || isStreaming ? "white" : "text.disabled",
                 "&:hover": {
-                  bgcolor: isStreaming ? "error.dark" : "primary.dark",
+                  background: isStreaming
+                    ? "linear-gradient(135deg, #e11d48 0%, #be123c 100%)"
+                    : input.trim()
+                      ? "linear-gradient(135deg, #00b4e6 0%, #005ce6 100%)"
+                      : isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
+                  transform: input.trim() || isStreaming ? "scale(1.05)" : "none",
                 },
-                borderRadius: 2,
+                borderRadius: "50%",
+                width: 40,
+                height: 40,
                 ml: 1,
                 flexShrink: 0,
                 boxShadow:
-                  isDark && input.trim()
-                    ? "0 0 12px rgba(25, 118, 210, 0.7), 0 0 20px rgba(25, 118, 210, 0.4)"
-                    : isDark && !input.trim()
-                      ? "0 0 8px rgba(100, 100, 100, 0.3)"
+                  input.trim()
+                    ? "0 4px 14px rgba(0, 114, 255, 0.4)"
+                    : isStreaming
+                      ? "0 4px 14px rgba(225, 29, 72, 0.4)"
                       : "none",
-                transition: "all 0.3s ease",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
               {isStreaming ? (

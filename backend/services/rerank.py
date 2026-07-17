@@ -5,7 +5,6 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import torch
 
 from config.settings import settings
 from schemas.vector import SearchResult
@@ -23,17 +22,8 @@ class RerankService:
         self.model = None
 
     def _load_model(self):
-        if self.model is None:
-            logger.info(f"Loading reranker model {self.model_name}...")
-            try:
-                from sentence_transformers import CrossEncoder
-
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-                self.model = CrossEncoder(self.model_name, device=device)
-                logger.info(f"Loaded on {device}.")
-            except Exception as e:
-                logger.error(f"Failed to load reranker: {e}")
-                raise
+        # No local model to load for Cohere API
+        pass
 
     def rerank(
         self,
@@ -43,8 +33,34 @@ class RerankService:
     ) -> List[Dict[str, Any]]:
         if not documents:
             return []
-        self._load_model()
-        return self.model.rank(query, documents, return_documents=False, top_k=top_k)
+            
+        import cohere
+        api_key = settings.COHERE_API_KEY
+        if not api_key:
+            logger.warning("COHERE_API_KEY is not set. Skipping reranking.")
+            return [{"score": 1.0, "corpus_id": i} for i in range(len(documents))]
+
+        try:
+            co = cohere.Client(api_key=api_key)
+            response = co.rerank(
+                model=self.model_name,
+                query=query,
+                documents=documents,
+                top_n=top_k if top_k else len(documents)
+            )
+            
+            # Map Cohere response back to expected format
+            rankings = []
+            for r in response.results:
+                rankings.append({
+                    "score": r.relevance_score,
+                    "corpus_id": r.index
+                })
+            return rankings
+        except Exception as e:
+            logger.error(f"Error calling Cohere Rerank API: {e}")
+            # Fallback in case of API failure
+            return [{"score": 1.0, "corpus_id": i} for i in range(len(documents))]
 
     def rerank_results(
         self,
