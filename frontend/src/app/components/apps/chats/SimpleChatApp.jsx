@@ -595,13 +595,13 @@ const SimpleChatApp = () => {
                 textTransform: "none",
                 fontWeight: 600,
                 width: "100%",
-                background: "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
-                boxShadow: "0 4px 15px rgba(0, 114, 255, 0.3)",
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                boxShadow: "0 4px 15px rgba(37, 99, 235, 0.2)",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  background: "linear-gradient(135deg, #00b4e6 0%, #005ce6 100%)",
+                  background: "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)",
                   transform: "translateY(-1px)",
-                  boxShadow: "0 6px 20px rgba(0, 114, 255, 0.4)",
+                  boxShadow: "0 6px 20px rgba(37, 99, 235, 0.3)",
                 }
               }}
             >
@@ -689,14 +689,14 @@ const SimpleChatApp = () => {
                           },
                           "&.Mui-selected": {
                             background: isDark 
-                              ? "linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)" 
-                              : "linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(0, 114, 255, 0.1) 100%)",
+                              ? "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%)" 
+                              : "linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%)",
                             borderLeft: "3px solid",
-                            borderColor: "primary.main",
+                            borderColor: "#3b82f6",
                             "&:hover": {
                               background: isDark 
-                                ? "linear-gradient(135deg, rgba(0, 198, 255, 0.2) 0%, rgba(0, 114, 255, 0.2) 100%)" 
-                                : "linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)",
+                                ? "linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)" 
+                                : "linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%)",
                             },
                           },
                         }}
@@ -987,17 +987,17 @@ const SimpleChatApp = () => {
                             ? "20px 20px 4px 20px"
                             : "20px 20px 20px 4px",
                           background: isUser
-                            ? "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)"
+                            ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
                             : isErrorThis
                               ? "rgba(239, 68, 68, 0.1)"
                               : isDark
-                                ? "rgba(30, 41, 59, 0.7)"
-                                : "rgba(255, 255, 255, 0.8)",
+                                ? "rgba(30, 41, 59, 0.4)"
+                                : "rgba(255, 255, 255, 0.6)",
                           backdropFilter: isUser ? "none" : "blur(12px)",
-                          border: isUser ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"}`,
+                          border: isUser ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
                           color: isUser ? "white" : "text.primary",
                           boxShadow: isUser 
-                            ? "0 4px 15px rgba(0, 114, 255, 0.3)" 
+                            ? "0 4px 15px rgba(37, 99, 235, 0.2)" 
                             : "0 4px 15px rgba(0,0,0,0.03)",
                           animation: "slideUpFade 0.4s ease-out forwards",
                           "@keyframes slideUpFade": {
@@ -1290,14 +1290,14 @@ const SimpleChatApp = () => {
                 background: isStreaming
                   ? "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)"
                   : input.trim()
-                    ? "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)"
+                    ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
                     : isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
                 color: input.trim() || isStreaming ? "white" : "text.disabled",
                 "&:hover": {
                   background: isStreaming
                     ? "linear-gradient(135deg, #e11d48 0%, #be123c 100%)"
                     : input.trim()
-                      ? "linear-gradient(135deg, #00b4e6 0%, #005ce6 100%)"
+                      ? "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)"
                       : isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
                   transform: input.trim() || isStreaming ? "scale(1.05)" : "none",
                 },
@@ -1308,7 +1308,7 @@ const SimpleChatApp = () => {
                 flexShrink: 0,
                 boxShadow:
                   input.trim()
-                    ? "0 4px 14px rgba(0, 114, 255, 0.4)"
+                    ? "0 4px 14px rgba(37, 99, 235, 0.3)"
                     : isStreaming
                       ? "0 4px 14px rgba(225, 29, 72, 0.4)"
                       : "none",
