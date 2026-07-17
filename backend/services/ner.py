@@ -11,7 +11,6 @@ Sử dụng NlpHUST/ner-vietnamese-electra-base để extract entities ở chunk
 
 import logging
 from typing import Optional
-import torch
 
 logger = logging.getLogger(__name__)
 
@@ -37,31 +36,12 @@ class NERService:
         return cls._instance
 
     def _load_model(self):
-        """Load model vào bộ nhớ (lazy load, gọi 1 lần tại startup)."""
-        if self._pipeline is not None:
-            return
-
-        logger.info(f"[NER] Loading model: {self.model_name}...")
-        from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
-
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        model = AutoModelForTokenClassification.from_pretrained(self.model_name)
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        self._pipeline = pipeline(
-            "ner",
-            model=model,
-            tokenizer=tokenizer,
-            aggregation_strategy="simple",
-            device=device,
-        )
-        logger.info(f"[NER] Model loaded on {device}.")
+        """Stubbed out due to removal of local ML dependencies."""
+        pass
 
     @property
     def pipeline(self):
-        if self._pipeline is None:
-            self._load_model()
-        return self._pipeline
+        return None
 
     def extract_entities(self, text: str) -> list[dict]:
         """
@@ -74,7 +54,7 @@ class NERService:
             List of entity dicts với keys: word, entity_group, score, start, end
             VD: [{"word": "VIETCIS", "entity_group": "ORG", "score": 0.99, "start": 0, "end": 7}]
         """
-        if not text or not text.strip():
+        if not text or not text.strip() or self.pipeline is None:
             return []
 
         try:

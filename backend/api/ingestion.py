@@ -39,49 +39,65 @@ async def _do_ingest_file_bytes(
     vector_service: VectorService,
 ):
     await ingestion_job_service.update_job(job_id, status=JobStatus.PROCESSING)
-    loop = asyncio.get_running_loop()
-    parsed_elements, metadata = await loop.run_in_executor(
-        _parsing_executor,
-        ingestion_service.ingest_file_bytes,
-        file_bytes,
-        filename,
-    )
+    try:
+        loop = asyncio.get_running_loop()
+        parsed_elements, metadata = await loop.run_in_executor(
+            _parsing_executor,
+            ingestion_service.ingest_file_bytes,
+            file_bytes,
+            filename,
+        )
 
-    chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
+        chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
 
-    if not chunks:
+        if not chunks:
+            result = IngestResponse(
+                message="Ingest, Parse va Vectorize file thanh cong (khong co chunk)",
+                document_id=job_id,
+                chunks_count=0,
+                chunks=[],
+                metadata=metadata,
+            )
+            await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
+            return
+
+        # Ensure collection exists before inserting
+        try:
+            await vector_service.get_collection_info(collection_name)
+        except Exception:
+            # Collection might not exist, auto-create it
+            from schemas.vector import CollectionCreate
+            dim = embedding_service.vector_dimension if hasattr(embedding_service, 'vector_dimension') else 1024
+            await vector_service.create_collection(CollectionCreate(name=collection_name, vector_size=dim, distance="Cosine"))
+
+
+        batch_size = 500
+        for i in range(0, len(chunks), batch_size):
+            batch_chunks = chunks[i : i + batch_size]
+            texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
+            vectors = embedding_service.encode_texts(texts, is_query=False)
+
+            points = []
+            for chunk, vector in zip(batch_chunks, vectors):
+                point_id = str(uuid.uuid4())
+                payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
+                points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
+
+            await vector_service.upsert_points(collection_name, points)
+
         result = IngestResponse(
-            message="Ingest, Parse va Vectorize file thanh cong (khong co chunk)",
+            message="Ingest, Parse va Vectorize file thanh cong",
             document_id=job_id,
-            chunks_count=0,
-            chunks=[],
+            chunks_count=len(chunks),
+            chunks=chunks,
             metadata=metadata,
         )
         await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
-        return
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        await ingestion_job_service.update_job(job_id, status=JobStatus.FAILED, error=str(e))
 
-    batch_size = 500
-    for i in range(0, len(chunks), batch_size):
-        batch_chunks = chunks[i : i + batch_size]
-        texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
-        vectors = embedding_service.encode_texts(texts, is_query=False)
-
-        points = []
-        for chunk, vector in zip(batch_chunks, vectors):
-            point_id = str(uuid.uuid4())
-            payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
-            points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
-
-        await vector_service.upsert_points(collection_name, points)
-
-    result = IngestResponse(
-        message="Ingest, Parse va Vectorize file thanh cong",
-        document_id=job_id,
-        chunks_count=len(chunks),
-        chunks=chunks,
-        metadata=metadata,
-    )
-    await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
 
 
 async def _do_ingest_db(
@@ -91,54 +107,68 @@ async def _do_ingest_db(
     vector_service: VectorService,
 ):
     await ingestion_job_service.update_job(job_id, status=JobStatus.PROCESSING)
-    loop = asyncio.get_running_loop()
-    source_metadata = {
-        "source_table": request.source_table,
-        "record_id": request.record_id,
-        **request.metadata,
-    }
-    parsed_elements, metadata = await loop.run_in_executor(
-        _parsing_executor,
-        ingestion_service.ingest_db_record,
-        request.content,
-        source_metadata,
-    )
+    try:
+        loop = asyncio.get_running_loop()
+        source_metadata = {
+            "source_table": request.source_table,
+            "record_id": request.record_id,
+            **request.metadata,
+        }
+        parsed_elements, metadata = await loop.run_in_executor(
+            _parsing_executor,
+            ingestion_service.ingest_db_record,
+            request.content,
+            source_metadata,
+        )
 
-    chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
+        chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
 
-    if not chunks:
+        if not chunks:
+            result = IngestResponse(
+                message="Ingest, Parse va Vectorize DB record thanh cong (khong co chunk)",
+                document_id=job_id,
+                chunks_count=0,
+                chunks=[],
+                metadata=metadata,
+            )
+            await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
+            return
+
+        # Ensure collection exists before inserting
+        try:
+            await vector_service.get_collection_info(request.collection_name)
+        except Exception:
+            from schemas.vector import CollectionCreate
+            dim = embedding_service.vector_dimension if hasattr(embedding_service, 'vector_dimension') else 1024
+            await vector_service.create_collection(CollectionCreate(name=request.collection_name, vector_size=dim, distance="Cosine"))
+
+        batch_size = 500
+        for i in range(0, len(chunks), batch_size):
+            batch_chunks = chunks[i : i + batch_size]
+            texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
+            vectors = embedding_service.encode_texts(texts, is_query=False)
+
+            points = []
+            for chunk, vector in zip(batch_chunks, vectors):
+                point_id = str(uuid.uuid4())
+                payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
+                points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
+
+            await vector_service.upsert_points(request.collection_name, points)
+
         result = IngestResponse(
-            message="Ingest, Parse va Vectorize DB record thanh cong (khong co chunk)",
+            message="Ingest, Parse va Vectorize DB record thanh cong",
             document_id=job_id,
-            chunks_count=0,
-            chunks=[],
+            chunks_count=len(chunks),
+            chunks=chunks,
             metadata=metadata,
         )
         await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
-        return
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        await ingestion_job_service.update_job(job_id, status=JobStatus.FAILED, error=str(e))
 
-    batch_size = 500
-    for i in range(0, len(chunks), batch_size):
-        batch_chunks = chunks[i : i + batch_size]
-        texts = [chunk.get("embed_text") or chunk["text"] for chunk in batch_chunks]
-        vectors = embedding_service.encode_texts(texts, is_query=False)
-
-        points = []
-        for chunk, vector in zip(batch_chunks, vectors):
-            point_id = str(uuid.uuid4())
-            payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
-            points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
-
-        await vector_service.upsert_points(request.collection_name, points)
-
-    result = IngestResponse(
-        message="Ingest, Parse va Vectorize DB record thanh cong",
-        document_id=job_id,
-        chunks_count=len(chunks),
-        chunks=chunks,
-        metadata=metadata,
-    )
-    await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
 
 
 @router.post(

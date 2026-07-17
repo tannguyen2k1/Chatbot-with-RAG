@@ -33,12 +33,13 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = 6333
     QDRANT_GRPC_PORT: int = 6334
 
-    # Embedding Model (Qwen3)
-    EMBEDDING_MODEL_NAME: str = "Qwen/Qwen3-Embedding-0.6B"
+    # Embedding Model
+    EMBEDDING_MODEL_NAME: str = "mistral-embed"
     EMBEDDING_USE_FLASH_ATTENTION: bool = False
 
     # Reranker Model
-    RERANKER_MODEL_NAME: str = "Qwen/Qwen3-Reranker-0.6B"
+    RERANKER_MODEL_NAME: str = "rerank-multilingual-v3.0"
+    COHERE_API_KEY: Optional[str] = None
     RERANKER_MIN_TOKENS: int = 20
     RERANKER_MIN_CANDIDATES: int = 3
     CHUNK_MIN_TOKENS_TO_MERGE: int = 40

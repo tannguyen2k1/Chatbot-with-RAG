@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { setGlobalAccessToken } from "../../api/globalFetcher";
+import { setGlobalAccessToken, rawPostFetcher } from "../../api/globalFetcher";
 import { setTokenRefreshHandler } from "../../api/refreshTokenHelper";
 import { useTenant } from "../TenantContext";
 import { isAuthPath, redirectToLogin, resetLoginRedirect } from "../../utils/auth/authRedirect";
@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
 
     if (isAuthPath(pathname)) {
       setIsLoading(false);
+      resetLoginRedirect();
       if (accessToken && user) {
         router.replace("/");
       }
@@ -143,13 +144,12 @@ export const AuthProvider = ({ children }) => {
 
   const refreshAccessToken = async () => {
     try {
-      const response = await fetch("/api/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Token refresh failed");
-
-      const data = await response.json();
+      const data = await rawPostFetcher(
+        "/api/auth/refresh",
+        {},
+        { credentials: "include" }
+      );
+      
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
       if (data.user) setUser(data.user);

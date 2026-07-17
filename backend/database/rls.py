@@ -31,7 +31,6 @@ def get_rls_tables():
     Tự động lấy danh sách các bảng có cột tenant_id từ SQLAlchemy MetaData.
     Điều này giúp tránh việc phải khai báo thủ công mỗi khi thêm model mới.
     """
-    import database.models  # Đảm bảo tất cả models đã được import để đăng ký vào MetaData
     from database.models.base import Base
 
     tables = []

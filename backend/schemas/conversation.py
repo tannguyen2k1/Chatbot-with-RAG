@@ -80,6 +80,7 @@ class CreateConversationWithMessageRequest(BaseModel):
     conversation_history_enabled: bool = Field(default=True, description="Bật/tắt lịch sử hội thoại")
     conversation_history_max_messages: int = Field(default=10, description="Số tin nhắn lịch sử đưa vào LLM")
     conversation_history_include_system: bool = Field(default=True, description="Đưa system prompt vào mỗi turn")
+    system_prompt: Optional[str] = Field(None, description="System prompt tùy chỉnh")
 
 
 class AddMessageRequest(BaseModel):
@@ -98,3 +99,4 @@ class AddMessageRequest(BaseModel):
     conversation_history_enabled: bool = Field(default=True, description="Bật/tắt lịch sử hội thoại")
     conversation_history_max_messages: int = Field(default=10, description="Số tin nhắn lịch sử đưa vào LLM")
     conversation_history_include_system: bool = Field(default=True, description="Đưa system prompt vào mỗi turn")
+    system_prompt: Optional[str] = Field(None, description="System prompt tùy chỉnh")

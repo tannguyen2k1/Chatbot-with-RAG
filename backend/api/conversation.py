@@ -500,7 +500,9 @@ async def create_conversation_with_message(
 
     if not classification.needs_context:
         context = ""
-        system_prompt = await chat.get_system_prompt()
+        system_prompt = request.system_prompt
+        if not system_prompt:
+            system_prompt = await chat.get_system_prompt()
 
         async def stream_generator():
             answer_content = ""
@@ -565,7 +567,9 @@ async def create_conversation_with_message(
     )
 
     context_str = chat.build_context(vector_response.results)
-    system_prompt = await chat.get_system_prompt()
+    system_prompt = request.system_prompt
+    if not system_prompt:
+        system_prompt = await chat.get_system_prompt()
 
     async def stream_generator():
         answer_content = ""
@@ -682,7 +686,9 @@ async def add_message_stream(
 
     if not classification.needs_context:
         context = ""
-        system_prompt = await chat.get_system_prompt()
+        system_prompt = request.system_prompt
+        if not system_prompt:
+            system_prompt = await chat.get_system_prompt()
 
         async def stream_generator():
             answer_content = ""
@@ -767,7 +773,9 @@ async def add_message_stream(
     )
 
     context_str = chat.build_context(vector_response.results)
-    system_prompt = await chat.get_system_prompt()
+    system_prompt = request.system_prompt
+    if not system_prompt:
+        system_prompt = await chat.get_system_prompt()
 
     async def stream_generator():
         answer_content = ""

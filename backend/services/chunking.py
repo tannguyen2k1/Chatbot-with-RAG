@@ -17,7 +17,7 @@ OCR_TOKEN_MIN_FREQ = 2
 
 
 class ChunkingService:
-    def __init__(self, tokenizer=None, chunk_size: int = 1600, chunk_overlap: int = 240):
+    def __init__(self, tokenizer=None, chunk_size: int = 8000, chunk_overlap: int = 800):
         if tokenizer:
             self.text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
                 tokenizer,

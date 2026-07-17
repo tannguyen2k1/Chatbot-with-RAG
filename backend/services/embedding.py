@@ -30,43 +30,17 @@ class EmbeddingService:
         return cls._instance
 
     def _load_model(self):
-        """Lazy load model - chỉ load khi cần lần đầu"""
-        if self._model is None:
-            # Lazy import để tránh crash nếu chưa cài sentence-transformers
-            from sentence_transformers import SentenceTransformer
-
-            model_name = settings.EMBEDDING_MODEL_NAME
-            logger.info(f"Loading embedding model: {model_name}...")
-
-            model_kwargs = {}
-            processor_kwargs = {}
-
-            if settings.EMBEDDING_USE_FLASH_ATTENTION:
-                model_kwargs["attn_implementation"] = "flash_attention_2"
-                model_kwargs["device_map"] = "auto"
-                processor_kwargs["padding_side"] = "left"
-
-            EmbeddingService._model = SentenceTransformer(
-                model_name,
-                model_kwargs=model_kwargs if model_kwargs else None,
-                processor_kwargs=processor_kwargs if processor_kwargs else None,
-                trust_remote_code=True,
-            )
-            logger.info(
-                f"Embedding model loaded. "
-                f"Dimension: {self._model.get_embedding_dimension()}"
-            )
-
-        return self._model
+        """No local model to load for Mistral API"""
+        pass
 
     @property
     def model(self):
-        return self._load_model()
+        return None
 
     @property
     def vector_dimension(self) -> int:
-        """Trả về kích thước vector của model"""
-        return self.model.get_embedding_dimension()
+        """Trả về kích thước vector của model (mistral-embed = 1024)"""
+        return 1024
 
     def encode_texts(
         self,
@@ -82,15 +56,37 @@ class EmbeddingService:
             is_query: True = query mode (có prompt prefix), False = document mode
             normalize: Chuẩn hóa vector (khuyến nghị True cho cosine similarity)
         """
-        kwargs = {"normalize_embeddings": normalize}
-        if is_query:
-            kwargs["prompt_name"] = "query"
-        else:
-            # Vô hiệu hóa default prompt khi encode document
-            kwargs["prompt_name"] = "document"
+        import httpx
+        
+        api_key = settings.MISTRAL_API_KEY
+        if not api_key:
+            raise ValueError("MISTRAL_API_KEY is not set in environment variables.")
 
-        embeddings = self.model.encode(texts, **kwargs)
-        return embeddings.tolist()
+        # Batch requests if needed, but for now just send directly
+        # Mistral API limit is usually high enough, but we should handle it
+        payload = {
+            "model": settings.EMBEDDING_MODEL_NAME,
+            "input": texts
+        }
+        
+        try:
+            # Using sync httpx for compatibility with existing synchronous flow
+            with httpx.Client() as client:
+                response = client.post(
+                    "https://api.mistral.ai/v1/embeddings",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json=payload,
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                # Mistral returns data in the same order as input
+                embeddings = [item["embedding"] for item in data["data"]]
+                return embeddings
+        except Exception as e:
+            logger.error(f"Error calling Mistral Embedding API: {e}")
+            raise
 
     def encode_single(
         self,
