@@ -34,8 +34,6 @@ import {
   Button,
   Dialog,
   DialogTitle,
-  DialogContent,
-  DialogContentText,
   DialogActions,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -56,6 +54,7 @@ import {
   IconUser,
   IconKey,
   IconRefresh,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
@@ -1362,20 +1361,86 @@ const SimpleChatApp = () => {
         onClose={closeConfirm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        slotProps={{
+          backdrop: {
+            sx: { backgroundColor: "rgba(15, 23, 42, 0.45)" },
+          },
+          paper: {
+            elevation: 0,
+            sx: {
+              borderRadius: 2.5,
+              border: "1px solid",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "divider",
+              boxShadow: isDark
+                ? "0 24px 48px rgba(0,0,0,0.45)"
+                : "0 24px 48px rgba(15,23,42,0.12)",
+              overflow: "hidden",
+            },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{confirmDialog.message}</DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={closeConfirm} sx={{ textTransform: "none" }}>
+        <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1 }}>
+          <Box sx={{ display: "flex", gap: 1.75, alignItems: "flex-start" }}>
+            <Box
+              sx={{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+                bgcolor: isDark ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.1)",
+                color: "error.main",
+              }}
+            >
+              <IconAlertTriangle size={22} stroke={1.75} />
+            </Box>
+            <Box sx={{ pt: 0.25, minWidth: 0 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, fontSize: "1.05rem", lineHeight: 1.3 }}
+              >
+                {confirmDialog.title}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.75, lineHeight: 1.55 }}
+              >
+                {confirmDialog.message}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogActions sx={{ px: 2.5, pb: 2.25, pt: 1.5, gap: 1 }}>
+          <Button
+            onClick={closeConfirm}
+            variant="text"
+            color="inherit"
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              px: 1.75,
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+              },
+            }}
+          >
             Hủy
           </Button>
           <Button
             variant="contained"
             color="error"
-            sx={{ textTransform: "none" }}
+            disableElevation
+            startIcon={<IconTrash size={16} stroke={2} />}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              px: 2,
+              borderRadius: 1.5,
+              boxShadow: "none",
+            }}
             onClick={async () => {
               closeConfirm();
               await confirmDialog.onConfirm?.();

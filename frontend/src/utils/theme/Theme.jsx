@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { createTheme, useMediaQuery } from "@mui/material";
+import { viVN, enUS } from "@mui/material/locale";
 
 import { useEffect, useContext } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
@@ -10,7 +11,6 @@ import { shadows, darkshadows } from "./Shadows";
 import { DarkThemeColors } from "./DarkThemeColors";
 import { LightThemeColors } from "./LightThemeColors";
 import { baseDarkTheme, baselightTheme } from "./DefaultColors";
-import * as locales from "@mui/material/locale";
 
 export const BuildTheme = (config) => {
   const themeOptions = LightThemeColors.find(
@@ -19,18 +19,19 @@ export const BuildTheme = (config) => {
   const darkthemeOptions = DarkThemeColors.find(
     (theme) => theme.name === config.theme
   );
-  const { isBorderRadius } = useContext(CustomizerContext);
+  const { isBorderRadius, isLanguage } = useContext(CustomizerContext);
   const activeMode = config.mode || "light";
 
   const defaultTheme = activeMode === "dark" ? baseDarkTheme : baselightTheme;
   const defaultShadow = activeMode === "dark" ? darkshadows : shadows;
   const themeSelect = activeMode === "dark" ? darkthemeOptions : themeOptions;
+  const locale = (isLanguage || config.language) === "en" ? enUS : viVN;
   const baseMode = {
     palette: {
       mode: activeMode,
     },
     shape: {
-      borderRadius: isBorderRadius,
+      borderRadius: isBorderRadius ?? 7,
     },
     shadows: defaultShadow,
     typography: {
@@ -39,9 +40,10 @@ export const BuildTheme = (config) => {
     },
   };
   const theme = createTheme(
-    _.merge({}, baseMode, defaultTheme, locales, themeSelect, {
+    _.merge({}, baseMode, defaultTheme, themeSelect || {}, {
       direction: config.direction,
-    })
+    }),
+    locale,
   );
   theme.components = components(theme);
 

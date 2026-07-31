@@ -89,7 +89,11 @@ const getFetcher = (url, options = {}) => {
       ...options,
     });
     if (res.status === 401) {
-      return handle401AndRetry(doFetch, (t) => { token = t; });
+      const retried = await handle401AndRetry(doFetch, (t) => { token = t; });
+      if (retried == null) {
+        throw new Error("Unauthorized");
+      }
+      return retried;
     }
     if (!res.ok) {
       let errorMessage = "Failed to process request";
@@ -128,7 +132,11 @@ const postFetcher = (url, arg, options = {}) => {
       ...options,
     });
     if (res.status === 401) {
-      return handle401AndRetry(doFetch, (t) => { token = t; });
+      const retried = await handle401AndRetry(doFetch, (t) => { token = t; });
+      if (retried == null) {
+        throw new Error("Unauthorized");
+      }
+      return retried;
     }
     if (!res.ok) {
       let errorMessage = "Failed to process request";
@@ -192,7 +200,11 @@ const putFetcher = (url, arg, options = {}) => {
       ...options,
     });
     if (res.status === 401) {
-      return handle401AndRetry(doFetch, (t) => { token = t; });
+      const retried = await handle401AndRetry(doFetch, (t) => { token = t; });
+      if (retried == null) {
+        throw new Error("Unauthorized");
+      }
+      return retried;
     }
     if (!res.ok) {
       let errorMessage = "Failed to process request";
@@ -231,7 +243,11 @@ const patchFetcher = (url, arg, options = {}) => {
       ...options,
     });
     if (res.status === 401) {
-      return handle401AndRetry(doFetch, (t) => { token = t; });
+      const retried = await handle401AndRetry(doFetch, (t) => { token = t; });
+      if (retried == null) {
+        throw new Error("Unauthorized");
+      }
+      return retried;
     }
     if (!res.ok) {
       let errorMessage = "Failed to process request";
@@ -270,7 +286,11 @@ const deleteFetcher = (url, arg, options = {}) => {
       ...options,
     });
     if (res.status === 401) {
-      return handle401AndRetry(doFetch, (t) => { token = t; });
+      const retried = await handle401AndRetry(doFetch, (t) => { token = t; });
+      if (retried == null) {
+        throw new Error("Unauthorized");
+      }
+      return retried;
     }
     if (!res.ok) {
       let errorMessage = "Failed to process request";

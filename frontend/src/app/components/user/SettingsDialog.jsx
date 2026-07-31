@@ -179,9 +179,10 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
   const fetchGeneralConfig = async () => {
     try {
       const data = await getFetcher("/api/configs/general");
+      if (!data || typeof data !== "object") return;
       isInitialGeneral.current = true;
       setSettings({
-        theme: data.theme || theme.palette.mode,
+        theme: data.theme || theme.palette.mode || "light",
         language: data.language || "vi",
         fontSize: data.font_size || "medium",
       });
@@ -193,19 +194,30 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
   const fetchChatConfig = async () => {
     try {
       const data = await getFetcher("/api/configs/chat");
+      if (!data || typeof data !== "object") return;
       isInitialChat.current = true;
       setChatConfig({
-        limit: data.limit || 3,
+        limit: Number(data.limit) > 0 ? Number(data.limit) : 3,
         use_reranker: data.use_reranker ?? true,
-        rerank_top_k: data.rerank_top_k || 30,
+        rerank_top_k: Number(data.rerank_top_k) > 0 ? Number(data.rerank_top_k) : 30,
         use_bm25: data.use_bm25 ?? true,
-        bm25_top_k: data.bm25_top_k || 30,
-        bm25_weight: data.bm25_weight ?? 0.3,
+        bm25_top_k: Number(data.bm25_top_k) > 0 ? Number(data.bm25_top_k) : 30,
+        bm25_weight:
+          data.bm25_weight == null || Number.isNaN(Number(data.bm25_weight))
+            ? 0.3
+            : Number(data.bm25_weight),
         reflection_enabled: data.reflection_enabled ?? true,
-        reflection_max_history: data.reflection_max_history || 20,
+        reflection_max_history:
+          Number(data.reflection_max_history) > 0
+            ? Number(data.reflection_max_history)
+            : 20,
         conversation_history_enabled: data.conversation_history_enabled ?? true,
-        conversation_history_max_messages: data.conversation_history_max_messages || 10,
-        conversation_history_include_system: data.conversation_history_include_system ?? true,
+        conversation_history_max_messages:
+          Number(data.conversation_history_max_messages) > 0
+            ? Number(data.conversation_history_max_messages)
+            : 10,
+        conversation_history_include_system:
+          data.conversation_history_include_system ?? true,
       });
       if (data.collection_name) {
         setSelectedCollection(data.collection_name);
@@ -223,12 +235,14 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
     setErrorCollections("");
     try {
       const data = await getFetcher("/api/vectors/collections");
-      setCollections(data.length > 0 ? data : ["default"]);
-      if (!data.includes(selectedCollection) && selectedCollection !== "default") {
-        setSelectedCollection("default");
+      const list = Array.isArray(data) ? data.filter(Boolean) : [];
+      const next = list.length > 0 ? list : ["default"];
+      setCollections(next);
+      if (!next.includes(selectedCollection)) {
+        setSelectedCollection(next[0] || "default");
       }
     } catch (err) {
-      setErrorCollections(err.message);
+      setErrorCollections(err?.message || "Không tải được collections");
       setCollections(["default"]);
     } finally {
       setLoadingCollections(false);
@@ -365,7 +379,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
     setLoadingArchived(true);
     try {
       const data = await getFetcher("/api/conversations/archived");
-      setArchivedChats(data);
+      setArchivedChats(Array.isArray(data) ? data : []);
     } catch (err) {
       showSnackbar(err.message || "Lỗi khi tải danh sách", "error");
     } finally {
@@ -576,8 +590,12 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
                     <FormControl size="small" sx={{ flex: 1 }}>
                       <Select
-                        value={selectedCollection}
-                        renderValue={(v) => <Typography variant="body2">{v}</Typography>}
+                        value={
+                          collections.includes(selectedCollection)
+                            ? selectedCollection
+                            : collections[0] || ""
+                        }
+                        renderValue={(v) => <Typography variant="body2">{v || "—"}</Typography>}
                         onChange={(e) => setSelectedCollection(e.target.value)}
                         sx={{ "& .MuiSelect-select": { py: 0.75 } }}
                       >
@@ -630,7 +648,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   </Typography>
                   <Slider
                     size="small"
-                    value={chatConfig.limit}
+                    value={Number(chatConfig.limit) || 1}
                     min={1}
                     max={10}
                     step={1}
@@ -651,7 +669,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   </Typography>
                   <Switch
                     size="small"
-                    checked={chatConfig.use_bm25}
+                    checked={Boolean(chatConfig.use_bm25)}
                     onChange={(e) => setChatConfig({ ...chatConfig, use_bm25: e.target.checked })}
                   />
                 </Box>
@@ -663,9 +681,9 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                       </Typography>
                       <Slider
                         size="small"
-                        value={chatConfig.bm25_top_k}
+                        value={Number(chatConfig.bm25_top_k) || 5}
                         min={5}
-                        max={chatConfig.use_reranker ? chatConfig.rerank_top_k : 50}
+                        max={chatConfig.use_reranker ? (Number(chatConfig.rerank_top_k) || 50) : 50}
                         step={5}
                         onChange={(_, v) => setChatConfig({ ...chatConfig, bm25_top_k: v })}
                         sx={{ flex: 1, minWidth: 120 }}
@@ -680,7 +698,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                       </Typography>
                       <Slider
                         size="small"
-                        value={Math.round(chatConfig.bm25_weight * 100)}
+                        value={Math.round((Number(chatConfig.bm25_weight) || 0.3) * 100)}
                         min={10}
                         max={90}
                         step={1}
@@ -703,7 +721,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   </Typography>
                   <Switch
                     size="small"
-                    checked={chatConfig.use_reranker}
+                    checked={Boolean(chatConfig.use_reranker)}
                     onChange={(e) => setChatConfig({ ...chatConfig, use_reranker: e.target.checked })}
                   />
                 </Box>
@@ -714,7 +732,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                     </Typography>
                     <Slider
                       size="small"
-                      value={chatConfig.rerank_top_k}
+                      value={Number(chatConfig.rerank_top_k) || 10}
                       min={10}
                       max={50}
                       step={5}
@@ -744,7 +762,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   </Box>
                   <Switch
                     size="small"
-                    checked={chatConfig.reflection_enabled}
+                    checked={Boolean(chatConfig.reflection_enabled)}
                     onChange={(e) => setChatConfig({ ...chatConfig, reflection_enabled: e.target.checked })}
                   />
                 </Box>
@@ -756,7 +774,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                       </Typography>
                       <Slider
                         size="small"
-                        value={chatConfig.reflection_max_history}
+                        value={Number(chatConfig.reflection_max_history) || 1}
                         min={1}
                         max={50}
                         step={1}
@@ -780,7 +798,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                   </Box>
                   <Switch
                     size="small"
-                    checked={chatConfig.conversation_history_enabled}
+                    checked={Boolean(chatConfig.conversation_history_enabled)}
                     onChange={(e) =>
                       setChatConfig({
                         ...chatConfig,
@@ -799,7 +817,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                         </Typography>
                         <Slider
                           size="small"
-                          value={chatConfig.conversation_history_max_messages}
+                          value={Number(chatConfig.conversation_history_max_messages) || 1}
                           min={1}
                           max={20}
                           step={1}
@@ -820,7 +838,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
                       </Box>
                       <Switch
                         size="small"
-                        checked={chatConfig.conversation_history_include_system}
+                        checked={Boolean(chatConfig.conversation_history_include_system)}
                         onChange={(e) =>
                           setChatConfig({ ...chatConfig, conversation_history_include_system: e.target.checked })
                         }
@@ -1116,7 +1134,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
-          ) : archivedChats.length === 0 ? (
+          ) : (archivedChats?.length ?? 0) === 0 ? (
             <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
               Không có đoạn chat nào đã lưu trữ
             </Typography>
