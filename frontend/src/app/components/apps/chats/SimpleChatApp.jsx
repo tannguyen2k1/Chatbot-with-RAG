@@ -59,6 +59,7 @@ import {
 } from "@tabler/icons-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
+import { authFetch } from "@/app/api/authFetch";
 import ProfileDialog from "@/app/components/user/ProfileDialog";
 import SettingsDialog from "@/app/components/user/SettingsDialog";
 
@@ -309,11 +310,10 @@ const SimpleChatApp = () => {
         };
       }
 
-      const response = await fetch(endpoint, {
+      const response = await authFetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
         signal: controller.signal,

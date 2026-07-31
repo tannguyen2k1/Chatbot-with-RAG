@@ -1,4 +1,5 @@
 import { refreshTokenIfNeeded } from "./refreshTokenHelper";
+import { isAccessTokenExpired } from "./jwtUtils";
 // SWR fetcher function
 
 // Global access token plumbing
@@ -19,7 +20,7 @@ export const setGlobalAccessToken = (valueOrGetter) => {
 };
 
 // Function to get current access token
-const getCurrentAccessToken = () => {
+export const getCurrentAccessToken = () => {
   if (typeof getAccessTokenFromContext === 'function') {
     try { return getAccessTokenFromContext(); } catch { /* noop */ }
   }
@@ -54,27 +55,6 @@ function getAuthHeaders(options = {}) {
     : { ...options.headers };
 }
 
-function decodeJwt(token) {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1]
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const decoded = JSON.parse(atob(payload));
-    return decoded || null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function isTokenExpired(token, skewSeconds = 60) {
-  const payload = decodeJwt(token);
-  if (!payload || !payload.exp) return false;
-  const nowSec = Math.floor(Date.now() / 1000);
-  return payload.exp <= (nowSec + skewSeconds);
-}
-
 async function handle401AndRetry(doFetchOnce, setToken) {
   // Ask helper to refresh; it returns a new token or null
   const newToken = await refreshTokenIfNeeded({ message: "401" });
@@ -93,7 +73,7 @@ const getFetcher = (url, options = {}) => {
   if (options.token) token = options.token; else token = getCurrentAccessToken();
   const doFetch = async () => {
     // Preflight refresh if token is missing/expired (client only)
-    if (typeof window !== 'undefined' && (!token || isTokenExpired(token))) {
+    if (typeof window !== 'undefined' && (!token || isAccessTokenExpired(token))) {
       const preToken = await refreshTokenIfNeeded({ message: "401" });
       if (typeof preToken === 'string' && preToken.length > 0) {
         token = preToken;
@@ -131,7 +111,7 @@ const postFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token; else token = getCurrentAccessToken();
   const doFetch = async () => {
-    if (typeof window !== 'undefined' && (!token || isTokenExpired(token))) {
+    if (typeof window !== 'undefined' && (!token || isAccessTokenExpired(token))) {
       const preToken = await refreshTokenIfNeeded({ message: "401" });
       if (typeof preToken === 'string' && preToken.length > 0) {
         token = preToken;
@@ -168,14 +148,26 @@ const postFetcher = (url, arg, options = {}) => {
 
 // Fetcher không kiểm tra access_token, dùng cho login/refresh
 const rawPostFetcher = async (url, arg, options = {}) => {
+  const { headers, credentials, ...rest } = options;
   const res = await fetch(buildUrl(url), {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    body: JSON.stringify(arg),
-    credentials: options.credentials || 'omit', // Support credentials for cookie handling
-    ...options,
+    headers: { "Content-Type": "application/json", ...(headers || {}) },
+    body: JSON.stringify(arg ?? {}),
+    credentials: credentials ?? "include",
+    ...rest,
   });
-  if (!res.ok) throw new Error("Failed to post data");
+  if (!res.ok) {
+    let detail = "Failed to post data";
+    try {
+      const errBody = await res.json();
+      detail = errBody.detail || detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(
+      typeof detail === "string" ? detail : `Failed to post data (${res.status})`,
+    );
+  }
   return res.json();
 };
 
@@ -183,7 +175,7 @@ const putFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token; else token = getCurrentAccessToken();
   const doFetch = async () => {
-    if (typeof window !== 'undefined' && (!token || isTokenExpired(token))) {
+    if (typeof window !== 'undefined' && (!token || isAccessTokenExpired(token))) {
       const preToken = await refreshTokenIfNeeded({ message: "401" });
       if (typeof preToken === 'string' && preToken.length > 0) {
         token = preToken;
@@ -222,7 +214,7 @@ const patchFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token; else token = getCurrentAccessToken();
   const doFetch = async () => {
-    if (typeof window !== 'undefined' && (!token || isTokenExpired(token))) {
+    if (typeof window !== 'undefined' && (!token || isAccessTokenExpired(token))) {
       const preToken = await refreshTokenIfNeeded({ message: "401" });
       if (typeof preToken === 'string' && preToken.length > 0) {
         token = preToken;
@@ -261,7 +253,7 @@ const deleteFetcher = (url, arg, options = {}) => {
   let token = null;
   if (options.token) token = options.token; else token = getCurrentAccessToken();
   const doFetch = async () => {
-    if (typeof window !== 'undefined' && (!token || isTokenExpired(token))) {
+    if (typeof window !== 'undefined' && (!token || isAccessTokenExpired(token))) {
       const preToken = await refreshTokenIfNeeded({ message: "401" });
       if (typeof preToken === 'string' && preToken.length > 0) {
         token = preToken;
@@ -305,5 +297,4 @@ export {
   deleteFetcher,
   patchFetcher,
   rawPostFetcher,
-  getCurrentAccessToken,
 };

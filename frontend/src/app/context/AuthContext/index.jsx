@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { setGlobalAccessToken, rawPostFetcher } from "../../api/globalFetcher";
-import { setTokenRefreshHandler } from "../../api/refreshTokenHelper";
+import { setGlobalAccessToken } from "../../api/globalFetcher";
+import { setTokenRefreshHandler, refreshSession } from "../../api/refreshTokenHelper";
+import { broadcastAuthEvent, subscribeAuthSync } from "../../api/authSessionSync";
 import { useTenant } from "../TenantContext";
 import { isAuthPath, redirectToLogin, resetLoginRedirect } from "../../utils/auth/authRedirect";
 import Snackbar from "@mui/material/Snackbar";
@@ -78,6 +79,26 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // Cross-tab sync: refresh tokens / logout from other tabs
+  useEffect(() => {
+    return subscribeAuthSync((event) => {
+      if (event?.type === "refreshed" && event.access_token) {
+        setAccessToken(event.access_token);
+        setGlobalAccessToken(event.access_token);
+        if (event.user) setUser(event.user);
+        resetLoginRedirect();
+        return;
+      }
+      if (event?.type === "logout") {
+        clearAuthState();
+        if (!isAuthPath(pathname)) {
+          redirectToLogin(router, pathname);
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, router]);
+
   const showSnackbar = (message, severity = "info") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
@@ -115,6 +136,11 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(data.access_token);
       setGlobalAccessToken(data.access_token);
       if (data.user) setUser(data.user);
+      broadcastAuthEvent({
+        type: "refreshed",
+        access_token: data.access_token,
+        user: data.user || null,
+      });
       resetLoginRedirect();
 
       showSnackbar("Đăng nhập thành công!", "success");
@@ -136,6 +162,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout error:", error);
     } finally {
       clearAuthState();
+      broadcastAuthEvent({ type: "logout" });
       resetLoginRedirect();
       redirectToLogin(router, pathname);
       if (showMessage) showSnackbar("Đã đăng xuất", "info");
@@ -143,23 +170,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const refreshAccessToken = async () => {
-    try {
-      const data = await rawPostFetcher(
-        "/api/auth/refresh",
-        {},
-        { credentials: "include" }
-      );
-      
-      setAccessToken(data.access_token);
-      setGlobalAccessToken(data.access_token);
-      if (data.user) setUser(data.user);
-      resetLoginRedirect();
-
-      return data;
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      throw error;
+    const data = await refreshSession({ redirectOnFail: false });
+    if (!data?.access_token) {
+      throw new Error("Unable to refresh session");
     }
+    // State is also updated via setTokenRefreshHandler / broadcast
+    if (data.user) setUser(data.user);
+    setAccessToken(data.access_token);
+    setGlobalAccessToken(data.access_token);
+    resetLoginRedirect();
+    return data;
   };
 
   // Function để cập nhật tokens từ refresh token helper

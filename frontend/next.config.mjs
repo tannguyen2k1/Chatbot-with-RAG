@@ -4,7 +4,7 @@ const nextConfig = {
   devIndicators: false,
   images: { unoptimized: true },
   experimental: {
-    proxyTimeout: 300000, // 300 giây - tránh timeout khi LLM xử lý multi-turn
+    proxyTimeout: 30000, // 30 giây
   },
   async rewrites() {
     return [

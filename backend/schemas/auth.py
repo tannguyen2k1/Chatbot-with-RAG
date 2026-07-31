@@ -38,14 +38,3 @@ class ResetPasswordRequest(BaseModel):
 class MessageResponse(BaseModel):
     message: str
 
-class SimpleResetPasswordRequest(BaseModel):
-    username: str
-    new_password: str
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "username": "admin",
-                "new_password": "new_password123"
-            }
-        }
-        

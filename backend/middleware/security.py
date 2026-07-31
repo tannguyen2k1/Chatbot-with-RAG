@@ -1,11 +1,12 @@
 from jose import jwt, JWTError
-from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from config.settings import settings
 
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+TOKEN_TYPE_ACCESS = "access"
+TOKEN_TYPE_REFRESH = "refresh"
 
 
 def hash_password(password: str) -> str:
@@ -16,24 +17,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode["exp"] = int(expire.timestamp())
-    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-
-
-def create_refresh_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    to_encode["exp"] = int(expire.timestamp())
-    return jwt.encode(to_encode, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-
-
 def verify_token(token: str, is_refresh: bool = False) -> dict:
+    """Decode and validate JWT. Prefer AuthService for issuing tokens."""
     try:
-        secret = settings.JWT_REFRESH_SECRET_KEY if is_refresh else settings.JWT_SECRET_KEY
+        secret = (
+            settings.JWT_REFRESH_SECRET_KEY
+            if is_refresh
+            else settings.JWT_SECRET_KEY
+        )
         payload = jwt.decode(token, secret, algorithms=[settings.JWT_ALGORITHM])
+        expected_type = TOKEN_TYPE_REFRESH if is_refresh else TOKEN_TYPE_ACCESS
+        if payload.get("type") != expected_type:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+            )
         return payload
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )

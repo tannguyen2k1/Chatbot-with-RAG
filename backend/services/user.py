@@ -405,6 +405,10 @@ class UserService:
         )
         await self.db.commit()
 
+        from services.auth import AuthService
+
+        await AuthService(self.db).revoke_all_refresh_tokens(user_id)
+
         return {
             "message": f"Password for user {user.username} has been reset successfully"
         }

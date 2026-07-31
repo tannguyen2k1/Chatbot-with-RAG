@@ -1,10 +1,12 @@
 import { uniqueId } from "lodash";
-
 import {
   IconUserCircle,
   IconPackage,
   IconFileCheck,
   IconHome,
+  IconDatabase,
+  IconShieldLock,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 
 const Menuitems = [
@@ -12,7 +14,13 @@ const Menuitems = [
     navlabel: true,
     subheader: "Applications",
   },
-
+  {
+    id: uniqueId(),
+    title: "Chat",
+    icon: IconMessageCircle,
+    href: "/",
+    chipColor: "secondary",
+  },
   {
     id: uniqueId(),
     title: "Home",
@@ -23,11 +31,10 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "Demo",
-    icon: IconHome,
+    icon: IconDatabase,
     href: "/apps/demos",
     chipColor: "secondary",
   },
-  
   {
     navlabel: true,
     subheader: "Systems",
@@ -50,6 +57,14 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: "PermissionManagement",
+    icon: IconShieldLock,
+    chipColor: "secondary",
+    href: "/systems/permission-management",
+    permission: "permission.view",
+  },
+  {
+    id: uniqueId(),
     title: "TenantManagement",
     icon: IconHome,
     chipColor: "secondary",
@@ -63,7 +78,7 @@ const Menuitems = [
     chipColor: "secondary",
     href: "/systems/audit-log",
     permission: "audit_log.view",
-  }
+  },
 ];
 
 export default Menuitems;

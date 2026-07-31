@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "@/app/context/AuthContext";
-import Link from "next/link";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -8,8 +7,6 @@ import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import Typography from "@mui/material/Typography";
-import * as dropdownData from "./data";
-
 import { IconMail } from "@tabler/icons-react";
 import { Stack } from "@mui/system";
 
@@ -23,7 +20,6 @@ const Profile = () => {
   };
 
   const { user, logout } = useContext(AuthContext);
-  // State cho đồng hồ
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -33,7 +29,6 @@ const Profile = () => {
   return (
     <Box>
       <IconButton
-        aria-label="show 11 new notifications"
         color="inherit"
         aria-controls="msgs-menu"
         aria-haspopup="true"
@@ -47,10 +42,7 @@ const Profile = () => {
         <Avatar
           src={"/images/profile/user-1.jpg"}
           alt={user?.full_name || user?.username || "ProfileImg"}
-          sx={{
-            width: 35,
-            height: 35,
-          }}
+          sx={{ width: 35, height: 35 }}
         />
       </IconButton>
       <Menu
@@ -69,14 +61,7 @@ const Profile = () => {
         }}
       >
         <Typography variant="h5">User Profile</Typography>
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{
-            py: 3,
-            alignItems: "center",
-          }}
-        >
+        <Stack direction="row" spacing={2} sx={{ py: 3, alignItems: "center" }}>
           <Avatar
             src={"/images/profile/user-1.jpg"}
             alt={user?.full_name || user?.username || "ProfileImg"}
@@ -96,8 +81,8 @@ const Profile = () => {
                 user?.roles?.includes("root")
                   ? "error"
                   : user?.roles?.includes("admin")
-                  ? "warning"
-                  : "secondary"
+                    ? "warning"
+                    : "secondary"
               }
               sx={{ fontWeight: 500 }}
             >
@@ -114,61 +99,6 @@ const Profile = () => {
           </Box>
         </Stack>
         <Divider />
-        {dropdownData.profile.map((profile) => (
-          <Box key={profile.title}>
-            <Box sx={{ py: 2, px: 0 }} className="hover-text-primary">
-              <Link href={profile.href}>
-                <Stack direction="row" spacing={2}>
-                  <Box
-                    sx={{
-                      width: "45px",
-                      height: "45px",
-                      bgcolor: "primary.light",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: "0",
-                    }}
-                  >
-                    <Avatar
-                      src={profile.icon}
-                      alt={profile.icon}
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 0,
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="subtitle2"
-                      color="textPrimary"
-                      className="text-hover"
-                      noWrap
-                      sx={{
-                        fontWeight: 600,
-                        width: "240px",
-                      }}
-                    >
-                      {profile.title}
-                    </Typography>
-                    <Typography
-                      color="textSecondary"
-                      variant="subtitle2"
-                      sx={{
-                        width: "240px",
-                      }}
-                      noWrap
-                    >
-                      {profile.subtitle}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Link>
-            </Box>
-          </Box>
-        ))}
         <Box sx={{ mt: 2 }}>
           <Box
             sx={(theme) => ({
