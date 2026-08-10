@@ -116,6 +116,8 @@ class AuthService:
         expires_delta: timedelta = timedelta(
             minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         ),
+        *,
+        commit: bool = True,
     ) -> str:
         current_tenant_id = tenant.id if tenant else user.tenant_id
 
@@ -138,7 +140,8 @@ class AuthService:
                 expires_at=expire,
             )
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
 
         return jwt.encode(
             payload, settings.JWT_REFRESH_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
@@ -274,7 +277,13 @@ class AuthService:
         token_iat = payload.get("iat")
         jti = payload.get("jti")
 
-        record = await self._get_refresh_record(jti)
+        # Lock row to serialize concurrent refresh of the same jti
+        result = await self.db.execute(
+            select(RefreshToken)
+            .where(RefreshToken.jti == jti)
+            .with_for_update()
+        )
+        record = result.scalar_one_or_none()
         if not record:
             raise ValueError("Refresh token is not recognized")
 
@@ -318,10 +327,14 @@ class AuthService:
             tenant = result.scalar_one_or_none()
 
         new_access_token = await self.create_access_token(user, tenant)
-        new_refresh_token = await self.create_refresh_token(user, tenant)
+        new_refresh_token = await self.create_refresh_token(
+            user, tenant, commit=False
+        )
 
         new_payload = self._decode_refresh_payload(new_refresh_token)
-        await self.revoke_refresh_jti(jti, replaced_by_jti=new_payload.get("jti"))
+        record.revoked_at = datetime.now(timezone.utc)
+        record.replaced_by_jti = new_payload.get("jti")
+        await self.db.commit()
 
         return new_access_token, new_refresh_token
 

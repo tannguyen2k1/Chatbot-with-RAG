@@ -1,4 +1,5 @@
 from enum import Enum
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from typing import TYPE_CHECKING, Optional
 
@@ -27,6 +28,15 @@ class Settings(BaseSettings):
     REFRESH_COOKIE_SAMESITE: str = "lax"
     REFRESH_COOKIE_PATH: str = "/"
     REFRESH_COOKIE_DOMAIN: Optional[str] = None
+
+    @field_validator("REFRESH_COOKIE_DOMAIN", mode="before")
+    @classmethod
+    def empty_cookie_domain_as_none(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     # Qdrant Vector Database
     QDRANT_HOST: str = "localhost"

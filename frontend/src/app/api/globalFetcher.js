@@ -157,13 +157,21 @@ const postFetcher = (url, arg, options = {}) => {
 // Fetcher không kiểm tra access_token, dùng cho login/refresh
 const rawPostFetcher = async (url, arg, options = {}) => {
   const { headers, credentials, ...rest } = options;
-  const res = await fetch(buildUrl(url), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(headers || {}) },
-    body: JSON.stringify(arg ?? {}),
-    credentials: credentials ?? "include",
-    ...rest,
-  });
+  let res;
+  try {
+    res = await fetch(buildUrl(url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(headers || {}) },
+      body: JSON.stringify(arg ?? {}),
+      credentials: credentials ?? "include",
+      ...rest,
+    });
+  } catch (networkErr) {
+    const err = new Error(networkErr?.message || "Network error");
+    err.status = 0;
+    err.cause = networkErr;
+    throw err;
+  }
   if (!res.ok) {
     let detail = "Failed to post data";
     try {
@@ -172,9 +180,11 @@ const rawPostFetcher = async (url, arg, options = {}) => {
     } catch {
       /* ignore */
     }
-    throw new Error(
+    const err = new Error(
       typeof detail === "string" ? detail : `Failed to post data (${res.status})`,
     );
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 };

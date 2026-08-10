@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
+        // refreshSession already retries transient 5xx / proxy ECONNRESET
         const data = await refreshAccessToken();
         if (!cancelled && data?.user) setUser(data.user);
       } catch {

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
@@ -28,6 +30,11 @@ def get_auth_service_session(db: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
 
+def _cookie_domain() -> Optional[str]:
+    domain = settings.REFRESH_COOKIE_DOMAIN
+    return domain if domain else None
+
+
 def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool) -> None:
     cookie_kwargs = dict(
         key=settings.REFRESH_COOKIE_NAME,
@@ -36,8 +43,10 @@ def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool
         secure=settings.REFRESH_COOKIE_SECURE,
         samesite=settings.REFRESH_COOKIE_SAMESITE,
         path=settings.REFRESH_COOKIE_PATH,
-        domain=settings.REFRESH_COOKIE_DOMAIN,
     )
+    domain = _cookie_domain()
+    if domain is not None:
+        cookie_kwargs["domain"] = domain
     if remember_me:
         cookie_kwargs["max_age"] = settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60
 
@@ -45,16 +54,12 @@ def set_refresh_cookie(response: Response, refresh_token: str, remember_me: bool
 
 
 def clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie(
-        key=settings.REFRESH_COOKIE_NAME,
-        path=settings.REFRESH_COOKIE_PATH,
-        domain=settings.REFRESH_COOKIE_DOMAIN,
-    )
-    response.delete_cookie(
-        key=REMEMBER_ME_COOKIE_NAME,
-        path=settings.REFRESH_COOKIE_PATH,
-        domain=settings.REFRESH_COOKIE_DOMAIN,
-    )
+    delete_kwargs = dict(path=settings.REFRESH_COOKIE_PATH)
+    domain = _cookie_domain()
+    if domain is not None:
+        delete_kwargs["domain"] = domain
+    response.delete_cookie(key=settings.REFRESH_COOKIE_NAME, **delete_kwargs)
+    response.delete_cookie(key=REMEMBER_ME_COOKIE_NAME, **delete_kwargs)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -89,16 +94,19 @@ async def login(
     # remember_me=True  -> persistent cookie
     # remember_me=False -> session cookie (mất khi đóng browser)
     set_refresh_cookie(response, refresh_token, login_data.remember_me)
-    response.set_cookie(
+    remember_cookie = dict(
         key=REMEMBER_ME_COOKIE_NAME,
         value="1" if login_data.remember_me else "0",
         httponly=True,
         secure=settings.REFRESH_COOKIE_SECURE,
         samesite=settings.REFRESH_COOKIE_SAMESITE,
         path=settings.REFRESH_COOKIE_PATH,
-        domain=settings.REFRESH_COOKIE_DOMAIN,
         max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60 if login_data.remember_me else None,
     )
+    domain = _cookie_domain()
+    if domain is not None:
+        remember_cookie["domain"] = domain
+    response.set_cookie(**remember_cookie)
 
     user_dict = await service.get_user_info_dict(user)
     return TokenResponse(
@@ -130,8 +138,13 @@ async def refresh_access_token(
     remember_me = request.cookies.get(REMEMBER_ME_COOKIE_NAME) == "1"
     set_refresh_cookie(response, new_refresh_token, remember_me)
 
-    user = await service.get_user_from_refresh_token(new_refresh_token)
-    user_dict = await service.get_user_info_dict(user)
+    try:
+        user = await service.get_user_from_refresh_token(new_refresh_token)
+        user_dict = await service.get_user_info_dict(user)
+    except ValueError as e:
+        clear_auth_cookies(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
     return TokenResponse(
         access_token=new_access_token,
         token_type="bearer",
