@@ -22,7 +22,7 @@ const ThemeSync = () => {
     };
 
     syncTheme();
-  }, [user, setActiveMode, setIsLanguage]);
+  }, [user, setActiveMode, setIsLanguage, setIsFontSize]);
 
   return null;
 };

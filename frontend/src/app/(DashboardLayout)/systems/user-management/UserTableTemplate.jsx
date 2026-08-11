@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import UserFormDialog from "./UserFormDialog";
 import { getFetcher, deleteFetcher, postFetcher } from "@/app/api/globalFetcher";
 import {
@@ -97,9 +97,9 @@ export default function UserTableTemplate({
     setMenuRow(null);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
-      const data = await fetchUsers(page, pageSize, search);
+      const data = await fetchUsers(page, pageSize, debouncedSearch);
       setRows(data.data || []);
       setRowCount(data.total || 0);
     } catch (e) {
@@ -110,7 +110,7 @@ export default function UserTableTemplate({
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, debouncedSearch, onActionDone]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -121,7 +121,7 @@ export default function UserTableTemplate({
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, debouncedSearch, reload]);
+  }, [loadData, reload]);
 
   const handleDelete = async () => {
     try {

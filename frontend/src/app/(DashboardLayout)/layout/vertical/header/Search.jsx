@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -12,19 +12,21 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { IconSearch, IconX } from "@tabler/icons-react";
 import Menuitems from "../sidebar/MenuItems";
-import { useHasPermission } from "@/app/utils/auth/useHasPermission";
+import { UserDataContext } from "@/app/context/UserDataContext";
+import { hasPermission } from "@/app/utils/auth/hasPermission";
 import Link from "next/link";
 
 const Search = () => {
   // drawer top
   const [showDrawer2, setShowDrawer2] = useState(false);
   const [search, setSerach] = useState("");
+  const { user } = useContext(UserDataContext);
 
   const handleDrawerClose2 = () => {
     setShowDrawer2(false);
   };
 
-  // Lọc menu theo quyền user
+  // Lọc menu theo quyền user (không gọi hook trong callback)
   const filterMenuByPermission = (items) => {
     return items
       .map((item) => {
@@ -36,7 +38,7 @@ const Search = () => {
         // Nếu có permission thì kiểm tra quyền
         if (item.permission) {
           const [module, action] = item.permission.split(".");
-          if (!useHasPermission(module, action)) return null;
+          if (!hasPermission(user?.permissions, module, action)) return null;
         }
         return item;
       })

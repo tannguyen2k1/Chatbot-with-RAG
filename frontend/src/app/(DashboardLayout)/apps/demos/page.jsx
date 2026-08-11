@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -111,10 +111,10 @@ export default function DemoManagementPage() {
     setDeleteId(null);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchDemos(page, pageSize, search);
+      const data = await fetchDemos(page, pageSize, debouncedSearch);
       setRows(data.data || []);
       setRowCount(data.total || 0);
     } catch (e) {
@@ -124,7 +124,7 @@ export default function DemoManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, debouncedSearch]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -135,7 +135,7 @@ export default function DemoManagementPage() {
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, debouncedSearch]);
+  }, [loadData]);
 
   // Form dialog
   const [form, setForm] = useState({ title: "", description: "" });

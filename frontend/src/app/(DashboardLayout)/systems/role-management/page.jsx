@@ -96,8 +96,9 @@ export default function RoleManagementPage() {
         showSnackbar(e.message, "error");
       })
       .finally(() => setLoading(false));
-  }, [reload]);
+  }, [reload, showSnackbar]);
 
+  
   // Quyền
   const canCreate = useHasPermission("role", "create");
   const canUpdate = useHasPermission("role", "update");

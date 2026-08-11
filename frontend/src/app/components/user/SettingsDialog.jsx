@@ -150,6 +150,8 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
       handleSaveGeneralConfig(settings);
     }, 50);
     return () => clearTimeout(timer);
+    // Chỉ theo dõi settings — tránh loop nếu thêm handlers vào deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
   // Auto-save Chat Config
@@ -162,6 +164,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
       handleSaveConfig();
     }, 10);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatConfig, selectedCollection]);
 
   // Fetch collections and configs on tab change
@@ -174,6 +177,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
         fetchChatConfig();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, open]);
 
   const fetchGeneralConfig = async () => {
@@ -1093,7 +1097,7 @@ const SettingsDialog = ({ open, onClose, onRefresh, onClearChat, onChatConfigCha
         </DialogTitleMUI>
         <DialogContentMUI>
           <Typography>
-            Bạn có chắc muốn xóa collection <strong>"{collectionToDelete}"</strong> không? Hành động này không thể hoàn tác.
+            Bạn có chắc muốn xóa collection <strong>&quot;{collectionToDelete}&quot;</strong> không? Hành động này không thể hoàn tác.
           </Typography>
         </DialogContentMUI>
         <DialogActionsMUI>
