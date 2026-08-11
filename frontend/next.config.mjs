@@ -4,7 +4,7 @@ const nextConfig = {
   devIndicators: false,
   images: { unoptimized: true },
   experimental: {
-    proxyTimeout: 30000, // 30 giây
+    proxyTimeout: 300000, // 5 phút — stream RAG/LLM có thể dài
   },
   async rewrites() {
     return [

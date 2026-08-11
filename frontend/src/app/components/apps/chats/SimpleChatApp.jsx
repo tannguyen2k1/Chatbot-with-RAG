@@ -65,6 +65,81 @@ import SettingsDialog from "@/app/components/user/SettingsDialog";
 const SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 
+const THINKING_PHRASES = [
+  "Đang suy nghĩ",
+  "Đang tìm trong tài liệu",
+  "Đang soạn câu trả lời",
+];
+
+const ThinkingIndicator = ({ isDark }) => {
+  const [phraseIdx, setPhraseIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIdx((i) => (i + 1) % THINKING_PHRASES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, []);
+
+  const accent = isDark ? "#4FC3F7" : "#2563eb";
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.25,
+        pl: 0.5,
+        pt: 0.25,
+        minHeight: 28,
+      }}
+    >
+      <Box sx={{ display: "flex", gap: 0.45, alignItems: "center" }}>
+        {[0, 1, 2].map((i) => (
+          <Box
+            key={i}
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              bgcolor: accent,
+              animation: `thinkPulse 1.2s ease-in-out ${i * 0.18}s infinite`,
+              "@keyframes thinkPulse": {
+                "0%, 100%": { opacity: 0.25, transform: "translateY(0)" },
+                "50%": { opacity: 1, transform: "translateY(-3px)" },
+              },
+            }}
+          />
+        ))}
+      </Box>
+      <Fade in key={phraseIdx} timeout={350}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: isDark ? "grey.400" : "grey.600",
+            fontStyle: "italic",
+            fontSize: "0.8125rem",
+            letterSpacing: "0.01em",
+            userSelect: "none",
+            "&::after": {
+              content: '"..."',
+              display: "inline-block",
+              width: "1.2em",
+              animation: "thinkDots 1.4s steps(4, end) infinite",
+              "@keyframes thinkDots": {
+                "0%": { clipPath: "inset(0 100% 0 0)" },
+                "100%": { clipPath: "inset(0 0 0 0)" },
+              },
+            },
+          }}
+        >
+          {THINKING_PHRASES[phraseIdx]}
+        </Typography>
+      </Fade>
+    </Box>
+  );
+};
+
 const normalizeAssistantText = (text) => {
   if (!text) return "";
   return text.replace(/^"+|"+$/g, "");
@@ -1127,6 +1202,26 @@ const SimpleChatApp = () => {
                             >
                               {normalizeAssistantText(message.content)}
                             </ReactMarkdown>
+                            {isStreamingThis && message.content && (
+                              <Box
+                                component="span"
+                                aria-hidden
+                                sx={{
+                                  display: "inline-block",
+                                  width: 7,
+                                  height: "1.05em",
+                                  ml: 0.35,
+                                  verticalAlign: "text-bottom",
+                                  bgcolor: isDark ? "#4FC3F7" : "primary.main",
+                                  borderRadius: 0.5,
+                                  animation: "caretBlink 1s step-end infinite",
+                                  "@keyframes caretBlink": {
+                                    "0%, 100%": { opacity: 1 },
+                                    "50%": { opacity: 0 },
+                                  },
+                                }}
+                              />
+                            )}
                           </Box>
                         )}
                       </Box>
@@ -1177,28 +1272,7 @@ const SimpleChatApp = () => {
                       )}
 
                       {isStreamingThis && !message.content && (
-                        <Box sx={{ display: "flex", gap: 0.5, pl: 1, pt: 0.5 }}>
-                          {[0, 1, 2].map((i) => (
-                            <Box
-                              key={i}
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: "50%",
-                                bgcolor: isDark ? "#4FC3F7" : "primary.main",
-                                opacity: 0.8,
-                                animation: `bounce 1.4s ease-in-out ${i * 0.16}s infinite both`,
-                                "@keyframes bounce": {
-                                  "0%, 80%, 100%": {
-                                    transform: "scale(0.6)",
-                                    opacity: 0.4,
-                                  },
-                                  "40%": { transform: "scale(1)", opacity: 1 },
-                                },
-                              }}
-                            />
-                          ))}
-                        </Box>
+                        <ThinkingIndicator isDark={isDark} />
                       )}
                     </Box>
 
