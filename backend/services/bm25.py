@@ -73,10 +73,7 @@ class BM25Service:
         tokenized_corpus = [_normalize_vi(t).split() for t in texts]
         self._index = BM25Okapi(tokenized_corpus)
         self._built = True
-        logger.info(
-            f"[BM25] Built index for '{self.collection_name}': "
-            f"{len(texts)} documents"
-        )
+        logger.info(f"[BM25] Built index for '{self.collection_name}': {len(texts)} documents")
 
     def search(
         self,

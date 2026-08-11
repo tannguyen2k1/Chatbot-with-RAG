@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from services import DemoService
+
 from schemas import DemoCreate
+from services import DemoService
+
 
 async def seed_default_demos(db: AsyncSession) -> None:
     """Seed default demo data"""

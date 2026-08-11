@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models.user import User
+from dependencies import get_current_user, get_db
 from schemas.config import (
-    ConfigCreate,
-    ConfigUpdate,
-    ConfigResponse,
     ChatConfigUpdate,
+    ConfigCreate,
+    ConfigResponse,
+    ConfigUpdate,
     GeneralConfigUpdate,
 )
-from dependencies import get_db, get_current_user
 from services import ConfigService, PermissionError
 
 router = APIRouter(prefix="/configs", tags=["Configs"])
@@ -29,9 +30,9 @@ async def list_configs(
     try:
         return await service.get_all_configs_for(current_user.id, group_name)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.get("/general", response_model=dict)
@@ -43,9 +44,9 @@ async def get_general_config(
     try:
         return await service.get_general_config_for(current_user.id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.put("/general", response_model=dict)
@@ -58,9 +59,9 @@ async def update_general_config(
     try:
         return await service.update_general_config_for(current_user.id, data)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.get("/chat", response_model=dict)
@@ -72,9 +73,9 @@ async def get_chat_config(
     try:
         return await service.get_chat_config_for(current_user.id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.put("/chat", response_model=dict)
@@ -87,9 +88,9 @@ async def update_chat_config(
     try:
         return await service.update_chat_config_for(current_user.id, data)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.get("/{key}", response_model=ConfigResponse)
@@ -102,9 +103,9 @@ async def get_config(
     try:
         return await service.get_config_for(current_user.id, key)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.post("", response_model=ConfigResponse, status_code=status.HTTP_201_CREATED)
@@ -117,9 +118,9 @@ async def create_config(
     try:
         return await service.create_config_for(current_user.id, data)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.put("/{key}", response_model=ConfigResponse)
@@ -133,9 +134,9 @@ async def update_config(
     try:
         return await service.update_config_for(current_user.id, key, data)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e
 
 
 @router.delete("/{key}")
@@ -149,6 +150,6 @@ async def delete_config(
         await service.delete_config_for(current_user.id, key)
         return {"message": f"Config '{key}' deleted successfully"}
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backend Error: {e!s}") from e

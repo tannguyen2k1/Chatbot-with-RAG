@@ -1,8 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models.user import User
-from schemas import RoleCreate, RoleUpdate, RoleOut, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole
 from dependencies import get_current_user, get_db
+from schemas import (
+    AssignPermissionToRole,
+    AssignRoleToUser,
+    ModuleCreate,
+    PermissionCreate,
+    RemovePermissionFromRole,
+    RoleCreate,
+    RoleOut,
+    RoleUpdate,
+)
 from services import RBACService
 
 router = APIRouter(prefix="/rbac", tags=["RBAC"])
@@ -13,160 +23,169 @@ def get_rbac_service(db: AsyncSession = Depends(get_db)) -> RBACService:
 
 
 @router.get("/roles", response_model=list[RoleOut])
-async def get_roles(
-    service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
-):
+async def get_roles(service: RBACService = Depends(get_rbac_service), current_user: User = Depends(get_current_user)):
     try:
         return await service.list_roles_for(current_user.id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.get("/roles/{role_id}", response_model=RoleOut)
 async def get_role_by_id(
-    role_id: int, 
+    role_id: int,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         found_role = await service.get_role_detail_for(current_user.id, role_id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     if not found_role:
         raise HTTPException(status_code=404, detail="Role not found")
     return found_role
 
+
 @router.post("/roles")
 async def create_role(
-    data: RoleCreate, 
+    data: RoleCreate,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     desc = data.description if data.description is not None else ""
     try:
         return await service.create_role_for(current_user.id, data.name, desc)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.put("/roles/{role_id}", response_model=RoleOut)
 async def update_role(
-    role_id: int, 
-    data: RoleUpdate, 
+    role_id: int,
+    data: RoleUpdate,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         updated_role = await service.update_role_for(current_user.id, role_id, data)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     if not updated_role:
         raise HTTPException(status_code=404, detail="Role not found")
     return updated_role
 
+
 @router.delete("/roles/{role_id}")
 async def delete_role(
-    role_id: int, 
+    role_id: int,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         success = await service.delete_role_for(current_user.id, role_id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     if not success:
         raise HTTPException(status_code=404, detail="Role not found")
     return {"success": True}
 
+
 @router.post("/assign-role")
 async def assign_role_to_user(
-    data: AssignRoleToUser, 
+    data: AssignRoleToUser,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         return await service.assign_role_to_user_for(current_user.id, data.user_id, data.role_id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.get("/modules")
-async def get_modules(
-    service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
-):
+async def get_modules(service: RBACService = Depends(get_rbac_service), current_user: User = Depends(get_current_user)):
     try:
         return await service.list_modules_for(current_user.id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.post("/modules")
 async def create_module(
-    data: ModuleCreate, 
+    data: ModuleCreate,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     desc = data.description if data.description is not None else ""
     try:
         return await service.create_module_for(current_user.id, data.name, desc)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.get("/permissions")
 async def get_permissions(
-    service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    service: RBACService = Depends(get_rbac_service), current_user: User = Depends(get_current_user)
 ):
     try:
         return await service.list_permissions_for(current_user.id)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.post("/permissions")
 async def create_permission(
-    data: PermissionCreate, 
+    data: PermissionCreate,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     desc = data.description if data.description is not None else ""
     try:
         return await service.create_permission_for(current_user.id, data.name, desc)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.post("/remove-permission")
 async def remove_permission_from_role(
-    data: RemovePermissionFromRole, 
+    data: RemovePermissionFromRole,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
-        success = await service.remove_permission_from_role_for(current_user.id, data.role_id, data.module_id, data.permission_id)
+        success = await service.remove_permission_from_role_for(
+            current_user.id, data.role_id, data.module_id, data.permission_id
+        )
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     if not success:
         raise HTTPException(status_code=404, detail="Permission not found for this role")
     return {"success": True}
 
+
 @router.post("/assign-permission")
 async def assign_permission_to_role(
-    data: AssignPermissionToRole, 
+    data: AssignPermissionToRole,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
-        return await service.assign_permission_to_role_for(current_user.id, data.role_id, data.module_id, data.permission_id)
+        return await service.assign_permission_to_role_for(
+            current_user.id, data.role_id, data.module_id, data.permission_id
+        )
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
 
 @router.get("/check-permission")
 async def check_user_permission(
-    user_id: int, 
-    module_name: str, 
-    permission_name: str, 
+    user_id: int,
+    module_name: str,
+    permission_name: str,
     service: RBACService = Depends(get_rbac_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         has_permission = await service.check_user_permission_for(current_user.id, user_id, module_name, permission_name)
     except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e)) from e
     return {"has_permission": has_permission}

@@ -1,8 +1,9 @@
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+
 from database.models import Demo
-from schemas import DemoCreate, DemoUpdate, PaginatedDemoResponse, DemoResponse
-from typing import Optional
+from schemas import DemoCreate, DemoResponse, DemoUpdate, PaginatedDemoResponse
+
 from .rbac_helper import ensure_permission_global
 
 
@@ -11,36 +12,24 @@ class DemoService:
         self.db = db
 
     async def get_all_demos(
-        self,
-        page: int = 1,
-        page_size: int = 10,
-        search: Optional[str] = None
+        self, page: int = 1, page_size: int = 10, search: str | None = None
     ) -> PaginatedDemoResponse:
         """Lấy tất cả demos với phân trang và tìm kiếm"""
         base_query = select(Demo)
 
         if search:
             like = f"%{search}%"
-            base_query = base_query.filter(
-                (Demo.title.ilike(like)) | (Demo.description.ilike(like))
-            )
+            base_query = base_query.filter((Demo.title.ilike(like)) | (Demo.description.ilike(like)))
 
         # COUNT
         count_query = select(func.count()).select_from(Demo)
         if search:
-            count_query = count_query.filter(
-                (Demo.title.ilike(like)) | (Demo.description.ilike(like))
-            )
+            count_query = count_query.filter((Demo.title.ilike(like)) | (Demo.description.ilike(like)))
 
         total = (await self.db.execute(count_query)).scalar_one()
 
         # DATA
-        query = (
-            base_query
-            .order_by(Demo.id.asc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
+        query = base_query.order_by(Demo.id.asc()).offset((page - 1) * page_size).limit(page_size)
 
         result = await self.db.execute(query)
         demos = result.scalars().all()
@@ -49,28 +38,23 @@ class DemoService:
             data=[DemoResponse.model_validate(demo) for demo in demos],
             total=total,
             page=page,
-            page_size=page_size
+            page_size=page_size,
         )
 
-    async def get_demo_by_id(self, demo_id: int) -> Optional[Demo]:
+    async def get_demo_by_id(self, demo_id: int) -> Demo | None:
         """Lấy demo theo ID"""
-        result = await self.db.execute(
-            select(Demo).filter(Demo.id == demo_id)
-        )
+        result = await self.db.execute(select(Demo).filter(Demo.id == demo_id))
         return result.scalar_one_or_none()
 
     async def create_demo(self, demo_data: DemoCreate) -> Demo:
         """Tạo demo mới"""
-        new_demo = Demo(
-            title=demo_data.title,
-            description=demo_data.description
-        )
+        new_demo = Demo(title=demo_data.title, description=demo_data.description)
         self.db.add(new_demo)
         await self.db.commit()
         await self.db.refresh(new_demo)
         return new_demo
 
-    async def update_demo(self, demo_id: int, demo_data: DemoUpdate) -> Optional[Demo]:
+    async def update_demo(self, demo_id: int, demo_data: DemoUpdate) -> Demo | None:
         """Cập nhật demo"""
         demo = await self.get_demo_by_id(demo_id)
         if not demo:
@@ -93,7 +77,9 @@ class DemoService:
         return True
 
     # "For" methods that handle permissions and business logic
-    async def get_all_demos_for(self, current_user_id: int, page: int = 1, page_size: int = 10, search: Optional[str] = None) -> PaginatedDemoResponse:
+    async def get_all_demos_for(
+        self, current_user_id: int, page: int = 1, page_size: int = 10, search: str | None = None
+    ) -> PaginatedDemoResponse:
         """Get all demos with permission check"""
         await ensure_permission_global(current_user_id, "demo", "view")
         return await self.get_all_demos(page, page_size, search)
@@ -101,50 +87,54 @@ class DemoService:
     async def get_demo_for(self, current_user_id: int, demo_id: int) -> DemoResponse:
         """Get demo by ID with permission check"""
         await ensure_permission_global(current_user_id, "demo", "view")
-        
+
         demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
-        
+
         return DemoResponse.model_validate(demo)
 
     async def create_demo_for(self, current_user_id: int, demo_data: DemoCreate) -> DemoResponse:
         """Create demo with permission check"""
         await ensure_permission_global(current_user_id, "demo", "create")
-        
+
         demo = await self.create_demo(demo_data)
         return DemoResponse.model_validate(demo)
 
     async def update_demo_for(self, current_user_id: int, demo_id: int, demo_data: DemoUpdate) -> DemoResponse:
         """Update demo with permission check"""
         await ensure_permission_global(current_user_id, "demo", "update")
-        
+
         demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
-        
+
         updated_demo = await self.update_demo(demo_id, demo_data)
         if updated_demo is None:
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found after update")
-        
+
         return DemoResponse.model_validate(updated_demo)
 
     async def delete_demo_for(self, current_user_id: int, demo_id: int) -> dict:
         """Delete demo with permission check"""
         await ensure_permission_global(current_user_id, "demo", "delete")
-        
+
         demo = await self.get_demo_by_id(demo_id)
         if not demo:
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo not found")
-        
+
         deleted = await self.delete_demo(demo_id)
         if not deleted:
             from fastapi import HTTPException, status
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not delete demo")
-        
-        return {"message": f"Demo with ID: {demo_id} has been deleted"}
 
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not delete demo")
+
+        return {"message": f"Demo with ID: {demo_id} has been deleted"}

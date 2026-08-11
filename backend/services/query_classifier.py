@@ -1,16 +1,16 @@
 import re
 import unicodedata
-import joblib
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.svm import LinearSVC
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
 
 ASSETS_DIR = Path(__file__).parent.parent / "assets"
 MODEL_DIR = Path(__file__).parent / "models"
@@ -20,7 +20,14 @@ MODEL_FILE = MODEL_DIR / "intent_classifier.joblib"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 TFIDF_PARAMS = {"ngram_range": (1, 3), "max_features": 7000}
-SVC_PARAMS = {"C": 2.0, "loss": "hinge", "dual": "auto", "max_iter": 5000, "class_weight": {0: 1, 1: 2.5}, "random_state": 42}
+SVC_PARAMS = {
+    "C": 2.0,
+    "loss": "hinge",
+    "dual": "auto",
+    "max_iter": 5000,
+    "class_weight": {0: 1, 1: 2.5},
+    "random_state": 42,
+}
 THRESHOLD_SEARCH = [-0.5, -0.3, -0.2, -0.1, 0.0]
 
 
@@ -88,14 +95,32 @@ def add_features(text: str) -> str:
         features.append("NO_DIGITS")
 
     question_patterns = [
-        r"\blà gì\b", r"\blà sao\b", r"\blàm sao\b", r"\btại sao\b",
-        r"\bthế nào\b", r"\bcách nào\b", r"\bnhư thế nào\b",
-        r"\bcó nên\b", r"\bcó cần\b", r"\bcó cách\b",
-        r"\bnên dùng\b", r"\bnên chọn\b", r"\bnên học\b",
-        r"\bgiải thích\b", r"\bhướng dẫn\b", r"\btìm hiểu\b",
-        r"\bcách\s+\w", r"\bviết\b", r"\bcode\b",
-        r"\blỗi\b", r"\bbug\b", r"\bkhông chạy\b", r"\bkhông được\b",
-        r"\bsao không\b", r"\bkhông hiểu\b", r"\bchưa hiểu\b",
+        r"\blà gì\b",
+        r"\blà sao\b",
+        r"\blàm sao\b",
+        r"\btại sao\b",
+        r"\bthế nào\b",
+        r"\bcách nào\b",
+        r"\bnhư thế nào\b",
+        r"\bcó nên\b",
+        r"\bcó cần\b",
+        r"\bcó cách\b",
+        r"\bnên dùng\b",
+        r"\bnên chọn\b",
+        r"\bnên học\b",
+        r"\bgiải thích\b",
+        r"\bhướng dẫn\b",
+        r"\btìm hiểu\b",
+        r"\bcách\s+\w",
+        r"\bviết\b",
+        r"\bcode\b",
+        r"\blỗi\b",
+        r"\bbug\b",
+        r"\bkhông chạy\b",
+        r"\bkhông được\b",
+        r"\bsao không\b",
+        r"\bkhông hiểu\b",
+        r"\bchưa hiểu\b",
     ]
     if any(re.search(p, text_lower) for p in question_patterns):
         features.append("HAS_QUESTION_PATTERN")
@@ -106,19 +131,43 @@ def add_features(text: str) -> str:
             features.append("ENDS_WITH_QUESTION_WORD")
 
     goodbye_patterns = [
-        r"\bcảm ơn\b", r"\bthanks?\b", r"\bcám ơn\b", r"\bbye\b",
-        r"\btạm biệt\b", r"\bchào\b", r"\bhello\b", r"\bhi\b", r"\bhey\b",
-        r"\bđược rồi\b", r"\bhiểu rồi\b", r"\brõ rồi\b", r"\bok\b",
-        r"\bđi đây\b", r"\bnghỉ đây\b", r"\bhẹn gặp\b",
-        r"\bthôi nhé\b", r"\bthôi nha\b",
+        r"\bcảm ơn\b",
+        r"\bthanks?\b",
+        r"\bcám ơn\b",
+        r"\bbye\b",
+        r"\btạm biệt\b",
+        r"\bchào\b",
+        r"\bhello\b",
+        r"\bhi\b",
+        r"\bhey\b",
+        r"\bđược rồi\b",
+        r"\bhiểu rồi\b",
+        r"\brõ rồi\b",
+        r"\bok\b",
+        r"\bđi đây\b",
+        r"\bnghỉ đây\b",
+        r"\bhẹn gặp\b",
+        r"\bthôi nhé\b",
+        r"\bthôi nha\b",
     ]
     if any(re.search(p, text_lower) for p in goodbye_patterns):
         features.append("HAS_GOODBYE_PATTERN")
 
     first_word = words[0].lower() if num_words >= 1 else ""
     if first_word in [
-        "cách", "hướng", "tạo", "viết", "xây", "thiết", "cài",
-        "cấu", "chạy", "deploy", "build", "setup", "config",
+        "cách",
+        "hướng",
+        "tạo",
+        "viết",
+        "xây",
+        "thiết",
+        "cài",
+        "cấu",
+        "chạy",
+        "deploy",
+        "build",
+        "setup",
+        "config",
     ]:
         features.append("STARTS_IMPERATIVE")
 
@@ -137,24 +186,26 @@ def train_and_evaluate(visualize: bool = False):
     x = data["text_norm"]
     y = data["need_context"]
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=42, stratify=y
-    )
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42, stratify=y)
 
     x_train_enhanced = x_train + " [SEP] " + x_train.apply(add_features)
     x_test_enhanced = x_test + " [SEP] " + x_test.apply(add_features)
 
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(**TFIDF_PARAMS)),
-        ("clf", LinearSVC(**SVC_PARAMS)),
-    ])
+    pipeline = Pipeline(
+        [
+            ("tfidf", TfidfVectorizer(**TFIDF_PARAMS)),
+            ("clf", LinearSVC(**SVC_PARAMS)),
+        ]
+    )
 
     pipeline.fit(x_train_enhanced, y_train)
     scores_test = pipeline.decision_function(x_test_enhanced)
 
     print("[Query Classifier] Rebuild with Feature Engineering + Threshold Tuning")
-    print(f"\n--- Threshold Tuning (target: minimize FN, maximize recall label 1) ---")
-    print(f"{'Threshold':>10}  {'Acc':>7}  {'Precision0':>10}  {'Recall0':>8}  {'Precision1':>10}  {'Recall1':>8}  {'FN':>4}  {'FP':>4}")
+    print("\n--- Threshold Tuning (target: minimize FN, maximize recall label 1) ---")
+    print(
+        f"{'Threshold':>10}  {'Acc':>7}  {'Precision0':>10}  {'Recall0':>8}  {'Precision1':>10}  {'Recall1':>8}  {'FN':>4}  {'FP':>4}"
+    )
     print("-" * 75)
 
     best_threshold = 0.0
@@ -173,7 +224,9 @@ def train_and_evaluate(visualize: bool = False):
         prec1 = tp / (tp + fp) if (tp + fp) > 0 else 0
         rec1 = tp / (tp + fn) if (tp + fn) > 0 else 0
         acc = (tp + tn) / (tp + tn + fp + fn)
-        print(f"{thresh:>+10.1f}  {acc:>7.4f}  {prec0:>10.4f}  {rec0:>8.4f}  {prec1:>10.4f}  {rec1:>8.4f}  {fn:>4d}  {fp:>4d}")
+        print(
+            f"{thresh:>+10.1f}  {acc:>7.4f}  {prec0:>10.4f}  {rec0:>8.4f}  {prec1:>10.4f}  {rec1:>8.4f}  {fn:>4d}  {fp:>4d}"
+        )
         if rec1 > best_recall1 or (rec1 == best_recall1 and fp < (cm_t[0, 1] if best_scores is not None else 9999)):
             best_recall1 = rec1
             best_threshold = thresh
@@ -185,12 +238,14 @@ def train_and_evaluate(visualize: bool = False):
     cm = confusion_matrix(y_test, np.where(scores_test >= best_threshold, 1, 0))
     acc = accuracy_score(y_test, np.where(scores_test >= best_threshold, 1, 0))
     print(f"\nAccuracy: {acc:.4f}")
-    print(f"                 Predicted")
-    print(f"                 0      1")
-    print(f"Actual 0   {cm[0,0]:>5}  {cm[0,1]:>5}")
-    print(f"       1   {cm[1,0]:>5}  {cm[1,1]:>5}")
+    print("                 Predicted")
+    print("                 0      1")
+    print(f"Actual 0   {cm[0, 0]:>5}  {cm[0, 1]:>5}")
+    print(f"       1   {cm[1, 0]:>5}  {cm[1, 1]:>5}")
     print(f"\n{classification_report(y_test, np.where(scores_test >= best_threshold, 1, 0), digits=4)}")
-    import sys; sys.stdout.flush()
+    import sys
+
+    sys.stdout.flush()
 
     x_full_enhanced = x + " [SEP] " + x.apply(add_features)
     pipeline.fit(x_full_enhanced, y)
@@ -268,4 +323,6 @@ if __name__ == "__main__":
         result = classifier.classify(text)
         status = "OK" if result.needs_context == bool(expected) else "FAIL"
         print(f"  [{status}] '{text}' -> {result.needs_context} ({result.reason})")
-    import sys; sys.stdout.flush()
+    import sys
+
+    sys.stdout.flush()

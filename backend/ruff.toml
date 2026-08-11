@@ -1,0 +1,52 @@
+# Ruff — lint/format for backend
+target-version = "py311"
+line-length = 120
+exclude = [
+    ".venv",
+    "migrations",
+    "database/migrations",
+    "__pycache__",
+    "assets",
+    "_fix_b904.py",
+]
+
+[lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+    "C4",
+    "PIE",
+    "RUF",
+    "BLE",
+    "DTZ",
+    "S110",
+    "TC",
+    "TRY002",
+]
+ignore = [
+    # FastAPI idiom: Depends(...) / Query(...) in defaults
+    "B008",
+    # Many intentional catch-all guards in services
+    "BLE001",
+    # Long Vietnamese prompts / table headers — not worth wrapping
+    "E501",
+]
+
+[lint.isort]
+known-first-party = ["api", "config", "database", "dependencies", "middleware", "schemas", "services"]
+# Keep base/user before dependents to avoid circular imports in models package
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "I001"]
+"database/models/__init__.py" = ["F401", "F403", "I001"]
+"database/seeds/*" = ["S110"]
+"middleware/__init__.py" = ["F401", "F403"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

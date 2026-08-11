@@ -8,6 +8,7 @@ Sử dụng Qwen3-Embedding-0.6B qua sentence-transformers để:
 
 import logging
 from typing import Optional
+
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,6 @@ class EmbeddingService:
 
     def _load_model(self):
         """No local model to load for Mistral API"""
-        pass
 
     @property
     def model(self):
@@ -57,18 +57,15 @@ class EmbeddingService:
             normalize: Chuẩn hóa vector (khuyến nghị True cho cosine similarity)
         """
         import httpx
-        
+
         api_key = settings.MISTRAL_API_KEY
         if not api_key:
             raise ValueError("MISTRAL_API_KEY is not set in environment variables.")
 
         # Batch requests if needed, but for now just send directly
         # Mistral API limit is usually high enough, but we should handle it
-        payload = {
-            "model": settings.EMBEDDING_MODEL_NAME,
-            "input": texts
-        }
-        
+        payload = {"model": settings.EMBEDDING_MODEL_NAME, "input": texts}
+
         try:
             # Using sync httpx for compatibility with existing synchronous flow
             with httpx.Client() as client:
@@ -76,11 +73,11 @@ class EmbeddingService:
                     "https://api.mistral.ai/v1/embeddings",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json=payload,
-                    timeout=30.0
+                    timeout=30.0,
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 # Mistral returns data in the same order as input
                 embeddings = [item["embedding"] for item in data["data"]]
                 return embeddings

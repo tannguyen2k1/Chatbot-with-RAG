@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
-logger = logging.getLogger(__name__)
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.vector import search_by_text
 from database.models.user import User
@@ -16,6 +15,8 @@ from services.embedding import EmbeddingService, get_embedding_service
 from services.query_classifier import QueryClassifier, get_query_classifier
 from services.rerank import RerankService, get_rerank_service
 from services.vector import VectorService, get_vector_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/chat",
@@ -35,7 +36,7 @@ async def context_chat_endpoint(
     classifier: QueryClassifier = Depends(get_query_classifier),
 ):
     chat = await get_chat_service_with_db(db)
-    
+
     classification = classifier.classify(request.query)
     if not classification.needs_context:
         return ContextChatResponse(
@@ -88,7 +89,7 @@ async def chat_endpoint(
     classifier: QueryClassifier = Depends(get_query_classifier),
 ):
     chat = await get_chat_service_with_db(db)
-    
+
     classification = classifier.classify(request.query)
     if not classification.needs_context:
         context = ""
@@ -150,7 +151,7 @@ async def chat_stream_endpoint(
     except Exception as e:
         logger.error(f"[chat/stream] Classification error: {e}")
         return StreamingResponse(
-            iter([f"Lỗi khi phân loại câu hỏi: {str(e)}"]),
+            iter([f"Lỗi khi phân loại câu hỏi: {e!s}"]),
             media_type="text/plain; charset=utf-8",
             headers={"X-Context-Sources": "0"},
         )

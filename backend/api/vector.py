@@ -3,8 +3,8 @@ Vector Database API Endpoints
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from database.models.user import User
 
+from database.models.user import User
 from dependencies import get_current_user
 from schemas.vector import (
     CollectionCreate,
@@ -50,7 +50,7 @@ async def get_collection(
     try:
         return await service.get_collection_info_for(current_user.id, name)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Collection '{name}' not found: {e}")
+        raise HTTPException(status_code=404, detail=f"Collection '{name}' not found: {e}") from e
 
 
 @router.post("/collections", status_code=status.HTTP_201_CREATED)
@@ -62,7 +62,7 @@ async def create_collection(
     try:
         return await service.create_collection_for(current_user.id, data)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.delete("/collections/{name}", status_code=status.HTTP_200_OK)
@@ -74,7 +74,7 @@ async def delete_collection(
     try:
         return await service.delete_collection_for(current_user.id, name)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.post("/collections/{collection_name}/points", status_code=status.HTTP_201_CREATED)
@@ -87,7 +87,7 @@ async def upsert_points(
     try:
         return await service.upsert_points_for(current_user.id, collection_name, data.points)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/collections/{collection_name}/points/{point_id}")
@@ -114,7 +114,7 @@ async def delete_points(
     try:
         return await service.delete_points_for(current_user.id, collection_name, point_ids)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.delete("/collections/{collection_name}/clear", status_code=status.HTTP_200_OK)
@@ -126,7 +126,7 @@ async def clear_collection(
     try:
         return await service.clear_collection_for(current_user.id, collection_name)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/collections/{collection_name}/search", response_model=VectorSearchResponse)
@@ -139,7 +139,7 @@ async def search_vectors(
     try:
         return await service.search_vectors_for(current_user.id, collection_name, request)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/collections/{collection_name}/search/text", response_model=VectorSearchResponse)
@@ -152,8 +152,6 @@ async def search_by_text(
     reranker: RerankService = Depends(get_rerank_service),
 ):
     try:
-        return await service.search_by_text_for(
-            current_user.id, collection_name, search_req, embedding, reranker
-        )
+        return await service.search_by_text_for(current_user.id, collection_name, search_req, embedding, reranker)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e

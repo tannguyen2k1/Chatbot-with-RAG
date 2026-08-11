@@ -2,14 +2,15 @@ import asyncio
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
-from database.models.user import User
 
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
+
+from database.models.user import User
 from dependencies import get_current_user
 from schemas.ingestion import (
     IngestDBRequest,
-    IngestResponse,
     IngestionJob,
+    IngestResponse,
     JobStatus,
 )
 from schemas.vector import PointUpsert
@@ -67,9 +68,11 @@ async def _do_ingest_file_bytes(
         except Exception:
             # Collection might not exist, auto-create it
             from schemas.vector import CollectionCreate
-            dim = embedding_service.vector_dimension if hasattr(embedding_service, 'vector_dimension') else 1024
-            await vector_service.create_collection(CollectionCreate(name=collection_name, vector_size=dim, distance="Cosine"))
 
+            dim = embedding_service.vector_dimension if hasattr(embedding_service, "vector_dimension") else 1024
+            await vector_service.create_collection(
+                CollectionCreate(name=collection_name, vector_size=dim, distance="Cosine")
+            )
 
         batch_size = 500
         for i in range(0, len(chunks), batch_size):
@@ -78,7 +81,7 @@ async def _do_ingest_file_bytes(
             vectors = embedding_service.encode_texts(texts, is_query=False)
 
             points = []
-            for chunk, vector in zip(batch_chunks, vectors):
+            for chunk, vector in zip(batch_chunks, vectors, strict=False):
                 point_id = str(uuid.uuid4())
                 payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
                 points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
@@ -95,9 +98,9 @@ async def _do_ingest_file_bytes(
         await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         await ingestion_job_service.update_job(job_id, status=JobStatus.FAILED, error=str(e))
-
 
 
 async def _do_ingest_db(
@@ -139,8 +142,11 @@ async def _do_ingest_db(
             await vector_service.get_collection_info(request.collection_name)
         except Exception:
             from schemas.vector import CollectionCreate
-            dim = embedding_service.vector_dimension if hasattr(embedding_service, 'vector_dimension') else 1024
-            await vector_service.create_collection(CollectionCreate(name=request.collection_name, vector_size=dim, distance="Cosine"))
+
+            dim = embedding_service.vector_dimension if hasattr(embedding_service, "vector_dimension") else 1024
+            await vector_service.create_collection(
+                CollectionCreate(name=request.collection_name, vector_size=dim, distance="Cosine")
+            )
 
         batch_size = 500
         for i in range(0, len(chunks), batch_size):
@@ -149,7 +155,7 @@ async def _do_ingest_db(
             vectors = embedding_service.encode_texts(texts, is_query=False)
 
             points = []
-            for chunk, vector in zip(batch_chunks, vectors):
+            for chunk, vector in zip(batch_chunks, vectors, strict=False):
                 point_id = str(uuid.uuid4())
                 payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
                 points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
@@ -166,9 +172,9 @@ async def _do_ingest_db(
         await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         await ingestion_job_service.update_job(job_id, status=JobStatus.FAILED, error=str(e))
-
 
 
 @router.post(

@@ -1,14 +1,10 @@
-from enum import Enum
+from enum import StrEnum
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    # Type hints for development, không ảnh hưởng runtime
-    pass
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(StrEnum):
     pending = "pending"
     cancelled = "cancelled"
     completed = "completed"
@@ -27,7 +23,7 @@ class Settings(BaseSettings):
     REFRESH_COOKIE_SECURE: bool = False
     REFRESH_COOKIE_SAMESITE: str = "lax"
     REFRESH_COOKIE_PATH: str = "/"
-    REFRESH_COOKIE_DOMAIN: Optional[str] = None
+    REFRESH_COOKIE_DOMAIN: str | None = None
 
     @field_validator("REFRESH_COOKIE_DOMAIN", mode="before")
     @classmethod
@@ -49,7 +45,7 @@ class Settings(BaseSettings):
 
     # Reranker Model
     RERANKER_MODEL_NAME: str = "rerank-multilingual-v3.0"
-    COHERE_API_KEY: Optional[str] = None
+    COHERE_API_KEY: str | None = None
     RERANKER_MIN_TOKENS: int = 20
     RERANKER_MIN_CANDIDATES: int = 3
     CHUNK_MIN_TOKENS_TO_MERGE: int = 40
@@ -61,11 +57,11 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "mistral"  # "mistral" | "deepseek"
 
     # Mistral
-    MISTRAL_API_KEY: Optional[str] = None
+    MISTRAL_API_KEY: str | None = None
     MISTRAL_MODEL_NAME: str = "mistral-large-latest"
 
     # DeepSeek
-    DEEPSEEK_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: str | None = None
     DEEPSEEK_MODEL_NAME: str = "deepseek-chat"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
 
@@ -77,7 +73,9 @@ class Settings(BaseSettings):
             case "deepseek":
                 return self.DEEPSEEK_MODEL_NAME
             case _:
-                raise ValueError(f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral' hoặc 'deepseek'.")
+                raise ValueError(
+                    f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral' hoặc 'deepseek'."
+                )
 
     # Chat System Prompt
     CHAT_SYSTEM_PROMPT: str = """Bạn là một trợ lý AI thông minh chuyên phân tích tài liệu.

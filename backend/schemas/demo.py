@@ -1,26 +1,31 @@
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime
+
+from pydantic import BaseModel
+
 
 class DemoCreate(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
+
 
 class DemoUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+
 
 class DemoResponse(BaseModel):
     id: int
     title: str
-    description: Optional[str]
+    description: str | None
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
+
     class Config:
         from_attributes = True
 
+
 class PaginatedDemoResponse(BaseModel):
-    data: List[DemoResponse]
+    data: list[DemoResponse]
     total: int
     page: int
     page_size: int

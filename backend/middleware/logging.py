@@ -1,16 +1,18 @@
 import logging
-from fastapi import Request
 import os
 import time
-from jose import jwt, JWTError
+from datetime import UTC, datetime
 from logging.handlers import TimedRotatingFileHandler
-from datetime import datetime
+
+from fastapi import Request
+from jose import JWTError, jwt
+
 from config.settings import settings
 from database.context import current_user_id
 
 log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
 os.makedirs(log_dir, exist_ok=True)
-log_filename = os.path.join(log_dir, f"app_{datetime.now().strftime('%Y%m%d')}.log")
+log_filename = os.path.join(log_dir, f"app_{datetime.now(tz=UTC).strftime('%Y%m%d')}.log")
 
 handler = TimedRotatingFileHandler(log_filename, when="midnight", interval=1, backupCount=7, encoding="utf-8")
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -28,6 +30,7 @@ for logger_name in ["sqlalchemy.engine"]:
     if not logger.handlers:
         logger.addHandler(handler)
 
+
 async def log_requests(request: Request, call_next):
     start_time = time.time()
     user_agent = request.headers.get("user-agent", "-")
@@ -44,5 +47,7 @@ async def log_requests(request: Request, call_next):
     current_user_id.set(user_id)
     response = await call_next(request)
     process_time = (time.time() - start_time) * 1000
-    app_logger.info(f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}")
+    app_logger.info(
+        f"{request.method} {request.url.path} {response.status_code} {process_time:.2f}ms UA={user_agent} IP={client_ip} user_id={user_id}"
+    )
     return response

@@ -1,9 +1,11 @@
-from typing import AsyncIterator, List, Optional
+import logging
+from collections.abc import AsyncIterator
 
 from config.settings import settings
 from schemas.vector import SearchResult
 from services.llm_provider import LLMProviderBase, get_cached_provider
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = """Bạn là một trợ lý AI thông minh chuyên phân tích tài liệu.
 
@@ -35,7 +37,7 @@ class ChatService:
             self._llm = get_cached_provider()
         return self._llm
 
-    def build_context(self, results: List[SearchResult]) -> str:
+    def build_context(self, results: list[SearchResult]) -> str:
         if not results:
             return "Không tìm thấy tài liệu phù hợp nào trong hệ thống."
 
@@ -45,16 +47,12 @@ class ChatService:
             text = res.payload.get("_text", "")
             filename = res.payload.get("filename", "Tài liệu")
 
-            context_text += (
-                f"[Tài liệu {i + 1} | Nguồn: {filename} | Phần: {heading}]\n"
-            )
+            context_text += f"[Tài liệu {i + 1} | Nguồn: {filename} | Phần: {heading}]\n"
             context_text += f"{text}\n\n"
 
         return context_text.strip()
 
-    def generate_prompt_preview(
-        self, query: str, context: str, system_prompt: str = None
-    ) -> str:
+    def generate_prompt_preview(self, query: str, context: str, system_prompt: str | None = None) -> str:
         if not system_prompt:
             system_prompt = DEFAULT_SYSTEM_PROMPT
         return system_prompt.format(context=context, query=query)
@@ -64,10 +62,10 @@ class ChatService:
         query: str,
         context: str,
         system_prompt: str,
-        conversation_history: Optional[List[dict]] = None,
+        conversation_history: list[dict] | None = None,
         history_max_messages: int = 10,
         history_include_system: bool = True,
-    ) -> List[dict]:
+    ) -> list[dict]:
         messages = []
 
         if history_include_system:
@@ -95,8 +93,8 @@ class ChatService:
         self,
         query: str,
         context: str,
-        system_prompt: str = None,
-        conversation_history: Optional[List[dict]] = None,
+        system_prompt: str | None = None,
+        conversation_history: list[dict] | None = None,
         history_max_messages: int = 10,
         history_include_system: bool = True,
     ) -> str:
@@ -120,8 +118,8 @@ class ChatService:
         self,
         query: str,
         context: str,
-        system_prompt: str = None,
-        conversation_history: Optional[List[dict]] = None,
+        system_prompt: str | None = None,
+        conversation_history: list[dict] | None = None,
         history_max_messages: int = 10,
         history_include_system: bool = True,
     ) -> AsyncIterator[str]:
@@ -155,7 +153,8 @@ class ChatService:
             if config and config.value:
                 return config.value
         except Exception:
-            pass
+            # Config lookup optional — fallback to default prompt
+            logger.debug("chat.system_prompt config unavailable; using default", exc_info=True)
 
         return DEFAULT_SYSTEM_PROMPT
 

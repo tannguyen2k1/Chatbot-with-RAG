@@ -1,12 +1,15 @@
+from datetime import UTC, datetime
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime, timezone
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from config.settings import settings
 from database.models.user import User
 from services.auth import TOKEN_TYPE_ACCESS
+
 from .database import get_db
 
 security = HTTPBearer()
@@ -37,7 +40,7 @@ async def get_current_user(
             raise credentials_exception
 
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
 
     result = await db.execute(select(User).filter(User.id == int(user_id)))
     user = result.scalar_one_or_none()
@@ -59,7 +62,7 @@ async def get_current_user(
                 detail="Token has been invalidated due to password change. Please login again.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        token_issued_at = datetime.fromtimestamp(token_iat, tz=timezone.utc)
+        token_issued_at = datetime.fromtimestamp(token_iat, tz=UTC)
         if user.password_changed_at > token_issued_at:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

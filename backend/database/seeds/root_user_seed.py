@@ -1,18 +1,18 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from database.models import User, UserRole, Role
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import Role, User, UserRole
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 async def seed_root_user(db: AsyncSession) -> None:
     """Seed root user with root role"""
-    
-    result = await db.execute(
-        select(User).filter(User.username == "root")
-    )
+
+    result = await db.execute(select(User).filter(User.username == "root"))
     root_user = result.scalar_one_or_none()
-    
+
     if not root_user:
         hashed_password = pwd_context.hash("root123456")
         root_user = User(
@@ -28,22 +28,17 @@ async def seed_root_user(db: AsyncSession) -> None:
         print("[OK] Created root user")
     else:
         print("[INFO] Root user already exists")
-    
+
     result = await db.execute(select(Role).filter_by(name="root"))
     root_role = result.scalar_one_or_none()
-    
+
     if root_role and root_user:
-        result = await db.execute(
-            select(UserRole).filter_by(
-                user_id=root_user.id, 
-                role_id=root_role.id
-            )
-        )
+        result = await db.execute(select(UserRole).filter_by(user_id=root_user.id, role_id=root_role.id))
         existing = result.scalar_one_or_none()
-        
+
         if not existing:
             user_role = UserRole(
-                user_id=root_user.id, 
+                user_id=root_user.id,
                 role_id=root_role.id,
             )
             db.add(user_role)
@@ -51,5 +46,5 @@ async def seed_root_user(db: AsyncSession) -> None:
             print("[OK] Assigned root role to root user")
         else:
             print("[INFO] Root user already has root role")
-    
+
     return root_user

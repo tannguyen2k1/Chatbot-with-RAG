@@ -1,10 +1,11 @@
+from datetime import UTC, datetime
+
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+
 from database.models import User
-from schemas import UserCreate, UserUpdate, UserResponse, PaginatedUserResponse
-from typing import Optional
-from database.models.auth_models import UserRole, Role
-from datetime import datetime, timezone
+from database.models.auth_models import Role, UserRole
+from schemas import PaginatedUserResponse, UserCreate, UserResponse, UserUpdate
 
 from .rbac_helper import (
     ensure_permission_global,
@@ -18,9 +19,7 @@ class UserService:
         self.db = db
 
     async def create_user(self, user_data: UserCreate) -> User:
-        result = await self.db.execute(
-            select(User).filter(User.username == user_data.username)
-        )
+        result = await self.db.execute(select(User).filter(User.username == user_data.username))
         existing_username = result.scalar_one_or_none()
         if existing_username:
             from fastapi import HTTPException, status
@@ -46,14 +45,12 @@ class UserService:
         await self.db.refresh(new_user)
         return new_user
 
-    async def get_user(self, user_id: int) -> Optional[User]:
+    async def get_user(self, user_id: int) -> User | None:
         result = await self.db.execute(select(User).filter(User.id == user_id))
         return result.scalar_one_or_none()
 
-    async def update_user(
-        self, user_id: int, update_data: UserUpdate
-    ) -> Optional[User]:
-        from database.models.auth_models import UserRole, Role
+    async def update_user(self, user_id: int, update_data: UserUpdate) -> User | None:
+        from database.models.auth_models import Role, UserRole
 
         user = await self.get_user(user_id)
         if not user:
@@ -61,9 +58,7 @@ class UserService:
 
         if update_data.username is not None:
             result = await self.db.execute(
-                select(User).filter(
-                    User.username == update_data.username, User.id != user_id
-                )
+                select(User).filter(User.username == update_data.username, User.id != user_id)
             )
             from fastapi import HTTPException, status
 
@@ -86,14 +81,10 @@ class UserService:
             update_dict["is_active"] = update_data.is_active
         if update_data.role is not None:
             await self.db.execute(delete(UserRole).filter_by(user_id=user_id))
-            result = await self.db.execute(
-                select(Role).filter_by(name=update_data.role)
-            )
+            result = await self.db.execute(select(Role).filter_by(name=update_data.role))
             role_obj = result.scalar_one_or_none()
             if role_obj:
-                new_user_role = UserRole(
-                    user_id=user_id, role_id=role_obj.id
-                )
+                new_user_role = UserRole(user_id=user_id, role_id=role_obj.id)
                 self.db.add(new_user_role)
         if update_dict:
             stmt = update(User).filter(User.id == user_id).values(**update_dict)
@@ -112,15 +103,11 @@ class UserService:
         await self.db.commit()
         return True
 
-    async def list_users(
-        self, skip: int = 0, limit: int = 10, search: str = ""
-    ) -> list[User]:
+    async def list_users(self, skip: int = 0, limit: int = 10, search: str = "") -> list[User]:
         query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
-            query = query.filter(
-                (User.username.ilike(search_lower)) | (User.email.ilike(search_lower))
-            )
+            query = query.filter((User.username.ilike(search_lower)) | (User.email.ilike(search_lower)))
         query = query.order_by(User.id.asc()).offset(skip).limit(limit)
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -129,15 +116,11 @@ class UserService:
         query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
-            query = query.filter(
-                (User.username.ilike(search_lower)) | (User.email.ilike(search_lower))
-            )
+            query = query.filter((User.username.ilike(search_lower)) | (User.email.ilike(search_lower)))
         result = await self.db.execute(query)
         return len(result.scalars().all())
 
-    async def create_user_for(
-        self, current_user_id: int, user_data: UserCreate
-    ) -> UserResponse:
+    async def create_user_for(self, current_user_id: int, user_data: UserCreate) -> UserResponse:
         await ensure_permission_global(current_user_id, "user", "create")
 
         user = await self.create_user(user_data)
@@ -147,14 +130,10 @@ class UserService:
         result = await self.db.execute(select(Role).filter_by(name=default_role_name))
         role_obj = result.scalar_one_or_none()
         if role_obj:
-            result = await self.db.execute(
-                select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id)
-            )
+            result = await self.db.execute(select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id))
             existing = result.scalar_one_or_none()
             if not existing:
-                self.db.add(
-                    UserRole(user_id=user.id, role_id=role_obj.id)
-                )
+                self.db.add(UserRole(user_id=user.id, role_id=role_obj.id))
                 await self.db.commit()
         else:
             print(f"Warning: Role '{default_role_name}' not found")
@@ -186,10 +165,7 @@ class UserService:
         query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
-            query = query.filter(
-                (User.username.ilike(search_lower))
-                | (User.email.ilike(search_lower))
-            )
+            query = query.filter((User.username.ilike(search_lower)) | (User.email.ilike(search_lower)))
         query = query.order_by(User.id.asc()).offset(skip).limit(page_size)
         result = await self.db.execute(query)
         users = result.scalars().all()
@@ -197,10 +173,7 @@ class UserService:
         count_query = select(User)
         if search:
             search_lower = f"%{search.lower()}%"
-            count_query = count_query.filter(
-                (User.username.ilike(search_lower))
-                | (User.email.ilike(search_lower))
-            )
+            count_query = count_query.filter((User.username.ilike(search_lower)) | (User.email.ilike(search_lower)))
         result = await self.db.execute(count_query)
         total = len(result.scalars().all())
 
@@ -212,15 +185,11 @@ class UserService:
             else:
                 permissions = {}
 
-            result_roles = await self.db.execute(
-                select(UserRole).filter_by(user_id=u.id)
-            )
+            result_roles = await self.db.execute(select(UserRole).filter_by(user_id=u.id))
             user_roles = result_roles.scalars().all()
             role_ids = [ur.role_id for ur in user_roles]
             if role_ids:
-                result_roles = await self.db.execute(
-                    select(Role).filter(Role.id.in_(role_ids))
-                )
+                result_roles = await self.db.execute(select(Role).filter(Role.id.in_(role_ids)))
                 roles = result_roles.scalars().all()
             else:
                 roles = []
@@ -231,9 +200,7 @@ class UserService:
             user_dict["status"] = status
             result_list.append(UserResponse(**user_dict))
 
-        return PaginatedUserResponse(
-            data=result_list, total=total, page=page, page_size=page_size
-        )
+        return PaginatedUserResponse(data=result_list, total=total, page=page, page_size=page_size)
 
     async def get_user_for(self, current_user_id: int, user_id: int) -> UserResponse:
         await ensure_permission_global(current_user_id, "user", "view")
@@ -242,9 +209,7 @@ class UserService:
         if not user:
             from fastapi import HTTPException, status
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         status = "active" if getattr(user, "is_active", 1) == 1 else "inactive"
         if hasattr(user, "id") and isinstance(user.id, int):
@@ -267,9 +232,7 @@ class UserService:
         user_dict["status"] = status
         return UserResponse(**user_dict)
 
-    async def update_user_for(
-        self, current_user_id: int, user_id: int, update_data: UserUpdate
-    ) -> UserResponse:
+    async def update_user_for(self, current_user_id: int, user_id: int, update_data: UserUpdate) -> UserResponse:
         if current_user_id != user_id:
             await ensure_permission_global(current_user_id, "user", "update")
 
@@ -277,9 +240,7 @@ class UserService:
         if not user:
             from fastapi import HTTPException, status
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         if not await is_root_user_global(current_user_id):
             update_data.role = None
@@ -300,9 +261,7 @@ class UserService:
                 detail="User not found after update",
             )
 
-        result = await self.db.execute(
-            select(UserRole).filter_by(user_id=getattr(updated_user, "id", None))
-        )
+        result = await self.db.execute(select(UserRole).filter_by(user_id=getattr(updated_user, "id", None)))
         user_roles = result.scalars().all()
         role_ids = [ur.role_id for ur in user_roles]
         if role_ids:
@@ -322,32 +281,24 @@ class UserService:
         if not user:
             from fastapi import HTTPException, status
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         success = await self.delete_user(user_id)
         if not success:
             from fastapi import HTTPException, status
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         return {"message": f"User with ID: {user_id} has been deleted"}
 
-    async def reset_password_for(
-        self, current_user_id: int, user_id: int, new_password: str
-    ) -> dict:
+    async def reset_password_for(self, current_user_id: int, user_id: int, new_password: str) -> dict:
         await ensure_permission_global(current_user_id, "user", "reset-password")
 
         user = await self.get_user(user_id)
         if not user:
             from fastapi import HTTPException, status
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         from passlib.context import CryptContext
 
@@ -361,7 +312,7 @@ class UserService:
             .where(User.id == user_id)
             .values(
                 hashed_password=hashed_password,
-                password_changed_at=datetime.now(timezone.utc),
+                password_changed_at=datetime.now(UTC),
             )
         )
         await self.db.commit()
@@ -370,6 +321,4 @@ class UserService:
 
         await AuthService(self.db).revoke_all_refresh_tokens(user_id)
 
-        return {
-            "message": f"Password for user {user.username} has been reset successfully"
-        }
+        return {"message": f"Password for user {user.username} has been reset successfully"}

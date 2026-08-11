@@ -1,6 +1,7 @@
 """
 Startup Service - Backend startup tasks
 """
+
 from contextlib import asynccontextmanager
 
 DEFAULT_COLLECTION = "default"
@@ -8,9 +9,9 @@ DEFAULT_COLLECTION = "default"
 
 async def setup_database() -> None:
     """Initialize database: create tables, audit events, seed initial data."""
-    from database.database import engine, AsyncSessionLocal
-    from database.models.base import Base
     from database.audit_event import register_audit_events
+    from database.database import AsyncSessionLocal, engine
+    from database.models.base import Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -20,6 +21,7 @@ async def setup_database() -> None:
     async with AsyncSessionLocal() as db:
         try:
             from database.seeds.auto_seed_data import auto_seed_all
+
             await auto_seed_all(db)
         except Exception as e:
             print(f"[SEED] Error: {e}")
@@ -43,8 +45,8 @@ async def check_qdrant_connection() -> None:
 def preload_ai_models() -> None:
     try:
         from services.embedding import get_embedding_service
-        from services.rerank import get_rerank_service
         from services.ner import get_ner_service
+        from services.rerank import get_rerank_service
 
         print("[AI Models] Loading language models (Embedding, Reranker, NER)...")
         get_embedding_service()._load_model()
@@ -58,9 +60,9 @@ def preload_ai_models() -> None:
 async def ensure_default_collection() -> None:
     try:
         from database.qdrant import async_qdrant_client
-        from services.vector import VectorService
-        from services.embedding import get_embedding_service
         from schemas.vector import CollectionCreate
+        from services.embedding import get_embedding_service
+        from services.vector import VectorService
 
         qdrant_service = VectorService(async_qdrant_client)
         existing = await qdrant_service.list_collections()
@@ -98,7 +100,7 @@ async def shutdown() -> None:
         await async_qdrant_client.close()
         print("[Qdrant] Client closed.")
     except Exception:
-        pass
+        print("[Qdrant] Client close skipped (already closed or unavailable).")
 
 
 async def run_all() -> None:

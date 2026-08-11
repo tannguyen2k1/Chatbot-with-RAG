@@ -33,3 +33,4 @@ seaborn
 matplotlib
 rank-bm25
 rapidfuzz
+ruff>=0.8.0

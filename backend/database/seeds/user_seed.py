@@ -1,8 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database.models import User, UserRole, Role
-from services import UserService
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import Role, User, UserRole
 from schemas import UserCreate
+from services import UserService
+
 
 async def seed_default_accounts(db: AsyncSession) -> None:
     """Seed default user accounts"""
@@ -13,11 +15,9 @@ async def seed_default_accounts(db: AsyncSession) -> None:
     ]
 
     for username, full_name, email, password, role in default_accounts:
-        result = await db.execute(
-            select(User).filter(User.username == username)
-        )
+        result = await db.execute(select(User).filter(User.username == username))
         user = result.scalar_one_or_none()
-        
+
         if not user:
             try:
                 user_create = UserCreate(
@@ -29,15 +29,13 @@ async def seed_default_accounts(db: AsyncSession) -> None:
                 )
                 user = await user_service.create_user(user_create)
             except Exception as e:
-                print(f"[ERROR] Error creating user {username}: {str(e)}")
+                print(f"[ERROR] Error creating user {username}: {e!s}")
                 continue
 
         result = await db.execute(select(Role).filter_by(name=role))
         role_obj = result.scalar_one_or_none()
         if user and role_obj:
-            result = await db.execute(
-                select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id)
-            )
+            result = await db.execute(select(UserRole).filter_by(user_id=user.id, role_id=role_obj.id))
             existing = result.scalar_one_or_none()
             if not existing:
                 user_role = UserRole(user_id=user.id, role_id=role_obj.id)

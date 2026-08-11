@@ -3,13 +3,15 @@ import re
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rapidfuzz import fuzz, process
+
 from config.settings import settings
 
-URL_PATTERN = re.compile(r'^(https?://|www\.)\S+$', re.IGNORECASE)
-SEPARATOR_PATTERN = re.compile(r'[-_=\.*~]{4,}')
+URL_PATTERN = re.compile(r"^(https?://|www\.)\S+$", re.IGNORECASE)
+SEPARATOR_PATTERN = re.compile(r"[-_=\.*~]{4,}")
 WORD_PATTERN = re.compile(r"[A-Za-zÀ-ỹ]+", re.UNICODE)
 OCR_TOKEN_MIN_LEN = 4
 OCR_TOKEN_MIN_SCORE = 92
@@ -23,17 +25,17 @@ class ChunkingService:
                 tokenizer,
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
-                separators=["\n\n", "\n", ".", "?", "!", " ", ""]
+                separators=["\n\n", "\n", ".", "?", "!", " ", ""],
             )
         else:
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
-                separators=["\n\n", "\n", ".", "?", "!", " ", ""]
+                separators=["\n\n", "\n", ".", "?", "!", " ", ""],
             )
 
-    def _merge_short_splits(self, splits: List[str], min_tokens: int) -> List[str]:
-        merged: List[str] = []
+    def _merge_short_splits(self, splits: list[str], min_tokens: int) -> list[str]:
+        merged: list[str] = []
         buffer = ""
 
         for split in splits:
@@ -69,9 +71,7 @@ class ChunkingService:
             return True
         if len(text) <= 5 and " " in text:
             return True
-        if len(text) > 10 and text.count(" ") / len(text) > 0.4:
-            return True
-        return False
+        return bool(len(text) > 10 and text.count(" ") / len(text) > 0.4)
 
     def _normalize_ocr_key(self, text: str) -> str:
         normalized = unicodedata.normalize("NFD", text)
@@ -87,7 +87,7 @@ class ChunkingService:
             return target[:1].upper() + target[1:]
         return target
 
-    def _build_document_vocabulary(self, parsed_elements: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _build_document_vocabulary(self, parsed_elements: list[dict[str, Any]]) -> dict[str, int]:
         token_counts: Counter[str] = Counter()
         for el in parsed_elements:
             raw_text = (el.get("text") or "").strip()
@@ -102,7 +102,7 @@ class ChunkingService:
                 token_counts[normalized] += 1
         return dict(token_counts)
 
-    def _normalize_ocr_tokens(self, text: str, vocabulary: Dict[str, int]) -> str:
+    def _normalize_ocr_tokens(self, text: str, vocabulary: dict[str, int]) -> str:
         if not vocabulary:
             return text
 
@@ -146,7 +146,7 @@ class ChunkingService:
     def clean_text(self, text: str) -> str:
         return self._clean_text_with_vocabulary(text, {})
 
-    def _clean_text_with_vocabulary(self, text: str, vocabulary: Dict[str, int]) -> str:
+    def _clean_text_with_vocabulary(self, text: str, vocabulary: dict[str, int]) -> str:
         text = SEPARATOR_PATTERN.sub("", text)
         text = re.sub(r"\n(?=[a-zà-ỹ])", " ", text, flags=re.IGNORECASE)
         text = self._normalize_ocr_tokens(text, vocabulary)
@@ -176,14 +176,8 @@ class ChunkingService:
         if stripped[0].islower():
             return False
 
-        title_case_words = sum(
-            1 for word in alpha_words
-            if word[0].isupper() or word.isupper()
-        )
-        lower_case_words = sum(
-            1 for word in alpha_words
-            if word[0].islower()
-        )
+        title_case_words = sum(1 for word in alpha_words if word[0].isupper() or word.isupper())
+        lower_case_words = sum(1 for word in alpha_words if word[0].islower())
 
         if stripped.endswith(":"):
             return title_case_words >= max(1, len(alpha_words) // 2) and lower_case_words <= 2
@@ -196,7 +190,7 @@ class ChunkingService:
                 return False
             return self._looks_like_heading_text(text)
 
-        if re.match(r"^(\d{4}|-|\*)", text) or text.endswith(".") or text.endswith(";"):
+        if re.match(r"^(\d{4}|-|\*)", text) or text.endswith((".", ";")):
             return False
         return self._looks_like_heading_text(text)
 
@@ -221,6 +215,7 @@ class ChunkingService:
 
         try:
             from services.ner import get_ner_service
+
             entities = get_ner_service().extract_entity_names(combined)
             return [e for e in entities if len(e) >= 2][:3]
         except Exception:
@@ -228,10 +223,10 @@ class ChunkingService:
 
     def group_and_chunk(
         self,
-        parsed_elements: List[Dict[str, Any]],
+        parsed_elements: list[dict[str, Any]],
         base_metadata: dict,
         min_tokens_to_merge: int = settings.CHUNK_MIN_TOKENS_TO_MERGE,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         vocabulary = self._build_document_vocabulary(parsed_elements)
         sections = []
         current_heading = ""
@@ -291,19 +286,21 @@ class ChunkingService:
                 prefix = " - ".join(prefix_parts)
                 embed_text = f"[{prefix}]\n{chunk_text}" if prefix else chunk_text
 
-                final_chunks.append({
-                    "text": chunk_text,
-                    "embed_text": embed_text,
-                    "metadata": {
-                        **base_metadata,
-                        "heading": heading,
-                        "chunk_entities": chunk_entities,
-                        "chunk_index": len(final_chunks),
-                        "split_index": i,
-                        "total_splits": len(splits),
-                        "token_estimate": len(chunk_text.split()),
+                final_chunks.append(
+                    {
+                        "text": chunk_text,
+                        "embed_text": embed_text,
+                        "metadata": {
+                            **base_metadata,
+                            "heading": heading,
+                            "chunk_entities": chunk_entities,
+                            "chunk_index": len(final_chunks),
+                            "split_index": i,
+                            "total_splits": len(splits),
+                            "token_estimate": len(chunk_text.split()),
+                        },
                     }
-                })
+                )
 
         return final_chunks
 

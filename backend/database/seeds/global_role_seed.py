@@ -1,5 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models import Role
 
 GLOBAL_ROLES = [
@@ -7,6 +8,7 @@ GLOBAL_ROLES = [
     ("admin", "Admin"),
     ("user", "User"),
 ]
+
 
 async def seed_global_roles(db: AsyncSession) -> None:
     """Seed global roles"""

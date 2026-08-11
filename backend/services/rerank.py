@@ -3,8 +3,7 @@ import re
 import statistics
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 from config.settings import settings
 from schemas.vector import SearchResult
@@ -17,7 +16,7 @@ MIN_BOOST = -1.5
 
 
 class RerankService:
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.model_name = model_name or settings.RERANKER_MODEL_NAME
         self.model = None
 
@@ -28,13 +27,14 @@ class RerankService:
     def rerank(
         self,
         query: str,
-        documents: List[str],
-        top_k: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        documents: list[str],
+        top_k: int | None = None,
+    ) -> list[dict[str, Any]]:
         if not documents:
             return []
-            
+
         import cohere
+
         api_key = settings.COHERE_API_KEY
         if not api_key:
             logger.warning("COHERE_API_KEY is not set. Skipping reranking.")
@@ -46,16 +46,13 @@ class RerankService:
                 model=self.model_name,
                 query=query,
                 documents=documents,
-                top_n=top_k if top_k else len(documents)
+                top_n=top_k if top_k else len(documents),
             )
-            
+
             # Map Cohere response back to expected format
             rankings = []
             for r in response.results:
-                rankings.append({
-                    "score": r.relevance_score,
-                    "corpus_id": r.index
-                })
+                rankings.append({"score": r.relevance_score, "corpus_id": r.index})
             return rankings
         except Exception as e:
             logger.error(f"Error calling Cohere Rerank API: {e}")
@@ -65,10 +62,10 @@ class RerankService:
     def rerank_results(
         self,
         query: str,
-        results: List[SearchResult],
+        results: list[SearchResult],
         top_k: int,
-        score_threshold: Optional[float] = None,
-    ) -> List[SearchResult]:
+        score_threshold: float | None = None,
+    ) -> list[SearchResult]:
         if not results:
             return []
 
@@ -76,9 +73,7 @@ class RerankService:
         min_candidates = getattr(settings, "RERANKER_MIN_CANDIDATES", 3)
 
         candidates = [
-            (idx, res)
-            for idx, res in enumerate(results)
-            if res.payload.get("token_estimate", 0) >= min_tokens
+            (idx, res) for idx, res in enumerate(results) if res.payload.get("token_estimate", 0) >= min_tokens
         ]
         if len(candidates) < min_candidates:
             candidates = list(enumerate(results))
@@ -149,9 +144,7 @@ class RerankService:
             return True
         if len(h.split()) > 10:
             return True
-        if h.endswith(",") or h.endswith(";"):
-            return True
-        return False
+        return bool(h.endswith((",", ";")))
 
     def _tokenize(self, normalized_text: str) -> list[str]:
         return [t for t in normalized_text.split() if len(t) > 1]

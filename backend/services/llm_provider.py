@@ -7,7 +7,7 @@ cho phép chuyển đổi qua lại chỉ bằng cách đổi biến LLM_PROVIDE
 
 import logging
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Iterator, List
+from collections.abc import AsyncIterator, Iterator
 
 from config.settings import settings
 
@@ -23,24 +23,22 @@ class LLMProviderBase(ABC):
     """Interface chung cho tất cả LLM provider."""
 
     @abstractmethod
-    def complete(self, model: str, messages: List[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
         """Gọi LLM (sync), trả về nội dung text."""
         ...
 
     @abstractmethod
-    async def complete_async(self, model: str, messages: List[dict], **kwargs) -> str:
+    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
         """Gọi LLM (async), trả về nội dung text."""
         ...
 
     @abstractmethod
-    def stream(self, model: str, messages: List[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
         """Stream LLM response (sync generator)."""
         ...
 
     @abstractmethod
-    async def stream_async(
-        self, model: str, messages: List[dict], **kwargs
-    ) -> AsyncIterator[str]:
+    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
         """Stream LLM response (async generator)."""
         ...
 
@@ -61,7 +59,7 @@ class MistralProvider(LLMProviderBase):
             raise ValueError("MISTRAL_API_KEY is not set in .env")
         self._client = Mistral(api_key=api_key)
 
-    def complete(self, model: str, messages: List[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
         response = self._client.chat.complete(
             model=model,
             messages=messages,
@@ -69,7 +67,7 @@ class MistralProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    async def complete_async(self, model: str, messages: List[dict], **kwargs) -> str:
+    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
         response = await self._client.chat.complete_async(
             model=model,
             messages=messages,
@@ -77,7 +75,7 @@ class MistralProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    def stream(self, model: str, messages: List[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
         stream = self._client.chat.stream(
             model=model,
             messages=messages,
@@ -89,9 +87,7 @@ class MistralProvider(LLMProviderBase):
                 if isinstance(content, str) and content:
                     yield content
 
-    async def stream_async(
-        self, model: str, messages: List[dict], **kwargs
-    ) -> AsyncIterator[str]:
+    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
         stream = await self._client.chat.stream_async(
             model=model,
             messages=messages,
@@ -123,7 +119,7 @@ class DeepSeekProvider(LLMProviderBase):
             base_url=settings.DEEPSEEK_BASE_URL,
         )
 
-    def complete(self, model: str, messages: List[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
         response = self._client.chat.completions.create(
             model=model,
             messages=messages,
@@ -132,7 +128,7 @@ class DeepSeekProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    async def complete_async(self, model: str, messages: List[dict], **kwargs) -> str:
+    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
         # OpenAI SDK >=1.0 uses httpx, hỗ trợ async natively
         response = await self._client.chat.completions.create(
             model=model,
@@ -142,7 +138,7 @@ class DeepSeekProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    def stream(self, model: str, messages: List[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
         stream = self._client.chat.completions.create(
             model=model,
             messages=messages,
@@ -155,9 +151,7 @@ class DeepSeekProvider(LLMProviderBase):
                 if content:
                     yield content
 
-    async def stream_async(
-        self, model: str, messages: List[dict], **kwargs
-    ) -> AsyncIterator[str]:
+    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
         stream = await self._client.chat.completions.create(
             model=model,
             messages=messages,
@@ -198,9 +192,7 @@ def get_llm_provider() -> LLMProviderBase:
     provider_class = _PROVIDER_REGISTRY.get(provider_name)
     if provider_class is None:
         available = ", ".join(_PROVIDER_REGISTRY.keys())
-        raise ValueError(
-            f"Unsupported LLM_PROVIDER '{provider_name}'. Available: {available}"
-        )
+        raise ValueError(f"Unsupported LLM_PROVIDER '{provider_name}'. Available: {available}")
     logger.info(f"[LLMProvider] Using provider: {provider_name}")
     return provider_class()
 

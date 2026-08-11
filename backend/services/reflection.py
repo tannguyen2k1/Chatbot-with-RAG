@@ -10,7 +10,6 @@ Dựa trên conversation history, rewrite câu hỏi ambiguous
 """
 
 import logging
-from typing import List, Optional
 
 from config.settings import settings
 from services.llm_provider import LLMProviderBase, get_cached_provider
@@ -49,9 +48,7 @@ class ReflectionService:
             self._llm = get_cached_provider()
         return self._llm
 
-    def _format_history(
-        self, conversation_history: List[dict], max_items: int = 100
-    ) -> str:
+    def _format_history(self, conversation_history: list[dict], max_items: int = 100) -> str:
         """
         Format conversation history thành chuỗi string cho reflection prompt.
         Hỗ trợ cả format cũ ('parts') và format mới ('role'/'content').
@@ -81,7 +78,7 @@ class ReflectionService:
 
     def reflect(
         self,
-        conversation_history: List[dict],
+        conversation_history: list[dict],
         last_query: str,
         max_items: int = 100,
     ) -> str:
@@ -107,9 +104,7 @@ class ReflectionService:
                 model=settings.llm_model_name,
                 messages=[{"role": "user", "content": prompt}],
             ).strip()
-            logger.info(
-                f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'"
-            )
+            logger.info(f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'")
             return reflected
         except Exception as e:
             logger.error(f"[Reflection] Error: {e}")
@@ -117,7 +112,7 @@ class ReflectionService:
 
     async def reflect_async(
         self,
-        conversation_history: List[dict],
+        conversation_history: list[dict],
         last_query: str,
         max_items: int = 100,
     ) -> str:
@@ -137,9 +132,7 @@ class ReflectionService:
                     messages=[{"role": "user", "content": prompt}],
                 )
             ).strip()
-            logger.info(
-                f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'"
-            )
+            logger.info(f"[Reflection] Original: '{last_query}' -> Reflected: '{reflected}'")
             return reflected
         except Exception as e:
             logger.error(f"[Reflection] Error: {e}")

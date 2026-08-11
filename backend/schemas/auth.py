@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class LoginRequest(BaseModel):
@@ -7,33 +6,36 @@ class LoginRequest(BaseModel):
     password: str
     remember_me: bool = True
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict | None = None
 
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
-    class Config:
-        json_schema_extra = {
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "current_password": "old_password123",
-                "new_password": "new_password456"
+                "new_password": "new_password456",
             }
         }
+    )
+
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "user@example.com"
-            }
-        }
+
+    model_config = ConfigDict(json_schema_extra={"example": {"email": "user@example.com"}})
+
 
 class MessageResponse(BaseModel):
     message: str

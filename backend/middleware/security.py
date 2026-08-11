@@ -1,6 +1,7 @@
-from jose import jwt, JWTError
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
 from config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -20,11 +21,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def verify_token(token: str, is_refresh: bool = False) -> dict:
     """Decode and validate JWT. Prefer AuthService for issuing tokens."""
     try:
-        secret = (
-            settings.JWT_REFRESH_SECRET_KEY
-            if is_refresh
-            else settings.JWT_SECRET_KEY
-        )
+        secret = settings.JWT_REFRESH_SECRET_KEY if is_refresh else settings.JWT_SECRET_KEY
         payload = jwt.decode(token, secret, algorithms=[settings.JWT_ALGORITHM])
         expected_type = TOKEN_TYPE_REFRESH if is_refresh else TOKEN_TYPE_ACCESS
         if payload.get("type") != expected_type:
@@ -34,6 +31,4 @@ def verify_token(token: str, is_refresh: bool = False) -> dict:
             )
         return payload
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from None

@@ -1,33 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, nullslast
-from sqlalchemy.orm import selectinload
-from typing import List
-from datetime import datetime, timezone
 import logging
+from datetime import UTC, datetime
 
-from database.models.user import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc, func, nullslast, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from api.vector import search_by_text
 from database.models.conversation import Conversation, Message
-from schemas.conversation import (
-    ConversationResponse,
-    ConversationListResponse,
-    ConversationCreate,
-    ConversationUpdate,
-    MessageResponse,
-    CreateConversationWithMessageRequest,
-    AddMessageRequest,
-)
+from database.models.user import User
 from dependencies import get_current_user
 from dependencies.database import get_db
-from services.chat import get_chat_service_with_db
-from api.vector import search_by_text
-from services.embedding import EmbeddingService, get_embedding_service
-from services.rerank import RerankService, get_rerank_service
-from services.query_classifier import QueryClassifier, get_query_classifier
-from services.vector import VectorService, get_vector_service
-from services.reflection import ReflectionService, get_reflection_service
+from schemas.conversation import (
+    AddMessageRequest,
+    ConversationCreate,
+    ConversationListResponse,
+    ConversationResponse,
+    ConversationUpdate,
+    CreateConversationWithMessageRequest,
+    MessageResponse,
+)
 from schemas.vector import TextSearchRequest
-
+from services.chat import get_chat_service_with_db
+from services.embedding import EmbeddingService, get_embedding_service
+from services.query_classifier import QueryClassifier, get_query_classifier
+from services.reflection import ReflectionService, get_reflection_service
+from services.rerank import RerankService, get_rerank_service
+from services.vector import VectorService, get_vector_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +45,11 @@ def generate_title(first_message: str, max_chars: int = 40) -> str:
     return clean[: max_chars - 3] + "..."
 
 
-async def _load_conversation_history(
-    db: AsyncSession, conversation_id: int
-) -> List[dict]:
+async def _load_conversation_history(db: AsyncSession, conversation_id: int) -> list[dict]:
     """Load conversation history (user + assistant messages) for passing to LLM."""
     from sqlalchemy import select
 
-    msg_query = (
-        select(Message)
-        .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at)
-    )
+    msg_query = select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at)
     result = await db.execute(msg_query)
     messages = result.scalars().all()
 
@@ -69,7 +62,7 @@ async def _load_conversation_history(
 
 @router.get(
     "",
-    response_model=List[ConversationListResponse],
+    response_model=list[ConversationListResponse],
     summary="Danh sách đoạn chat",
 )
 async def list_conversations(
@@ -97,15 +90,11 @@ async def list_conversations(
     # Query chính
     query = (
         select(Conversation, message_count_subq.c.count)
-        .outerjoin(
-            message_count_subq, Conversation.id == message_count_subq.c.conversation_id
-        )
+        .outerjoin(message_count_subq, Conversation.id == message_count_subq.c.conversation_id)
         .where(Conversation.user_id == current_user.id)
         .where(Conversation.is_deleted == 0)
         .where(Conversation.is_archived == 0)
-        .order_by(
-            nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at)
-        )
+        .order_by(nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at))
     )
 
     result = await db.execute(query)
@@ -138,7 +127,7 @@ async def list_conversations(
 
 @router.get(
     "/archived",
-    response_model=List[ConversationListResponse],
+    response_model=list[ConversationListResponse],
     summary="Danh sách đoạn chat đã lưu trữ",
 )
 async def list_archived_conversations(
@@ -153,15 +142,11 @@ async def list_archived_conversations(
     )
     query = (
         select(Conversation, message_count_subq.c.count)
-        .outerjoin(
-            message_count_subq, Conversation.id == message_count_subq.c.conversation_id
-        )
+        .outerjoin(message_count_subq, Conversation.id == message_count_subq.c.conversation_id)
         .where(Conversation.user_id == current_user.id)
         .where(Conversation.is_deleted == 0)
         .where(Conversation.is_archived == 1)
-        .order_by(
-            nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at)
-        )
+        .order_by(nullslast(desc(Conversation.updated_at)), desc(Conversation.created_at))
     )
     result = await db.execute(query)
     rows = result.all()
@@ -212,15 +197,13 @@ async def archive_all_conversations(
         .where(Conversation.user_id == current_user.id)
         .where(Conversation.is_deleted == 0)
         .where(Conversation.is_archived == 0)
-        .values(is_archived=1, updated_at=datetime.now(timezone.utc))
+        .values(is_archived=1, updated_at=datetime.now(UTC))
     )
     await db.commit()
     return {"message": "All conversations archived successfully"}
 
 
-@router.delete(
-    "/archived/delete-all", summary="Xóa vĩnh viễn tất cả đoạn chat đã lưu trữ"
-)
+@router.delete("/archived/delete-all", summary="Xóa vĩnh viễn tất cả đoạn chat đã lưu trữ")
 async def delete_all_archived_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -238,9 +221,7 @@ async def delete_all_archived_conversations(
         )
     )
     await db.execute(
-        sql_delete(Conversation)
-        .where(Conversation.user_id == current_user.id)
-        .where(Conversation.is_archived == 1)
+        sql_delete(Conversation).where(Conversation.user_id == current_user.id).where(Conversation.is_archived == 1)
     )
     await db.commit()
     return {"message": "All archived conversations deleted permanently"}
@@ -264,9 +245,7 @@ async def delete_all_unarchived_conversations(
         )
     )
     await db.execute(
-        sql_delete(Conversation)
-        .where(Conversation.user_id == current_user.id)
-        .where(Conversation.is_archived == 0)
+        sql_delete(Conversation).where(Conversation.user_id == current_user.id).where(Conversation.is_archived == 0)
     )
     await db.commit()
     return {"message": "All unarchived conversations deleted permanently"}
@@ -292,11 +271,7 @@ async def get_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     # Load messages separately
-    msg_query = (
-        select(Message)
-        .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at)
-    )
+    msg_query = select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at)
     msg_result = await db.execute(msg_query)
     messages = msg_result.scalars().all()
 
@@ -372,9 +347,7 @@ async def delete_conversation(
     return {"message": "Conversation deleted successfully"}
 
 
-@router.patch(
-    "/{conversation_id}/archive", summary="Archive / Unarchive cuộc hội thoại"
-)
+@router.patch("/{conversation_id}/archive", summary="Archive / Unarchive cuộc hội thoại")
 async def toggle_archive_conversation(
     conversation_id: int,
     current_user: User = Depends(get_current_user),
@@ -439,9 +412,7 @@ async def update_conversation_title(
 # =============================================================================
 
 
-@router.post(
-    "/new-with-message", summary="Tạo conversation mới và bắt đầu chat (streaming)"
-)
+@router.post("/new-with-message", summary="Tạo conversation mới và bắt đầu chat (streaming)")
 async def create_conversation_with_message(
     request: CreateConversationWithMessageRequest,
     current_user: User = Depends(get_current_user),
@@ -474,9 +445,7 @@ async def create_conversation_with_message(
     db.add(user_message)
     await db.commit()
 
-    logger.info(
-        f"[chat/stream] Created conversation {conversation.id} with first message"
-    )
+    logger.info(f"[chat/stream] Created conversation {conversation.id} with first message")
 
     chat = await get_chat_service_with_db(db)
 
@@ -487,7 +456,7 @@ async def create_conversation_with_message(
         from fastapi.responses import StreamingResponse
 
         async def error_stream(err=e):
-            yield f"Lỗi khi phân loại câu hỏi: {str(err)}"
+            yield f"Lỗi khi phân loại câu hỏi: {err!s}"
 
         return StreamingResponse(
             error_stream(),
@@ -528,11 +497,11 @@ async def create_conversation_with_message(
                     yield chunk
 
                 assistant_msg.content = answer_content
-                conversation.updated_at = datetime.now(timezone.utc)
+                conversation.updated_at = datetime.now(UTC)
                 await db.commit()
             except Exception as e:
                 logger.error(f"[chat/stream] Error in stream: {e}")
-                assistant_msg.content = f"Lỗi khi tạo response: {str(e)}"
+                assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
                 await db.commit()
 
         from fastapi.responses import StreamingResponse
@@ -595,11 +564,11 @@ async def create_conversation_with_message(
                 yield chunk
 
             assistant_msg.content = answer_content
-            conversation.updated_at = datetime.now(timezone.utc)
+            conversation.updated_at = datetime.now(UTC)
             await db.commit()
         except Exception as e:
             logger.error(f"[chat/stream] Error in stream: {e}")
-            assistant_msg.content = f"Lỗi khi tạo response: {str(e)}"
+            assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
             await db.commit()
 
     from fastapi.responses import StreamingResponse
@@ -619,9 +588,7 @@ async def create_conversation_with_message(
 # =============================================================================
 
 
-@router.post(
-    "/{conversation_id}/messages", summary="Thêm message và bắt đầu chat (streaming)"
-)
+@router.post("/{conversation_id}/messages", summary="Thêm message và bắt đầu chat (streaming)")
 async def add_message_stream(
     conversation_id: int,
     request: AddMessageRequest,
@@ -673,7 +640,7 @@ async def add_message_stream(
         from fastapi.responses import StreamingResponse
 
         async def error_stream(err=e):
-            yield f"Lỗi khi phân loại câu hỏi: {str(err)}"
+            yield f"Lỗi khi phân loại câu hỏi: {err!s}"
 
         return StreamingResponse(
             error_stream(),
@@ -716,11 +683,11 @@ async def add_message_stream(
                     yield chunk
 
                 assistant_msg.content = answer_content
-                conversation.updated_at = datetime.now(timezone.utc)
+                conversation.updated_at = datetime.now(UTC)
                 await db.commit()
             except Exception as e:
                 logger.error(f"[chat/stream] Error in stream: {e}")
-                assistant_msg.content = f"Lỗi khi tạo response: {str(e)}"
+                assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
                 await db.commit()
 
         from fastapi.responses import StreamingResponse
@@ -744,10 +711,7 @@ async def add_message_stream(
                 last_query=request.query,
                 max_items=request.reflection_max_history,
             )
-            logger.info(
-                f"[Reflection] conv={conversation.id} "
-                f"original='{request.query}' reflected='{reflected_query}'"
-            )
+            logger.info(f"[Reflection] conv={conversation.id} original='{request.query}' reflected='{reflected_query}'")
         except Exception as e:
             logger.warning(f"[Reflection] Failed, falling back to original: {e}")
             reflected_query = request.query
@@ -803,11 +767,11 @@ async def add_message_stream(
                 yield chunk
 
             assistant_msg.content = answer_content
-            conversation.updated_at = datetime.now(timezone.utc)
+            conversation.updated_at = datetime.now(UTC)
             await db.commit()
         except Exception as e:
             logger.error(f"[chat/stream] Error in stream: {e}")
-            assistant_msg.content = f"Lỗi khi tạo response: {str(e)}"
+            assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
             await db.commit()
 
     from fastapi.responses import StreamingResponse

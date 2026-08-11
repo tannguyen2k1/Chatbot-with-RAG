@@ -31,13 +31,13 @@ class NERService:
     def get_instance(cls) -> "NERService":
         if cls._instance is None:
             from config.settings import settings
+
             model_name = settings.NER_MODEL_NAME
             cls._instance = cls(model_name)
         return cls._instance
 
     def _load_model(self):
         """Stubbed out due to removal of local ML dependencies."""
-        pass
 
     @property
     def pipeline(self):

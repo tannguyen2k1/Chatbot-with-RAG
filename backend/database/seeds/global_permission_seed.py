@@ -1,6 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database.models import Permission, Module
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import Module, Permission
 
 GLOBAL_MODULES = [
     ("user", "User management"),
@@ -54,9 +55,10 @@ GLOBAL_PERMISSIONS = [
     ("config.delete", "Delete configuration"),
 ]
 
+
 async def seed_global_modules_and_permissions(db: AsyncSession) -> None:
     """Seed global modules and permissions"""
-    
+
     for name, desc in GLOBAL_MODULES:
         result = await db.execute(select(Module).filter_by(name=name))
         module = result.scalar_one_or_none()
@@ -67,7 +69,7 @@ async def seed_global_modules_and_permissions(db: AsyncSession) -> None:
             print(f"[OK] Created global module: {name}")
         else:
             print(f"[INFO] Global module {name} already exists")
-    
+
     for name, desc in GLOBAL_PERMISSIONS:
         result = await db.execute(select(Permission).filter_by(name=name))
         permission = result.scalar_one_or_none()

@@ -1,11 +1,9 @@
 import asyncio
 import time
 import uuid
-from datetime import datetime
-from typing import Optional, List
+from datetime import UTC, datetime
 
 from schemas.ingestion import IngestionJob, JobStatus
-
 
 _INGESTION_PERMISSION_CACHE: dict[int, tuple[bool, float]] = {}
 _PERMISSION_CACHE_TTL = 30.0
@@ -23,6 +21,7 @@ class IngestionJobService:
             return cached[0]
 
         from services.rbac_helper import ensure_permission_global
+
         try:
             await ensure_permission_global(user_id, "ingestion", "view")
             _INGESTION_PERMISSION_CACHE[user_id] = (True, now)
@@ -34,9 +33,9 @@ class IngestionJobService:
     async def create_job(
         self,
         source_type: str,
-        filename: Optional[str] = None,
-        collection_name: Optional[str] = None,
-        created_by: Optional[str] = None,
+        filename: str | None = None,
+        collection_name: str | None = None,
+        created_by: str | None = None,
     ) -> IngestionJob:
         job_id = str(uuid.uuid4())
         job = IngestionJob(
@@ -51,24 +50,21 @@ class IngestionJobService:
             self._jobs[job_id] = job
         return job
 
-    async def get_job(self, job_id: str) -> Optional[IngestionJob]:
+    async def get_job(self, job_id: str) -> IngestionJob | None:
         async with self._lock:
             return self._jobs.get(job_id)
 
-    async def get_active_jobs(self) -> List[IngestionJob]:
+    async def get_active_jobs(self) -> list[IngestionJob]:
         async with self._lock:
-            return [
-                j for j in self._jobs.values()
-                if j.status in (JobStatus.PENDING, JobStatus.PROCESSING)
-            ]
+            return [j for j in self._jobs.values() if j.status in (JobStatus.PENDING, JobStatus.PROCESSING)]
 
     async def update_job(
         self,
         job_id: str,
-        status: Optional[JobStatus] = None,
+        status: JobStatus | None = None,
         result=None,
-        error: Optional[str] = None,
-    ) -> Optional[IngestionJob]:
+        error: str | None = None,
+    ) -> IngestionJob | None:
         async with self._lock:
             job = self._jobs.get(job_id)
             if job is None:
@@ -79,7 +75,7 @@ class IngestionJobService:
                 job.result = result
             if error is not None:
                 job.error = error
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             return job
 
     async def run_job(self, job_id: str, coro):

@@ -8,30 +8,32 @@ Cung cấp các thao tác:
 """
 
 import math
-from typing import Optional, Any
+from typing import Any
+
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
     Distance,
-    VectorParams,
-    PointStruct,
-    Filter,
     FieldCondition,
+    Filter,
     MatchValue,
+    PointStruct,
+    VectorParams,
 )
+
 from schemas.vector import (
     CollectionCreate,
     CollectionInfo,
     PointUpsert,
     SearchResult,
+    TextSearchRequest,
     VectorSearchRequest,
     VectorSearchResponse,
-    TextSearchRequest,
 )
+from services.bm25 import get_bm25_service
 from services.embedding import EmbeddingService
 from services.rerank import RerankService
-from services.bm25 import get_bm25_service
-from .rbac_helper import ensure_permission_global
 
+from .rbac_helper import ensure_permission_global
 
 DISTANCE_MAP = {
     "Cosine": Distance.COSINE,
@@ -48,6 +50,7 @@ def get_async_qdrant_client_singleton() -> AsyncQdrantClient:
     global _async_qdrant_client
     if _async_qdrant_client is None:
         from database.qdrant import create_async_qdrant_client
+
         _async_qdrant_client = create_async_qdrant_client()
     return _async_qdrant_client
 
@@ -77,16 +80,16 @@ class VectorService:
     async def get_collection_info(self, name: str) -> CollectionInfo:
         """Lấy thông tin chi tiết của một collection"""
         info = await self.client.get_collection(name)
-        
+
         vector_size = None
         distance = None
         if info.config and info.config.params and info.config.params.vectors:
             vectors_config = info.config.params.vectors
             # vectors_config có thể là VectorParams hoặc dict of named vectors
-            if hasattr(vectors_config, 'size'):
+            if hasattr(vectors_config, "size"):
                 vector_size = vectors_config.size
                 distance = str(vectors_config.distance) if vectors_config.distance else None
-        
+
         return CollectionInfo(
             name=name,
             vectors_count=getattr(info, "vectors_count", 0) or 0,
@@ -114,9 +117,7 @@ class VectorService:
 
     # ==================== Points ====================
 
-    async def upsert_points(
-        self, collection_name: str, points: list[PointUpsert]
-    ) -> None:
+    async def upsert_points(self, collection_name: str, points: list[PointUpsert]) -> None:
         """Thêm hoặc cập nhật points vào collection"""
         qdrant_points = [
             PointStruct(
@@ -131,9 +132,7 @@ class VectorService:
             points=qdrant_points,
         )
 
-    async def delete_points(
-        self, collection_name: str, point_ids: list[str | int]
-    ) -> None:
+    async def delete_points(self, collection_name: str, point_ids: list[str | int]) -> None:
         """Xóa points theo IDs"""
         await self.client.delete(
             collection_name=collection_name,
@@ -147,9 +146,7 @@ class VectorService:
             points_selector=Filter(),
         )
 
-    async def get_point(
-        self, collection_name: str, point_id: str | int
-    ) -> Optional[dict]:
+    async def get_point(self, collection_name: str, point_id: str | int) -> dict | None:
         """Lấy point theo ID"""
         results = await self.client.retrieve(
             collection_name=collection_name,
@@ -173,8 +170,8 @@ class VectorService:
         collection_name: str,
         vector: list[float],
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-        filter_conditions: Optional[dict[str, Any]] = None,
+        score_threshold: float | None = None,
+        filter_conditions: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """Tìm kiếm vector tương tự (similarity search)"""
         # Build Qdrant filter nếu có
@@ -182,9 +179,7 @@ class VectorService:
         if filter_conditions:
             must_conditions = []
             for key, value in filter_conditions.items():
-                must_conditions.append(
-                    FieldCondition(key=key, match=MatchValue(value=value))
-                )
+                must_conditions.append(FieldCondition(key=key, match=MatchValue(value=value)))
             query_filter = Filter(must=must_conditions)
 
         results = await self.client.query_points(
@@ -263,6 +258,7 @@ class VectorService:
         result = await self.get_point(collection_name, point_id)
         if not result:
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Point '{point_id}' not found")
         return result
 
@@ -322,7 +318,9 @@ class VectorService:
         await ensure_permission_global(current_user_id, "vector", "view")
 
         query_vector = embedding.encode_single(search_req.query, is_query=True)
-        fetch_limit = search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)
+        fetch_limit = (
+            search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)
+        )
 
         vec_results = await self.search(
             collection_name=collection_name,
@@ -398,7 +396,7 @@ def _merge_bm25_scores(
 
 
 def _cosine_sim(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
@@ -436,10 +434,7 @@ def mmr_diversify(
         for i in remaining:
             rel = query_sims[i]
             if selected_indices:
-                div = max(
-                    _cosine_sim(text_embeddings[i], text_embeddings[j])
-                    for j in selected_indices
-                )
+                div = max(_cosine_sim(text_embeddings[i], text_embeddings[j]) for j in selected_indices)
             else:
                 div = 0.0
             mmr = lambda_param * rel - (1 - lambda_param) * div
