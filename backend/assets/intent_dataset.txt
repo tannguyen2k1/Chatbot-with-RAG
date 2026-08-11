@@ -2924,8 +2924,6 @@ hí hí hí,0
 há há há,0
 hề hề hề,0
 hứ hứ hứ,0
-haha haha,0
-hehe hehe,0
 hihi hihi,0
 hú hú hú hú,0
 ha ha ha ha,0
@@ -2986,14 +2984,8 @@ haha được đó,0
 hehe ngon rồi,0
 haha tuyệt,0
 hoho great,0
-haha nice,0
-hehe cool,0
 hihi awesome,0
-haha lol,0
-hehe lmao,0
 hihi rofl,0
-haha funny,0
-hehe hilarious,0
 haha cười đau bụng,0
 hehe cười ra nước mắt,0
 hihi cười muốn xỉu,0
@@ -3010,7 +3002,6 @@ haha cười xong mệt luôn,0
 hehe cười đỏ cả mặt,0
 haha thôi mình đi cười tiếp đây,0
 hehe bye nha,0
-haha pp,0
 hihi tạm biệt,0
 haha cảm ơn bạn nhiều nha,0
 hehe ok mình hiểu rồi,0
@@ -3091,77 +3082,8 @@ hehe mọi thứ tốt đẹp,0
 haha happy ending,0
 hehe viên mãn,0
 haha trọn vẹn,0
-hehe perfect,0
-haha wonderful,0
-hehe excellent,0
-haha brilliant,0
-hehe fantastic,0
-haha marvelous,0
-hehe superb,0
-haha outstanding,0
-hehe phenomenal,0
-haha spectacular,0
-hehe magnificent,0
-haha fabulous,0
-hehe terrific,0
-haha amazing,0
-hehe incredible,0
-haha unbelievable,0
-hehe extraordinary,0
-haha remarkable,0
-hehe exceptional,0
-haha splendid,0
-hehe glorious,0
-haha divine,0
-hehe heavenly,0
-haha godlike,0
-hehe legendary,0
-haha epic,0
 hehe awesome sauce,0
 haha cool beans,0
-hehe sweet,0
-haha lit,0
-hehe fire,0
-haha dope,0
-hehe rad,0
-haha groovy,0
-hehe neat,0
-haha swell,0
-hehe peachy,0
-haha nifty,0
-hehe spiffy,0
-haha snazzy,0
-hehe jazzy,0
-haha fancy,0
-hehe chic,0
-haha elegant,0
-hehe classy,0
-haha sophisticated,0
-hehe refined,0
-haha polished,0
-hehe sleek,0
-haha smooth,0
-hehe silky,0
-haha buttery,0
-hehe velvety,0
-haha creamy,0
-hehe dreamy,0
-haha lovely,0
-hehe delightful,0
-haha charming,0
-hehe enchanting,0
-haha captivating,0
-hehe mesmerizing,0
-haha hypnotic,0
-hehe magical,0
-haha mystical,0
-hehe ethereal,0
-haha celestial,0
-hehe angelic,0
-haha divine,0
-hehe sublime,0
-haha transcendent,0
-hehe otherworldly,0
 haha out of this world,0
 hehe beyond compare,0
 haha second to none,0
@@ -3170,73 +3092,98 @@ haha number one,0
 hehe top notch,0
 haha first class,0
 hehe world class,0
-haha premium,0
-hehe deluxe,0
-haha luxury,0
 hehe gold standard,0
-haha platinum,0
-hehe diamond,0
-haha priceless,0
-hehe invaluable,0
-haha treasure,0
-hehe gem,0
-haha jewel,0
-hehe masterpiece,0
 haha work of art,0
 hehe chef's kiss,0
-haha muah,0
-hehe perfecto,0
-haha magnifique,0
-hehe bellissimo,0
-haha wunderbar,0
-hehe maravilloso,0
-haha splendido,0
-hehe fantastico,0
-haha eccellente,0
-hehe ottimo,0
-haha perfetto,0
-hehe excelente,0
 haha ótimo,0
-hehe uitstekend,0
-haha uitmuntend,0
-hehe voortreffelijk,0
-haha erstklassig,0
-hehe hervorragend,0
-haha ausgezeichnet,0
-hehe wunderschön,0
-haha fantastisch,0
-hehe großartig,0
-haha sensationell,0
-hehe phänomenal,0
-haha außergewöhnlich,0
-hehe bemerkenswert,0
-haha erstaunlich,0
-hehe unglaublich,0
-haha beeindruckend,0
-hehe eindrucksvoll,0
-haha überragend,0
-hehe meisterhaft,0
-haha genial,0
-hehe brillant,0
-haha exzellent,0
-hehe vortrefflich,0
-haha fabelhaft,0
-hehe märchenhaft,0
-haha traumhaft,0
-hehe bezaubernd,0
-haha entzückend,0
-hehe reizend,0
-haha charmant,0
-hehe lieblich,0
-haha herrlich,0
-hehe köstlich,0
-haha prächtig,0
-hehe prachtvoll,0
-haha glanzvoll,0
-hehe glänzend,0
-haha strahlend,0
-hehe leuchtend,0
-haha funkelnd,0
-hehe schimmernd,0
-haha glitzernd,0
-hehe blinkend,0
+bạn là ai,0
+ban la ai,0
+mày là ai,0
+cậu là ai vậy,0
+bạn tên gì,0
+em là chatbot à,0
+bạn là trợ lý AI đúng không,0
+giới thiệu về bản thân đi,0
+bạn làm được gì,0
+bạn giỏi cái gì,0
+nói chuyện với mình đi,0
+kể chuyện vui đi,0
+hehe vậy hả,0
+lol,0
+lmao,0
+ủa vậy hả,0
+à ok,0
+okela,0
+okie,0
+rồi đó,0
+xong chưa cần nữa,0
+thôi được rồi,0
+không cần tìm tài liệu đâu,0
+đừng search gì hết,0
+chỉ trò chuyện thôi,0
+chat chơi thôi,0
+xin chào trợ lý,0
+hello bot,0
+hi assistant,0
+cảm ơn trợ lý,0
+thanks bot,0
+ngủ ngon,0
+chúc ngủ ngon,0
+bạn khỏe không,0
+hôm nay thế nào,0
+trời đẹp quá,0
+buồn quá,0
+vui quá,0
+tuyệt vời,0
+hay quá,0
+đỉnh,0
+quy trình xử lý hợp đồng mua bán như thế nào,1
+hợp đồng mua bán cần những điều khoản gì,1
+PO là gì trong quy trình mua hàng,1
+purchase order gồm những thông tin nào,1
+serial number nằm ở đâu trong tài liệu,1
+tìm số serial của thiết bị trong hợp đồng,1
+hạn thanh toán của hợp đồng này là khi nào,1
+điều khoản bảo hành trong HĐ quy định ra sao,1
+bên A và bên B trong hợp đồng có nghĩa vụ gì,1
+phạt chậm tiến độ hợp đồng tính như thế nào,1
+quy trình phê duyệt hợp đồng nội bộ,1
+cần chữ ký của ai để hợp đồng có hiệu lực,1
+tài liệu đính kèm PO gồm những gì,1
+đối chiếu PO với hóa đơn như thế nào,1
+delivery note khác gì với invoice,1
+tìm thông tin nhà cung cấp trong tài liệu,1
+mã dự án trong hợp đồng là gì,1
+giá trị hợp đồng tổng cộng bao nhiêu,1
+ngày hiệu lực và ngày hết hạn HĐ,1
+điều khoản chấm dứt hợp đồng nói gì,1
+bảo mật thông tin trong hợp đồng quy định ra sao,1
+file nào mô tả quy trình nghiệm thu,1
+checklist nghiệm thu thiết bị gồm gì,1
+yêu cầu kỹ thuật trong phụ lục hợp đồng,1
+phụ lục A của hợp đồng nói về gì,1
+tìm điều khoản thanh toán theo đợt,1
+hợp đồng này áp dụng luật nào,1
+trọng tài giải quyết tranh chấp ở đâu,1
+số hợp đồng HD-2024 nằm trong tài liệu nào,1
+tóm tắt nội dung tài liệu vừa upload,1
+trong tài liệu có đề cập đến VAT không,1
+tỷ lệ VAT áp dụng trong báo giá,1
+đơn giá và thành tiền trong bảng báo giá,1
+so sánh 2 phiên bản hợp đồng khác nhau chỗ nào,1
+ai là người đại diện ký kết,1
+chức danh người ký bên bán là gì,1
+địa chỉ giao hàng trong PO,1
+thời gian giao hàng cam kết bao lâu,1
+điều kiện Incoterms trong hợp đồng,1
+yêu cầu đóng gói và vận chuyển,1
+còn điều khoản nào nữa không,1
+nó quy định như thế nào,1
+cái đó ở trang nào,1
+trong tài liệu nói gì về việc này,1
+theo hợp đồng thì sao,1
+theo PO thì bao nhiêu,1
+phần bảo hành thì sao,1
+còn hạn nào nữa không,1
+chi tiết hơn về điều khoản phạt,1
+tóm tắt lại phần thanh toán,1

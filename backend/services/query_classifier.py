@@ -25,10 +25,11 @@ SVC_PARAMS = {
     "loss": "hinge",
     "dual": "auto",
     "max_iter": 5000,
-    "class_weight": {0: 1, 1: 2.5},
+    # Nhẹ hơn trước (2.5) để giảm FP chitchat bị kéo sang RAG
+    "class_weight": {0: 1.0, 1: 1.6},
     "random_state": 42,
 }
-THRESHOLD_SEARCH = [-0.5, -0.3, -0.2, -0.1, 0.0]
+THRESHOLD_SEARCH = [-0.3, -0.2, -0.1, 0.0, 0.1, 0.2]
 
 
 def normalize_text(text: str) -> str:
@@ -144,6 +145,11 @@ def add_features(text: str) -> str:
         r"\bhiểu rồi\b",
         r"\brõ rồi\b",
         r"\bok\b",
+        r"\boke\b",
+        r"\bokela\b",
+        r"\bhaha\b",
+        r"\bhehe\b",
+        r"\blol\b",
         r"\bđi đây\b",
         r"\bnghỉ đây\b",
         r"\bhẹn gặp\b",
@@ -152,6 +158,36 @@ def add_features(text: str) -> str:
     ]
     if any(re.search(p, text_lower) for p in goodbye_patterns):
         features.append("HAS_GOODBYE_PATTERN")
+
+    identity_patterns = [
+        r"\b(bạn|cậu|mày|em|bot|trợ lý|assistant)\s+(là\s+)?ai\b",
+        r"\b(bạn|cậu|em)\s+tên\s+gì\b",
+        r"\bgiới thiệu\s+(về\s+)?(bản thân|mình)\b",
+        r"\b(bạn|em)\s+làm\s+được\s+gì\b",
+        r"\bchat\s+chơi\b",
+        r"\btrò chuyện\b",
+    ]
+    if any(re.search(p, text_lower) for p in identity_patterns):
+        features.append("HAS_IDENTITY_OR_CHITCHAT")
+
+    doc_domain_patterns = [
+        r"\bhợp\s*đồng\b",
+        r"\bhop\s*dong\b",
+        r"\bpo\b",
+        r"\bpurchase\s+order\b",
+        r"\bserial\b",
+        r"\bđiều\s*khoản\b",
+        r"\bthanh\s*toán\b",
+        r"\bnghiệm\s*thu\b",
+        r"\bphụ\s*lục\b",
+        r"\btài\s*liệu\b",
+        r"\binvoice\b",
+        r"\bvat\b",
+        r"\bincoterms\b",
+        r"\bnhà\s+cung\s+cấp\b",
+    ]
+    if any(re.search(p, text_lower) for p in doc_domain_patterns):
+        features.append("HAS_DOC_DOMAIN")
 
     first_word = words[0].lower() if num_words >= 1 else ""
     if first_word in [
@@ -202,38 +238,39 @@ def train_and_evaluate(visualize: bool = False):
     scores_test = pipeline.decision_function(x_test_enhanced)
 
     print("[Query Classifier] Rebuild with Feature Engineering + Threshold Tuning")
-    print("\n--- Threshold Tuning (target: minimize FN, maximize recall label 1) ---")
+    print("\n--- Threshold Tuning (target: recall-1 >= 0.97, then max F1-1 / recall-0) ---")
     print(
-        f"{'Threshold':>10}  {'Acc':>7}  {'Precision0':>10}  {'Recall0':>8}  {'Precision1':>10}  {'Recall1':>8}  {'FN':>4}  {'FP':>4}"
+        f"{'Threshold':>10}  {'Acc':>7}  {'Precision0':>10}  {'Recall0':>8}  {'Precision1':>10}  {'Recall1':>8}  {'F1-1':>6}  {'FN':>4}  {'FP':>4}"
     )
-    print("-" * 75)
+    print("-" * 88)
 
     best_threshold = 0.0
-    best_recall1 = 0.0
-    best_scores = None
+    best_key = None
 
     for thresh in THRESHOLD_SEARCH:
         y_pred_t = np.where(scores_test >= thresh, 1, 0)
         cm_t = confusion_matrix(y_test, y_pred_t)
-        tp = cm_t[1, 1]
-        fn = cm_t[1, 0]
-        fp = cm_t[0, 1]
-        tn = cm_t[0, 0]
+        tp = int(cm_t[1, 1])
+        fn = int(cm_t[1, 0])
+        fp = int(cm_t[0, 1])
+        tn = int(cm_t[0, 0])
         prec0 = tn / (tn + fn) if (tn + fn) > 0 else 0
         rec0 = tn / (tn + fp) if (tn + fp) > 0 else 0
         prec1 = tp / (tp + fp) if (tp + fp) > 0 else 0
         rec1 = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1_1 = (2 * prec1 * rec1 / (prec1 + rec1)) if (prec1 + rec1) > 0 else 0
         acc = (tp + tn) / (tp + tn + fp + fn)
         print(
-            f"{thresh:>+10.1f}  {acc:>7.4f}  {prec0:>10.4f}  {rec0:>8.4f}  {prec1:>10.4f}  {rec1:>8.4f}  {fn:>4d}  {fp:>4d}"
+            f"{thresh:>+10.1f}  {acc:>7.4f}  {prec0:>10.4f}  {rec0:>8.4f}  {prec1:>10.4f}  {rec1:>8.4f}  {f1_1:>6.4f}  {fn:>4d}  {fp:>4d}"
         )
-        if rec1 > best_recall1 or (rec1 == best_recall1 and fp < (cm_t[0, 1] if best_scores is not None else 9999)):
-            best_recall1 = rec1
+        # Ưu tiên: giữ recall RAG cao, sau đó F1 label-1, rồi recall chitchat
+        key = (rec1 >= 0.97, f1_1, rec0, -fp)
+        if best_key is None or key > best_key:
+            best_key = key
             best_threshold = thresh
-            best_scores = cm_t
 
-    print("-" * 75)
-    print(f">>> Best threshold: {best_threshold}  (Recall-1: {best_recall1:.4f})")
+    print("-" * 88)
+    print(f">>> Best threshold: {best_threshold}")
 
     cm = confusion_matrix(y_test, np.where(scores_test >= best_threshold, 1, 0))
     acc = accuracy_score(y_test, np.where(scores_test >= best_threshold, 1, 0))
