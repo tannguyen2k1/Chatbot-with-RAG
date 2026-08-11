@@ -60,7 +60,6 @@ class GeneralConfigUpdate(BaseModel):
 
 class ConfigResponse(ConfigBase):
     id: int
-    tenant_id: Optional[int]
     created_at: str
     updated_at: Optional[str]
 

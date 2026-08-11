@@ -5,7 +5,7 @@ from database.models import BaseModel, GlobalBaseModel
 from typing import Optional, List
 
 class Role(GlobalBaseModel):
-    """Role là global, không thuộc tenant nào"""
+    """Role model"""
     __tablename__ = "roles"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -15,7 +15,7 @@ class Role(GlobalBaseModel):
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="role")
 
 class Module(GlobalBaseModel):
-    """Module là global, không thuộc tenant nào"""
+    """Module model"""
     __tablename__ = "modules"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -24,7 +24,7 @@ class Module(GlobalBaseModel):
     role_permissions: Mapped[List["RolePermission"]] = relationship("RolePermission", back_populates="module")
 
 class Permission(GlobalBaseModel):
-    """Permission là global, không thuộc tenant nào"""
+    """Permission model"""
     __tablename__ = "permissions"
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

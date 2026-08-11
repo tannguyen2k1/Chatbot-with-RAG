@@ -4,7 +4,7 @@ from uuid import uuid4
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from database.models import User, UserRole, Role, Tenant
+from database.models import User, UserRole, Role
 from database.models.refresh_token import RefreshToken
 from config.settings import settings
 from passlib.context import CryptContext
@@ -22,57 +22,23 @@ class AuthService:
 
     @staticmethod
     def _is_user_active(user: User) -> bool:
-        # users.is_active is stored as Integer (1/0)
         return int(getattr(user, "is_active", 0) or 0) == 1
 
     async def authenticate_user(
-        self, username: str, password: str, tenant_code: str
-    ) -> tuple[User, Tenant]:
-        # Tìm tenant theo tenant_code
-        tenant_result = await self.db.execute(
-            select(Tenant).filter(Tenant.tenant_code == tenant_code)
-        )
-        tenant = tenant_result.scalar_one_or_none()
-        if not tenant:
-            raise ValueError(f"Tenant with code '{tenant_code}' not found")
-
-        # Kiểm tra tenant có active không
-        if not tenant.is_active:
-            raise ValueError(f"Tenant '{tenant_code}' is deactivated")
-
-        # Kiểm tra tenant có hết hạn không
-        if tenant.expiration_date and tenant.expiration_date < datetime.now(
-            timezone.utc
-        ):
-            raise ValueError(f"Tenant '{tenant_code}' has expired")
-
-        # Tìm user với username (không filter theo tenant để root có thể login vào bất kỳ tenant nào)
+        self, username: str, password: str
+    ) -> User:
         result = await self.db.execute(select(User).filter(User.username == username))
-
         user = result.scalar_one_or_none()
         if not user:
             raise ValueError(f"User '{username}' not found")
 
-        # Chặn đăng nhập nếu user đã bị disable
         if not self._is_user_active(user):
             raise ValueError(f"User '{username}' is deactivated")
 
-        # Kiểm tra password
         if not pwd_context.verify(password, str(user.hashed_password)):
             raise ValueError("Incorrect password")
 
-        # Kiểm tra xem user có quyền truy cập tenant này không
-        # Root user (tenant_id = NULL) có thể truy cập bất kỳ tenant nào
-        if not user.is_root_user and user.tenant_id != tenant.id:
-            raise ValueError(
-                f"User '{username}' does not have permission to access tenant '{tenant_code}'"
-            )
-
-        # Set tenant context cho session nếu là TenantSession
-        if hasattr(self.db, "set_tenant_context"):
-            self.db.set_tenant_context(tenant.id)
-
-        return user, tenant
+        return user
 
     async def _get_primary_role(self, user: User) -> str:
         result = await self.db.execute(select(UserRole).filter_by(user_id=user.id))
@@ -87,13 +53,11 @@ class AuthService:
     async def create_access_token(
         self,
         user: User,
-        tenant: Tenant = None,
         expires_delta: timedelta = timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         ),
     ) -> str:
         primary_role = await self._get_primary_role(user)
-        current_tenant_id = tenant.id if tenant else user.tenant_id
 
         now = datetime.now(timezone.utc)
         expire = now + expires_delta
@@ -101,7 +65,6 @@ class AuthService:
             "sub": str(user.id),
             "type": TOKEN_TYPE_ACCESS,
             "role": primary_role,
-            "tenant_id": str(current_tenant_id) if current_tenant_id else None,
             "iat": int(now.timestamp()),
             "exp": int(expire.timestamp()),
         }
@@ -112,15 +75,12 @@ class AuthService:
     async def create_refresh_token(
         self,
         user: User,
-        tenant: Tenant = None,
         expires_delta: timedelta = timedelta(
             minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         ),
         *,
         commit: bool = True,
     ) -> str:
-        current_tenant_id = tenant.id if tenant else user.tenant_id
-
         now = datetime.now(timezone.utc)
         expire = now + expires_delta
         jti = uuid4().hex
@@ -128,7 +88,6 @@ class AuthService:
             "sub": str(user.id),
             "type": TOKEN_TYPE_REFRESH,
             "jti": jti,
-            "tenant_id": str(current_tenant_id) if current_tenant_id else None,
             "iat": int(now.timestamp()),
             "exp": int(expire.timestamp()),
         }
@@ -177,7 +136,6 @@ class AuthService:
     async def change_password(
         self, user: User, current_password: str, new_password: str
     ) -> bool:
-        """Đổi mật khẩu cho user hiện tại"""
         if not pwd_context.verify(current_password, str(user.hashed_password)):
             raise ValueError("Current password is incorrect")
 
@@ -201,7 +159,6 @@ class AuthService:
         return True
 
     def create_reset_token(self, user: User) -> str:
-        """Tạo token để reset password (có thời hạn ngắn)"""
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
         payload = {
             "sub": str(user.id),
@@ -213,7 +170,6 @@ class AuthService:
         )
 
     async def verify_reset_token(self, token: str) -> User:
-        """Verify reset password token và trả về user"""
         try:
             payload = jwt.decode(
                 token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
@@ -234,7 +190,6 @@ class AuthService:
             raise ValueError("Invalid or expired reset token")
 
     async def reset_password(self, token: str, new_password: str) -> bool:
-        """Reset password bằng token"""
         user = await self.verify_reset_token(token)
 
         hashed_new_password = pwd_context.hash(new_password)
@@ -270,14 +225,11 @@ class AuthService:
         return payload
 
     async def refresh_tokens(self, refresh_token: str) -> tuple[str, str]:
-        """Tạo cặp access/refresh token mới từ refresh token hợp lệ"""
         payload = self._decode_refresh_payload(refresh_token)
         user_id = payload.get("sub")
-        tenant_id = payload.get("tenant_id")
         token_iat = payload.get("iat")
         jti = payload.get("jti")
 
-        # Lock row to serialize concurrent refresh of the same jti
         result = await self.db.execute(
             select(RefreshToken)
             .where(RefreshToken.jti == jti)
@@ -287,7 +239,6 @@ class AuthService:
         if not record:
             raise ValueError("Refresh token is not recognized")
 
-        # Reuse detection: token already revoked → revoke all sessions for user
         if record.revoked_at is not None:
             await self.revoke_all_refresh_tokens(record.user_id)
             raise ValueError("Refresh token reuse detected. Please login again.")
@@ -319,17 +270,8 @@ class AuthService:
                     "Refresh token has been invalidated due to password change. Please login again."
                 )
 
-        tenant = None
-        if tenant_id:
-            result = await self.db.execute(
-                select(Tenant).filter(Tenant.id == int(tenant_id))
-            )
-            tenant = result.scalar_one_or_none()
-
-        new_access_token = await self.create_access_token(user, tenant)
-        new_refresh_token = await self.create_refresh_token(
-            user, tenant, commit=False
-        )
+        new_access_token = await self.create_access_token(user)
+        new_refresh_token = await self.create_refresh_token(user, commit=False)
 
         new_payload = self._decode_refresh_payload(new_refresh_token)
         record.revoked_at = datetime.now(timezone.utc)
@@ -339,7 +281,6 @@ class AuthService:
         return new_access_token, new_refresh_token
 
     async def get_user_info_dict(self, user: User) -> dict:
-        """Trả về dict user kèm roles, permissions, loại bỏ trường nhạy cảm"""
         from services.rbac import RBACService
         from database.models.auth_models import UserRole, Role
 
@@ -361,7 +302,6 @@ class AuthService:
         return user_dict
 
     async def get_user_from_refresh_token(self, refresh_token: str) -> User:
-        """Giải mã refresh token và trả về user tương ứng"""
         payload = self._decode_refresh_payload(refresh_token)
         user_id = payload.get("sub")
 
@@ -374,7 +314,6 @@ class AuthService:
         return user
 
     async def revoke_refresh_token_string(self, refresh_token: str) -> None:
-        """Revoke a refresh token JWT (used on logout)."""
         try:
             payload = self._decode_refresh_payload(refresh_token)
         except ValueError:
@@ -384,7 +323,6 @@ class AuthService:
             await self.revoke_refresh_jti(jti)
 
     async def get_user_by_email(self, email: str) -> User:
-        """Lấy user theo email"""
         result = await self.db.execute(select(User).filter(User.email == email))
         user = result.scalar_one_or_none()
         if not user:

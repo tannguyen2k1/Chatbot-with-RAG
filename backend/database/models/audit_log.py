@@ -6,14 +6,12 @@ from typing import Optional
 
 class AuditLog(Base):
     __tablename__ = 'audit_logs'
-    id: Mapped[int] = mapped_column(BigInteger ,primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     action: Mapped[str] = mapped_column(String(50), nullable=False)
     table_name: Mapped[str] = mapped_column(String(50), nullable=False)
     record_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, index=True)
     user_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey('users.id'), nullable=True, index=True)
     user: Mapped[User] = relationship("User", backref="audit_logs")
-    # Foreign key to tenant
-    tenant_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey('tenants.id'), nullable=True, index=True)
     timestamp: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     old_value: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     new_value: Mapped[Optional[str]] = mapped_column(String, nullable=True)

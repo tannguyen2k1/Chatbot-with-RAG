@@ -2,19 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models.user import User
 from schemas import RoleCreate, RoleUpdate, RoleOut, ModuleCreate, PermissionCreate, AssignRoleToUser, AssignPermissionToRole, RemovePermissionFromRole
-from dependencies import get_current_user
-from dependencies.database import get_global_db
+from dependencies import get_current_user, get_db
 from services import RBACService
 
 router = APIRouter(prefix="/rbac", tags=["RBAC"])
 
 
-def get_rbac_service(db: AsyncSession = Depends(get_global_db)) -> RBACService:
-    """Dependency injection cho RBACService"""
+def get_rbac_service(db: AsyncSession = Depends(get_db)) -> RBACService:
     return RBACService(db)
 
 
-# roles
 @router.get("/roles", response_model=list[RoleOut])
 async def get_roles(
     service: RBACService = Depends(get_rbac_service),
@@ -91,7 +88,6 @@ async def assign_role_to_user(
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
-# modules
 @router.get("/modules")
 async def get_modules(
     service: RBACService = Depends(get_rbac_service),
@@ -114,7 +110,6 @@ async def create_module(
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
-# permissions
 @router.get("/permissions")
 async def get_permissions(
     service: RBACService = Depends(get_rbac_service),
@@ -175,7 +170,3 @@ async def check_user_permission(
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
     return {"has_permission": has_permission}
-
-
-
-

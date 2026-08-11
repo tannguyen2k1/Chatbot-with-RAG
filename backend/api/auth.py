@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from database.models import User
 from dependencies import get_current_user, get_db
-from dependencies.database import get_global_db
 from services.auth import AuthService
 from config.settings import settings
 from schemas import (
@@ -20,13 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 REMEMBER_ME_COOKIE_NAME = "remember_me"
 
 
-def get_auth_service(db: AsyncSession = Depends(get_global_db)) -> AuthService:
-    """Dependency injection cho AuthService (dùng global db)"""
-    return AuthService(db)
-
-
-def get_auth_service_session(db: AsyncSession = Depends(get_db)) -> AuthService:
-    """Dependency injection cho AuthService (dùng session db)"""
+def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
 
@@ -68,31 +61,23 @@ async def login(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ):
-    """
-    Đăng nhập với username, password và tenant_code
-    """
     try:
-        user, tenant = await service.authenticate_user(
+        user = await service.authenticate_user(
             login_data.username,
             login_data.password,
-            login_data.tenant_code,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     access_token = await service.create_access_token(
         user,
-        tenant,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     refresh_token = await service.create_refresh_token(
         user,
-        tenant,
         expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
     )
 
-    # remember_me=True  -> persistent cookie
-    # remember_me=False -> session cookie (mất khi đóng browser)
     set_refresh_cookie(response, refresh_token, login_data.remember_me)
     remember_cookie = dict(
         key=REMEMBER_ME_COOKIE_NAME,
@@ -158,10 +143,6 @@ async def change_password(
     current_user: User = Depends(get_current_user),
     service: AuthService = Depends(get_auth_service),
 ):
-    """
-    Đổi mật khẩu cho user hiện tại.
-    Invalidate access (via password_changed_at) và revoke mọi refresh token.
-    """
     try:
         await service.change_password(
             current_user,
@@ -179,9 +160,6 @@ async def logout(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ):
-    """
-    Đăng xuất: revoke refresh token (jti) và clear cookies.
-    """
     refresh_token = request.cookies.get(settings.REFRESH_COOKIE_NAME)
     if refresh_token:
         await service.revoke_refresh_token_string(refresh_token)

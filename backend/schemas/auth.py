@@ -1,12 +1,10 @@
 
 from pydantic import BaseModel, EmailStr
 
-# Validation schema for authentication/authorization data
 
 class LoginRequest(BaseModel):
     username: str
     password: str
-    tenant_code: str  # Ví dụ: "root", "admin", "company1"
     remember_me: bool = True
 
 class TokenResponse(BaseModel):
@@ -16,6 +14,7 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
@@ -26,6 +25,7 @@ class ChangePasswordRequest(BaseModel):
                 "new_password": "new_password456"
             }
         }
+
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
     class Config:
@@ -37,4 +37,3 @@ class ResetPasswordRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
-

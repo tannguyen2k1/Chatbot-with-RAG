@@ -3,18 +3,17 @@ from sqlalchemy import select
 from database.models import Role
 
 GLOBAL_ROLES = [
-    ("root", "Super Admin - Global access to all tenants"),
+    ("root", "Super Admin - Full system access"),
     ("admin", "Admin"),
     ("user", "User"),
 ]
 
 async def seed_global_roles(db: AsyncSession) -> None:
-    """Seed global roles (không thuộc tenant nào)"""
+    """Seed global roles"""
     for name, desc in GLOBAL_ROLES:
         result = await db.execute(select(Role).filter_by(name=name))
         role = result.scalar_one_or_none()
         if not role:
-            # Tạo role global (không có tenant_id)
             role = Role(name=name, description=desc)
             db.add(role)
             await db.commit()

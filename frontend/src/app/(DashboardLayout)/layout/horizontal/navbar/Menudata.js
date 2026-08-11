@@ -55,12 +55,6 @@ const Menuitems = [
       },
       {
         id: uniqueId(),
-        title: "TenantManagement",
-        icon: IconHome,
-        href: "/systems/tenant-management",
-      },
-      {
-        id: uniqueId(),
         title: "AuditLog",
         icon: IconFileCheck,
         href: "/systems/audit-log",

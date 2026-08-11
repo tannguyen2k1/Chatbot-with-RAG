@@ -5,7 +5,6 @@ import MyApp from "./App";
 import "./global.css";
 import ClientCustomizerProvider from "./context/ClientCustomizerContext/ClientCustomizerProvider";
 import { AuthProvider } from "./context/AuthContext";
-import { TenantProvider } from "./context/TenantContext";
 import { SnackbarProvider } from "./context/SnackbarContext";
 
 export const metadata = {
@@ -20,11 +19,9 @@ export default function RootLayout({ children }) {
         <NextTopLoader color="#5D87FF" />
         <ClientCustomizerProvider>
           <SnackbarProvider>
-            <TenantProvider>
-              <AuthProvider>
-                <MyApp>{children}</MyApp>
-              </AuthProvider>
-            </TenantProvider>
+            <AuthProvider>
+              <MyApp>{children}</MyApp>
+            </AuthProvider>
           </SnackbarProvider>
         </ClientCustomizerProvider>
       </body>

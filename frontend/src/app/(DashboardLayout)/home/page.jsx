@@ -13,7 +13,6 @@ import {
 import {
   IconMessageCircle,
   IconUsers,
-  IconBuilding,
   IconFileCheck,
 } from "@tabler/icons-react";
 import PageContainer from "@/app/components/container/PageContainer";
@@ -28,15 +27,9 @@ const links = [
   },
   {
     title: "Người dùng",
-    description: "Quản lý tài khoản và phân quyền trong tenant.",
+    description: "Quản lý tài khoản và phân quyền người dùng.",
     href: "/systems/user-management",
     icon: IconUsers,
-  },
-  {
-    title: "Tenant",
-    description: "Cấu hình tổ chức / không gian làm việc.",
-    href: "/systems/tenant-management",
-    icon: IconBuilding,
   },
   {
     title: "Audit log",
@@ -57,7 +50,7 @@ export default function HomeDashboard() {
             Xin chào{user?.full_name || user?.username ? `, ${user.full_name || user.username}` : ""}
           </Typography>
           <Typography color="text.secondary">
-            Chat Assistant — nền tảng RAG đa tenant. Chọn khu vực bên dưới để tiếp tục.
+            Chat Assistant — nền tảng trợ lý AI thông minh. Chọn khu vực bên dưới để tiếp tục.
           </Typography>
         </Box>
 

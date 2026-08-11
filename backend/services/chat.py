@@ -143,7 +143,7 @@ class ChatService:
             yield chunk
 
     async def get_system_prompt(self) -> str:
-        """Lấy system prompt từ database theo tenant, fallback về default"""
+        """Lấy system prompt từ database, fallback về default"""
         if not self.db:
             return DEFAULT_SYSTEM_PROMPT
 
@@ -168,5 +168,5 @@ def get_chat_service() -> ChatService:
 
 
 async def get_chat_service_with_db(db) -> ChatService:
-    """Factory function để tạo ChatService với db session cho multi-tenant"""
+    """Factory function để tạo ChatService với db session"""
     return ChatService(db=db)

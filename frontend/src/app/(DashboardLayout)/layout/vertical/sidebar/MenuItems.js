@@ -65,14 +65,6 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "TenantManagement",
-    icon: IconHome,
-    chipColor: "secondary",
-    href: "/systems/tenant-management",
-    permission: "tenant.view",
-  },
-  {
-    id: uniqueId(),
     title: "AuditLog",
     icon: IconFileCheck,
     chipColor: "secondary",

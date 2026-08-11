@@ -14,10 +14,4 @@ class User(BaseModel):
     is_active: Mapped[int] = mapped_column(Integer, default=1)
     password_changed_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
-    # Relationships 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user")
-    
-    @property
-    def is_root_user(self) -> bool:
-        """Kiểm tra xem user có phái là root user không (tenant_id = NULL)"""
-        return self.tenant_id is None

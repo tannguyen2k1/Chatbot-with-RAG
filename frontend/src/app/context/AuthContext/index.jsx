@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { setGlobalAccessToken } from "../../api/globalFetcher";
 import { setTokenRefreshHandler, refreshSession } from "../../api/refreshTokenHelper";
 import { broadcastAuthEvent, subscribeAuthSync } from "../../api/authSessionSync";
-import { useTenant } from "../TenantContext";
 import { isAuthPath, redirectToLogin, resetLoginRedirect } from "../../utils/auth/authRedirect";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -26,8 +25,6 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { tenantCode } = useTenant();
-
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -106,8 +103,7 @@ export const AuthProvider = ({ children }) => {
     setSnackbarOpen(true);
   };
 
-  const login = async (username, password, rememberMe = true, tenantOverride = null) => {
-    const effectiveTenant = tenantOverride || tenantCode;
+  const login = async (username, password, rememberMe = true) => {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -117,7 +113,6 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({
           username,
           password,
-          tenant_code: effectiveTenant,
           remember_me: rememberMe,
         }),
         credentials: "include",

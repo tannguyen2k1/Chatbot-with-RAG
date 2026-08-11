@@ -155,13 +155,6 @@ export default function PermissionManagementPage() {
               <Tab label={mod} key={mod} />
             ))}
           </Tabs>
-          {/* Thông báo khi admin không thể chỉnh sửa tenant */}
-          {isCurrentUserAdmin && modules[tab] === "tenant" && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Admin không thể chỉnh sửa quyền của module Tenant. Chỉ Root mới có quyền này.
-            </Alert>
-          )}
-          
           {/* Bảng quyền cho module đang chọn */}
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small">
@@ -196,7 +189,7 @@ export default function PermissionManagementPage() {
                             checked={checked}
                             onChange={() => handleToggle(perm.id)}
                             color={checked ? "success" : "default"}
-                            disabled={loading || (isCurrentUserAdmin && modules[tab] === "tenant")}
+                            disabled={loading}
                           />
                         </TableCell>
                       </TableRow>

@@ -4,7 +4,6 @@ from database.models.config import Config
 from schemas.config import ConfigCreate, ConfigUpdate
 from typing import Optional
 from .rbac_helper import ensure_permission_global
-from database.context import current_tenant_id
 
 
 class ConfigService:
@@ -12,32 +11,26 @@ class ConfigService:
         self.db = db
 
     async def get_all_configs(self) -> list[Config]:
-        """Lấy tất cả cấu hình"""
         result = await self.db.execute(select(Config).order_by(Config.group_name, Config.key))
         return list(result.scalars().all())
 
     async def get_config_by_key(self, key: str) -> Optional[Config]:
-        """Lấy cấu hình theo key"""
         result = await self.db.execute(select(Config).where(Config.key == key))
         return result.scalar_one_or_none()
 
     async def get_configs_by_group(self, group_name: str) -> list[Config]:
-        """Lấy cấu hình theo nhóm"""
         result = await self.db.execute(
             select(Config).where(Config.group_name == group_name).order_by(Config.key)
         )
         return list(result.scalars().all())
 
     async def create_config(self, data: ConfigCreate) -> Config:
-        """Tạo cấu hình mới"""
-        tid = current_tenant_id.get()
         new_config = Config(
             key=data.key,
             value=data.value or "",
             description=data.description,
             group_name=data.group_name,
             is_system=data.is_system,
-            tenant_id=int(tid) if tid and tid != "-" else None
         )
         self.db.add(new_config)
         await self.db.commit()
@@ -45,7 +38,6 @@ class ConfigService:
         return new_config
 
     async def update_config(self, key: str, data: ConfigUpdate) -> Optional[Config]:
-        """Cập nhật cấu hình"""
         config = await self.get_config_by_key(key)
         if not config:
             return None
@@ -60,7 +52,6 @@ class ConfigService:
         return config
 
     async def upsert_config(self, key: str, value: str, description: str = None, group_name: str = None) -> Config:
-        """Thêm mới hoặc cập nhật cấu hình"""
         existing = await self.get_config_by_key(key)
         if existing:
             existing.value = value
@@ -72,13 +63,11 @@ class ConfigService:
             await self.db.refresh(existing)
             return existing
 
-        tid = current_tenant_id.get()
         new_config = Config(
             key=key,
             value=value,
             description=description,
             group_name=group_name,
-            tenant_id=int(tid) if tid and tid != "-" else None
         )
         self.db.add(new_config)
         await self.db.commit()
@@ -86,7 +75,6 @@ class ConfigService:
         return new_config
 
     async def delete_config(self, key: str) -> bool:
-        """Xóa cấu hình"""
         config = await self.get_config_by_key(key)
         if not config:
             return False
@@ -94,19 +82,13 @@ class ConfigService:
         await self.db.commit()
         return True
 
-    # =========================================================================
-    # "For" methods matching demo pattern (handle permissions)
-    # =========================================================================
-
     async def get_all_configs_for(self, current_user_id: int, group_name: str = None) -> list[Config]:
-        """Get configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "view")
         if group_name:
             return await self.get_configs_by_group(group_name)
         return await self.get_all_configs()
 
     async def get_config_for(self, current_user_id: int, key: str) -> Config:
-        """Get config by key with permission check"""
         await ensure_permission_global(current_user_id, "config", "view")
         config = await self.get_config_by_key(key)
         if not config:
@@ -115,12 +97,10 @@ class ConfigService:
         return config
 
     async def create_config_for(self, current_user_id: int, data: ConfigCreate) -> Config:
-        """Create config with permission check"""
         await ensure_permission_global(current_user_id, "config", "create")
         return await self.create_config(data)
 
     async def update_config_for(self, current_user_id: int, key: str, data: ConfigUpdate) -> Config:
-        """Update config with permission check"""
         await ensure_permission_global(current_user_id, "config", "update")
         config = await self.update_config(key, data)
         if not config:
@@ -129,7 +109,6 @@ class ConfigService:
         return config
 
     async def delete_config_for(self, current_user_id: int, key: str) -> dict:
-        """Delete config with permission check"""
         await ensure_permission_global(current_user_id, "config", "delete")
         deleted = await self.delete_config(key)
         if not deleted:
@@ -138,7 +117,6 @@ class ConfigService:
         return {"message": f"Config '{key}' deleted successfully"}
 
     async def update_chat_config_for(self, current_user_id: int, data) -> dict:
-        """Update chat-related configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "update")
         
         if data.limit is not None:
@@ -171,7 +149,6 @@ class ConfigService:
         return {"message": "Lưu cấu hình thành công"}
     
     async def get_chat_config_for(self, current_user_id: int) -> dict:
-        """Get consolidated chat configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "view")
         
         configs = await self.get_configs_by_group("chat")
@@ -201,8 +178,8 @@ class ConfigService:
             "conversation_history_max_messages": int(config_dict.get("chat.history_max_messages", 10)),
             "conversation_history_include_system": config_dict.get("chat.history_include_system", "true").lower() == "true",
         }
+
     async def update_general_config_for(self, current_user_id: int, data) -> dict:
-        """Update general application configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "update")
         
         if data.theme is not None:
@@ -215,7 +192,6 @@ class ConfigService:
         return {"message": "Lưu cài đặt thành công"}
 
     async def get_general_config_for(self, current_user_id: int) -> dict:
-        """Get consolidated general configs with permission check"""
         await ensure_permission_global(current_user_id, "config", "view")
         
         configs = await self.get_configs_by_group("general")
@@ -226,4 +202,3 @@ class ConfigService:
             "language": config_dict.get("general.language", "vi"),
             "font_size": config_dict.get("general.font_size", "medium")
         }
-

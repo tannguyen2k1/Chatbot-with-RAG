@@ -1,11 +1,5 @@
 """
-Startup Service - Các tác vụ khởi động backend
-
-Tập trung toàn bộ logic startup:
-- Kiểm tra kết nối Qdrant
-- Pre-load AI Models (Embedding & Reranker)
-- Tự động tạo collection "default" nếu chưa có
-- Train Query Classifier
+Startup Service - Backend startup tasks
 """
 from contextlib import asynccontextmanager
 
@@ -13,23 +7,16 @@ DEFAULT_COLLECTION = "default"
 
 
 async def setup_database() -> None:
-    """Khởi tạo database: tạo bảng, RLS, audit events, seed dữ liệu ban đầu."""
+    """Initialize database: create tables, audit events, seed initial data."""
     from database.database import engine, AsyncSessionLocal
     from database.models.base import Base
     from database.audit_event import register_audit_events
-    from database.rls import setup_rls
 
-    # Tạo các bảng nếu chưa có
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Thiết lập Row Level Security cho multi-tenancy
-    await setup_rls(engine)
-
-    # Đăng ký audit event listener cho tất cả các bảng
     register_audit_events()
 
-    # Auto seed RBAC (roles, modules, permissions)
     async with AsyncSessionLocal() as db:
         try:
             from database.seeds.auto_seed_data import auto_seed_all
@@ -39,7 +26,6 @@ async def setup_database() -> None:
 
 
 async def check_qdrant_connection() -> None:
-    """Kiểm tra kết nối Qdrant và in danh sách collections hiện có."""
     try:
         from database.qdrant import async_qdrant_client
         from services.vector import VectorService
@@ -55,23 +41,21 @@ async def check_qdrant_connection() -> None:
 
 
 def preload_ai_models() -> None:
-    """Pre-load Embedding model, Reranker model và NER model vào bộ nhớ."""
     try:
         from services.embedding import get_embedding_service
         from services.rerank import get_rerank_service
         from services.ner import get_ner_service
 
-        print("[AI Models] Đang tải các mô hình ngôn ngữ (Embedding, Reranker, NER)...")
+        print("[AI Models] Loading language models (Embedding, Reranker, NER)...")
         get_embedding_service()._load_model()
         get_rerank_service()._load_model()
         get_ner_service()._load_model()
-        print("[AI Models] Khởi tạo thành công!")
+        print("[AI Models] Models loaded successfully!")
     except Exception as e:
-        print(f"[WARN] Lỗi tải AI Models: {e}")
+        print(f"[WARN] Error loading AI Models: {e}")
 
 
 async def ensure_default_collection() -> None:
-    """Tạo collection 'default' trong Qdrant nếu chưa tồn tại."""
     try:
         from database.qdrant import async_qdrant_client
         from services.vector import VectorService
@@ -94,22 +78,20 @@ async def ensure_default_collection() -> None:
         else:
             print(f"[Qdrant] Collection '{DEFAULT_COLLECTION}' already exists.")
     except Exception as e:
-        print(f"[WARN] Không thể tạo collection '{DEFAULT_COLLECTION}': {e}")
+        print(f"[WARN] Cannot create collection '{DEFAULT_COLLECTION}': {e}")
 
 
 def train_query_classifier() -> None:
-    """Train Query Classifier."""
     try:
         from services.query_classifier import get_query_classifier
 
-        print("[Query Classifier] Đang train classifier...")
+        print("[Query Classifier] Training classifier...")
         get_query_classifier()
     except Exception as e:
-        print(f"[WARN] Lỗi train Query Classifier: {e}")
+        print(f"[WARN] Error training Query Classifier: {e}")
 
 
 async def shutdown() -> None:
-    """Dọn dẹp tài nguyên khi tắt server."""
     try:
         from database.qdrant import async_qdrant_client
 
@@ -120,13 +102,6 @@ async def shutdown() -> None:
 
 
 async def run_all() -> None:
-    """
-    Chạy toàn bộ các tác vụ khởi động theo thứ tự:
-    1. Kiểm tra Qdrant
-    2. Pre-load AI Models
-    3. Tạo collection 'default' nếu chưa có
-    4. Train Query Classifier
-    """
     await check_qdrant_connection()
     preload_ai_models()
     await ensure_default_collection()
@@ -135,7 +110,6 @@ async def run_all() -> None:
 
 @asynccontextmanager
 async def lifespan():
-    """Context manager gộp toàn bộ startup + shutdown. Dùng trong lifespan của FastAPI."""
     await setup_database()
     await run_all()
     yield

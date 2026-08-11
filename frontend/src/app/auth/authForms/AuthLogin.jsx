@@ -20,7 +20,6 @@ import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLab
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [tenantCode, setTenantCode] = useState("default");
   const [rememberDevice, setRememberDevice] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -31,7 +30,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     const errs = {};
     if (!username.trim()) errs.username = "Vui lòng nhập tên tài khoản";
     if (!password) errs.password = "Vui lòng nhập mật khẩu";
-    if (!tenantCode.trim()) errs.tenantCode = "Vui lòng nhập mã tenant";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -42,7 +40,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     setLoading(true);
     try {
-      await login(username.trim(), password, rememberDevice, tenantCode.trim());
+      await login(username.trim(), password, rememberDevice);
       router.push("/");
     } catch {
       // snackbar shown in AuthContext
@@ -61,25 +59,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       {subtext}
 
       <Stack spacing={2}>
-        <Box>
-          <CustomFormLabel htmlFor="tenant_code">Mã Tenant</CustomFormLabel>
-          <CustomTextField
-            id="tenant_code"
-            variant="outlined"
-            fullWidth
-            value={tenantCode}
-            onChange={(e) => {
-              setTenantCode(e.target.value);
-              if (errors.tenantCode) setErrors((p) => ({ ...p, tenantCode: "" }));
-            }}
-            placeholder="VD: root, default, company"
-            error={!!errors.tenantCode}
-            helperText={errors.tenantCode}
-            disabled={loading}
-            autoComplete="off"
-          />
-        </Box>
-
         <Box>
           <CustomFormLabel htmlFor="username">Tài khoản</CustomFormLabel>
           <CustomTextField
