@@ -3,16 +3,15 @@ import {
   IconUserCircle,
   IconPackage,
   IconFileCheck,
-  IconHome,
-  IconDatabase,
-  IconShieldLock,
   IconMessageCircle,
+  IconLayoutDashboard,
+  IconAdjustments,
 } from "@tabler/icons-react";
 
 const Menuitems = [
   {
     navlabel: true,
-    subheader: "Applications",
+    subheader: "Ứng dụng",
   },
   {
     id: uniqueId(),
@@ -22,22 +21,24 @@ const Menuitems = [
     chipColor: "secondary",
   },
   {
-    id: uniqueId(),
-    title: "Home",
-    icon: IconHome,
-    href: "/home",
-    chipColor: "secondary",
-  },
-  {
-    id: uniqueId(),
-    title: "Demo",
-    icon: IconDatabase,
-    href: "/apps/demos",
-    chipColor: "secondary",
-  },
-  {
     navlabel: true,
-    subheader: "Systems",
+    subheader: "Quản trị",
+  },
+  {
+    id: uniqueId(),
+    title: "AdminOverview",
+    icon: IconLayoutDashboard,
+    href: "/admin",
+    chipColor: "secondary",
+    permission: "user.view",
+  },
+  {
+    id: uniqueId(),
+    title: "ChatConfig",
+    icon: IconAdjustments,
+    href: "/admin/chat-config",
+    chipColor: "secondary",
+    permission: "config.view",
   },
   {
     id: uniqueId(),
@@ -54,14 +55,6 @@ const Menuitems = [
     chipColor: "secondary",
     href: "/systems/role-management",
     permission: "role.view",
-  },
-  {
-    id: uniqueId(),
-    title: "PermissionManagement",
-    icon: IconShieldLock,
-    chipColor: "secondary",
-    href: "/systems/permission-management",
-    permission: "permission.view",
   },
   {
     id: uniqueId(),

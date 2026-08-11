@@ -10,6 +10,7 @@
     "List": "Danh sách",
     "Checkout": "Thanh toán",
     "Chats": "Trò chuyện",
+    "Chat": "Trò chuyện",
     "Users": "Người dùng",
     "Profile": "Hồ sơ",
     "Followers": "Người theo dõi",
@@ -26,6 +27,10 @@
     "Edit": "Chỉnh sửa",
     "UserManagement": "Quản lý người dùng",
     "RoleManagement": "Quản lý vai trò",
+    "PermissionManagement": "Quản lý quyền",
+    "AdminOverview": "Tổng quan",
+    "ChatConfig": "Cấu hình chat",
+    "Administration": "Quản trị",
     "Demo": "Trình diễn (Demo mẫu)",
     "AuditLog": "Nhật ký hệ thống"
 }

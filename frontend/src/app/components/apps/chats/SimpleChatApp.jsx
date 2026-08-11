@@ -55,12 +55,15 @@ import {
   IconKey,
   IconRefresh,
   IconAlertTriangle,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
 import { authFetch } from "@/app/api/authFetch";
 import ProfileDialog from "@/app/components/user/ProfileDialog";
 import SettingsDialog from "@/app/components/user/SettingsDialog";
+import { hasPermission } from "@/app/utils/auth/hasPermission";
+import { useRouter } from "next/navigation";
 
 const SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 48;
@@ -148,6 +151,10 @@ const normalizeAssistantText = (text) => {
 const SimpleChatApp = () => {
   const theme = useTheme();
   const { getAccessToken, user, logout } = useAuth();
+  const router = useRouter();
+  const canAccessAdmin =
+    hasPermission(user?.permissions, "user", "view") ||
+    hasPermission(user?.permissions, "config", "view");
   const [input, setInput] = useState("");
   const [savedInput, setSavedInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -165,10 +172,6 @@ const SimpleChatApp = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", message: "", onConfirm: null });
-
-  const handleChatConfigChange = (newConfig) => {
-    setChatConfig(newConfig);
-  };
 
   const [chatConfig, setChatConfig] = useState({
     collection_name: null,
@@ -872,6 +875,19 @@ const SimpleChatApp = () => {
                 </ListItemIcon>
                 <ListItemText>Cài đặt</ListItemText>
               </MenuItem>
+              {canAccessAdmin && (
+                <MenuItem
+                  onClick={() => {
+                    setUserAnchor(null);
+                    router.push("/admin");
+                  }}
+                >
+                  <ListItemIcon>
+                    <IconLayoutDashboard size={18} />
+                  </ListItemIcon>
+                  <ListItemText>Quản trị</ListItemText>
+                </MenuItem>
+              )}
               <Divider />
               <MenuItem onClick={logout} sx={{ color: "error.main" }}>
                 <ListItemIcon>
@@ -1419,7 +1435,6 @@ const SimpleChatApp = () => {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onRefresh={fetchHistory}
-        onChatConfigChange={handleChatConfigChange}
         onClearChat={() => {
           setActiveChatId(null);
           setMessages([]);

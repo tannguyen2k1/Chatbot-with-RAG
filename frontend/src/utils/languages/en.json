@@ -10,6 +10,7 @@
     "List": "List",
     "Checkout": "Checkout",
     "Chats": "Chats",
+    "Chat": "Chat",
     "Users": "Users",
     "Profile": "Profile",
     "Followers": "Followers",
@@ -26,6 +27,10 @@
     "Edit": "Edit",
     "UserManagement": "User Management",
     "RoleManagement": "Role Management",
+    "PermissionManagement": "Permission Management",
+    "AdminOverview": "Overview",
+    "ChatConfig": "Chat Config",
+    "Administration": "Administration",
     "Demo": "Demo",
     "AuditLog": "Audit Log"
 }

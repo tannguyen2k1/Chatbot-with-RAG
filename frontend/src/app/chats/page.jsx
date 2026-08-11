@@ -1,9 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import SimpleChatApp from "@/app/components/apps/chats/SimpleChatApp";
-
-const Chats = () => {
-  return <SimpleChatApp />;
-};
-
-export default Chats;
+export default function ChatsPage() {
+  redirect("/");
+}
