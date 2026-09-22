@@ -162,8 +162,12 @@ async def chat_stream_endpoint(
         headers = {"X-Context-Sources": "0"}
 
         async def stream_generator():
-            async for chunk in chat.stream_answer(request.query, context, system_prompt):
-                yield chunk
+            try:
+                async for chunk in chat.stream_answer(request.query, context, system_prompt):
+                    yield chunk
+            except Exception as e:
+                logger.error(f"[chat/stream] Streaming error: {e}")
+                yield f"\n\n[Lỗi kết nối AI]: {e!s}"
 
         return StreamingResponse(
             stream_generator(),
@@ -195,8 +199,12 @@ async def chat_stream_endpoint(
     system_prompt = await chat.get_system_prompt()
 
     async def stream_generator():
-        async for chunk in chat.stream_answer(request.query, context_str, system_prompt):
-            yield chunk
+        try:
+            async for chunk in chat.stream_answer(request.query, context_str, system_prompt):
+                yield chunk
+        except Exception as e:
+            logger.error(f"[chat/stream] Streaming error: {e}")
+            yield f"\n\n[Lỗi kết nối AI]: {e!s}"
 
     headers = {"X-Context-Sources": str(vector_response.count)}
     return StreamingResponse(

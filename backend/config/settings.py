@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     QDRANT_GRPC_PORT: int = 6334
 
     # Embedding Model
-    EMBEDDING_MODEL_NAME: str = "mistral-embed"
+    EMBEDDING_PROVIDER: str = "gemini"
     EMBEDDING_USE_FLASH_ATTENTION: bool = False
 
     # Reranker Model
@@ -54,16 +54,23 @@ class Settings(BaseSettings):
     NER_MODEL_NAME: str = "NlpHUST/ner-vietnamese-electra-base"
 
     # LLM Settings - Strategy Pattern
-    LLM_PROVIDER: str = "mistral"  # "mistral" | "deepseek"
+    LLM_PROVIDER: str = "gemini"  # "mistral" | "deepseek" | "gemini"
 
     # Mistral
     MISTRAL_API_KEY: str | None = None
     MISTRAL_MODEL_NAME: str = "mistral-large-latest"
+    MISTRAL_EMBEDDING_MODEL:str="mistral-embed"
 
     # DeepSeek
     DEEPSEEK_API_KEY: str | None = None
     DEEPSEEK_MODEL_NAME: str = "deepseek-chat"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+
+    # Gemini
+    GEMINI_API_KEY: str | None = None
+    GEMINI_CHAT_MODEL: str = "gemini-2.5-flash"
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
     @property
     def llm_model_name(self) -> str:
@@ -72,9 +79,11 @@ class Settings(BaseSettings):
                 return self.MISTRAL_MODEL_NAME
             case "deepseek":
                 return self.DEEPSEEK_MODEL_NAME
+            case "gemini":
+                return self.GEMINI_CHAT_MODEL
             case _:
                 raise ValueError(
-                    f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral' hoặc 'deepseek'."
+                    f"LLM_PROVIDER không hợp lệ: '{self.LLM_PROVIDER}'. Chỉ hỗ trợ 'mistral', 'deepseek', 'gemini'."
                 )
 
     # Chat System Prompt
@@ -101,6 +110,6 @@ Trả lời (kèm trích dẫn [Tài liệu N]):"""
 
     class Config:
         env_file = ".env"
-
+        extra = "ignore"
 
 settings = Settings()

@@ -13,12 +13,13 @@ __all__ = ["current_user_id", "register_audit_events"]
 def create_audit_log_sync(
     action: str,
     table_name: str,
-    record_id: int,
+    record_id: int | None,
     old_value: str | None = None,
     new_value: str | None = None,
     description: str | None = None,
 ):
     """Helper function to create audit log using sync approach"""
+    session = None
     try:
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
@@ -27,10 +28,16 @@ def create_audit_log_sync(
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine_sync)
         session = SessionLocal()
 
-        user_id = current_user_id.get()
+        user_id_raw = current_user_id.get()
+        user_id = None
+        
+        if user_id_raw is not None:
+            try:
+                user_id = int(user_id_raw)
+            except (ValueError, TypeError):
+                pass
 
         if user_id is None:
-            session.close()
             return
 
         audit_log = AuditLog(
@@ -45,10 +52,10 @@ def create_audit_log_sync(
         )
         session.add(audit_log)
         session.commit()
-        session.close()
     except Exception as e:
         print(f"Audit log error: {e}")
-        if "session" in locals():
+    finally:
+        if session is not None:
             session.close()
 
 

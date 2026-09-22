@@ -39,7 +39,9 @@ class EmbeddingService:
 
     @property
     def vector_dimension(self) -> int:
-        """Trả về kích thước vector của model (mistral-embed = 1024)"""
+        """Trả về kích thước vector của model (gemini = 768, mistral = 1024)"""
+        if settings.EMBEDDING_PROVIDER == "gemini":
+            return 768
         return 1024
 
     def encode_texts(
@@ -50,40 +52,57 @@ class EmbeddingService:
     ) -> list[list[float]]:
         """
         Encode texts thành vectors.
-
-        Args:
-            texts: Danh sách text cần encode
-            is_query: True = query mode (có prompt prefix), False = document mode
-            normalize: Chuẩn hóa vector (khuyến nghị True cho cosine similarity)
         """
         import httpx
 
-        api_key = settings.MISTRAL_API_KEY
-        if not api_key:
-            raise ValueError("MISTRAL_API_KEY is not set in environment variables.")
-
-        # Batch requests if needed, but for now just send directly
-        # Mistral API limit is usually high enough, but we should handle it
-        payload = {"model": settings.EMBEDDING_MODEL_NAME, "input": texts}
-
-        try:
-            # Using sync httpx for compatibility with existing synchronous flow
-            with httpx.Client() as client:
-                response = client.post(
-                    "https://api.mistral.ai/v1/embeddings",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json=payload,
-                    timeout=30.0,
+        provider = settings.EMBEDDING_PROVIDER
+        
+        if provider == "gemini":
+            from openai import OpenAI
+            api_key = settings.GEMINI_API_KEY
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY is not set in environment variables.")
+            
+            client = OpenAI(
+                api_key=api_key,
+                base_url=settings.GEMINI_BASE_URL,
+            )
+            try:
+                response = client.embeddings.create(
+                    input=texts,
+                    model=settings.GEMINI_EMBEDDING_MODEL,
+                    dimensions=768
                 )
-                response.raise_for_status()
-                data = response.json()
-
-                # Mistral returns data in the same order as input
-                embeddings = [item["embedding"] for item in data["data"]]
+                embeddings = [item.embedding for item in response.data]
                 return embeddings
-        except Exception as e:
-            logger.error(f"Error calling Mistral Embedding API: {e}")
-            raise
+            except Exception as e:
+                logger.error(f"Error calling Gemini Embedding API: {e}")
+                raise
+
+        elif provider == "mistral":
+            api_key = settings.MISTRAL_API_KEY
+            if not api_key:
+                raise ValueError("MISTRAL_API_KEY is not set in environment variables.")
+
+            payload = {"model": settings.MISTRAL_EMBEDDING_MODEL, "input": texts}
+
+            try:
+                with httpx.Client() as client:
+                    response = client.post(
+                        "https://api.mistral.ai/v1/embeddings",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json=payload,
+                        timeout=30.0,
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    embeddings = [item["embedding"] for item in data["data"]]
+                    return embeddings
+            except Exception as e:
+                logger.error(f"Error calling Mistral Embedding API: {e}")
+                raise
+        else:
+            raise ValueError(f"Unsupported EMBEDDING_PROVIDER: {provider}")
 
     def encode_single(
         self,

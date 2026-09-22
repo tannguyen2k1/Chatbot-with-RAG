@@ -8,6 +8,7 @@ cho phép chuyển đổi qua lại chỉ bằng cách đổi biến LLM_PROVIDE
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterator
+from typing import Any
 
 from config.settings import settings
 
@@ -23,24 +24,24 @@ class LLMProviderBase(ABC):
     """Interface chung cho tất cả LLM provider."""
 
     @abstractmethod
-    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: Any, **kwargs) -> str:
         """Gọi LLM (sync), trả về nội dung text."""
         ...
 
     @abstractmethod
-    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
+    async def complete_async(self, model: str, messages: Any, **kwargs) -> str:
         """Gọi LLM (async), trả về nội dung text."""
         ...
 
     @abstractmethod
-    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: Any, **kwargs) -> Iterator[str]:
         """Stream LLM response (sync generator)."""
         ...
 
     @abstractmethod
-    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
+    async def stream_async(self, model: str, messages: Any, **kwargs) -> AsyncIterator[str]:
         """Stream LLM response (async generator)."""
-        ...
+        yield ""
 
 
 # ============================================================
@@ -59,7 +60,7 @@ class MistralProvider(LLMProviderBase):
             raise ValueError("MISTRAL_API_KEY is not set in .env")
         self._client = Mistral(api_key=api_key)
 
-    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: Any, **kwargs) -> str:
         response = self._client.chat.complete(
             model=model,
             messages=messages,
@@ -67,7 +68,7 @@ class MistralProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
+    async def complete_async(self, model: str, messages: Any, **kwargs) -> str:
         response = await self._client.chat.complete_async(
             model=model,
             messages=messages,
@@ -75,7 +76,7 @@ class MistralProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: Any, **kwargs) -> Iterator[str]:
         stream = self._client.chat.stream(
             model=model,
             messages=messages,
@@ -87,7 +88,7 @@ class MistralProvider(LLMProviderBase):
                 if isinstance(content, str) and content:
                     yield content
 
-    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
+    async def stream_async(self, model: str, messages: Any, **kwargs) -> AsyncIterator[str]:
         stream = await self._client.chat.stream_async(
             model=model,
             messages=messages,
@@ -109,7 +110,7 @@ class DeepSeekProvider(LLMProviderBase):
     """Strategy cho DeepSeek (dùng OpenAI-compatible SDK)."""
 
     def __init__(self) -> None:
-        from openai import OpenAI
+        from openai import AsyncOpenAI, OpenAI
 
         api_key = settings.DEEPSEEK_API_KEY
         if not api_key:
@@ -118,8 +119,12 @@ class DeepSeekProvider(LLMProviderBase):
             api_key=api_key,
             base_url=settings.DEEPSEEK_BASE_URL,
         )
+        self._async_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=settings.DEEPSEEK_BASE_URL,
+        )
 
-    def complete(self, model: str, messages: list[dict], **kwargs) -> str:
+    def complete(self, model: str, messages: Any, **kwargs) -> str:
         response = self._client.chat.completions.create(
             model=model,
             messages=messages,
@@ -128,9 +133,8 @@ class DeepSeekProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    async def complete_async(self, model: str, messages: list[dict], **kwargs) -> str:
-        # OpenAI SDK >=1.0 uses httpx, hỗ trợ async natively
-        response = await self._client.chat.completions.create(
+    async def complete_async(self, model: str, messages: Any, **kwargs) -> str:
+        response = await self._async_client.chat.completions.create(
             model=model,
             messages=messages,
             stream=False,
@@ -138,7 +142,7 @@ class DeepSeekProvider(LLMProviderBase):
         )
         return response.choices[0].message.content
 
-    def stream(self, model: str, messages: list[dict], **kwargs) -> Iterator[str]:
+    def stream(self, model: str, messages: Any, **kwargs) -> Iterator[str]:
         stream = self._client.chat.completions.create(
             model=model,
             messages=messages,
@@ -151,8 +155,76 @@ class DeepSeekProvider(LLMProviderBase):
                 if content:
                     yield content
 
-    async def stream_async(self, model: str, messages: list[dict], **kwargs) -> AsyncIterator[str]:
-        stream = await self._client.chat.completions.create(
+    async def stream_async(self, model: str, messages: Any, **kwargs) -> AsyncIterator[str]:
+        stream = await self._async_client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+            **kwargs,
+        )
+        async for chunk in stream:
+            for choice in chunk.choices:
+                content = choice.delta.content
+                if content:
+                    yield content
+
+
+# ============================================================
+# Gemini Provider
+# ============================================================
+
+
+class GeminiProvider(LLMProviderBase):
+    """Strategy cho Google Gemini (dùng OpenAI-compatible SDK)."""
+
+    def __init__(self) -> None:
+        from openai import AsyncOpenAI, OpenAI
+
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY is not set in .env")
+        self._client = OpenAI(
+            api_key=api_key,
+            base_url=settings.GEMINI_BASE_URL,
+        )
+        self._async_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=settings.GEMINI_BASE_URL,
+        )
+
+    def complete(self, model: str, messages: Any, **kwargs) -> str:
+        response = self._client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=False,
+            **kwargs,
+        )
+        return response.choices[0].message.content
+
+    async def complete_async(self, model: str, messages: Any, **kwargs) -> str:
+        response = await self._async_client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=False,
+            **kwargs,
+        )
+        return response.choices[0].message.content
+
+    def stream(self, model: str, messages: Any, **kwargs) -> Iterator[str]:
+        stream = self._client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+            **kwargs,
+        )
+        for chunk in stream:
+            for choice in chunk.choices:
+                content = choice.delta.content
+                if content:
+                    yield content
+
+    async def stream_async(self, model: str, messages: Any, **kwargs) -> AsyncIterator[str]:
+        stream = await self._async_client.chat.completions.create(
             model=model,
             messages=messages,
             stream=True,
@@ -172,6 +244,7 @@ class DeepSeekProvider(LLMProviderBase):
 _PROVIDER_REGISTRY = {
     "mistral": MistralProvider,
     "deepseek": DeepSeekProvider,
+    "gemini": GeminiProvider,
 }
 
 
