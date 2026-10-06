@@ -103,7 +103,7 @@ class FeedbackResponse(BaseModel):
     is_helpful: int
     comment: str | None
     domain: str | None
-    created_at: datetime
+    created_at: datetime | None = None
 
     class Config:
         from_attributes = True

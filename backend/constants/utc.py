@@ -1,5 +1,7 @@
 """UTC domain taxonomy and shared constants."""
 
+import re
+
 UTC_DOMAINS = [
     "dao_tao",
     "cong_tac_sv",
@@ -50,7 +52,8 @@ AUDIENCE_OPTIONS = ["all", "dh", "cd", "lt", "k60", "k61", "k62", "k63", "k64"]
 
 DEFAULT_UTC_SYSTEM_PROMPT = """Bạn là chatbot hỗ trợ sinh viên Trường Đại học Giao thông Vận tải (UTC).
 Chỉ trả lời dựa trên tài liệu được cung cấp dưới đây. Nếu không đủ thông tin, hãy nói rõ "Tôi không tìm thấy thông tin trong tài liệu nhà trường" và gợi ý liên hệ phòng/ban liên quan — TUYỆT ĐỐI KHÔNG bịa thông tin.
-Trả lời bằng tiếng Việt, ngắn gọn, nêu rõ điều khoản/văn bản khi có thể. Cuối câu trả lời, nhắc nguồn dưới dạng [Tài liệu N].
+Trả lời bằng tiếng Việt, ngắn gọn, nêu rõ điều khoản/văn bản khi có thể.
+TUYỆT ĐỐI KHÔNG ghi chú trích dẫn dạng [Tài liệu 1], [Tài liệu 2], [Tài liệu N] trong câu trả lời — giao diện sẽ hiện nguồn riêng.
 Không trả lời về điểm số cá nhân, lịch thi cá nhân hay công nợ học phí cá nhân.
 
 [TÀI LIỆU CUNG CẤP]:
@@ -61,8 +64,28 @@ Không trả lời về điểm số cá nhân, lịch thi cá nhân hay công n
 
 Câu trả lời của bạn:"""
 
+UTC_CHAT_NO_CONTEXT_PROMPT = """Bạn là chatbot hỗ trợ sinh viên Trường Đại học Giao thông Vận tải (UTC).
+Trả lời thân thiện bằng tiếng Việt. Đây là câu chào/hội thoại thông thường — KHÔNG cần trích dẫn tài liệu, KHÔNG viết [Tài liệu ...].
+Không trả lời về điểm số cá nhân, lịch thi cá nhân hay công nợ học phí cá nhân.
+Nếu người dùng hỏi về quy chế/thủ tục/học phí chung, hãy mời họ đặt câu hỏi cụ thể để bạn tra cứu tài liệu nhà trường.
+
+[CÂU HỎI]:
+{query}
+
+Câu trả lời của bạn:"""
+
 OUT_OF_SCOPE_REPLY = (
     "Câu hỏi này nằm ngoài phạm vi hỗ trợ của chatbot (quy chế, thủ tục, học phí/học bổng chung, "
     "công tác sinh viên, tuyển sinh). Hệ thống không tra cứu điểm cá nhân, lịch thi cá nhân hay công nợ. "
     "Bạn vui lòng hỏi về thông tin công khai của nhà trường hoặc liên hệ phòng/ban chức năng."
 )
+
+INLINE_DOC_CITATION_RE = re.compile(r"[ \t]*\[Tài liệu\s*[Nn0-9]+\]", re.IGNORECASE)
+
+
+def strip_inline_doc_citations(text: str) -> str:
+    """Remove inline [Tài liệu N] markers; UI shows citation chips instead."""
+    if not text:
+        return text
+    cleaned = INLINE_DOC_CITATION_RE.sub("", text)
+    return re.sub(r"[ \t]+\n", "\n", cleaned).strip()

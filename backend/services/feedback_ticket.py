@@ -70,8 +70,18 @@ class FeedbackService:
 
     async def create_for(self, user_id: int, data: FeedbackCreate) -> FeedbackResponse:
         # Any authenticated user can feedback their messages
-        fb = await self.create(user_id, data)
-        return FeedbackResponse.model_validate(fb)
+        from fastapi import HTTPException, status
+        from sqlalchemy.exc import IntegrityError
+
+        try:
+            fb = await self.create(user_id, data)
+            return FeedbackResponse.model_validate(fb)
+        except IntegrityError as e:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Không gửi được đánh giá (tin nhắn/hội thoại không hợp lệ).",
+            ) from e
 
 
 class TicketService:

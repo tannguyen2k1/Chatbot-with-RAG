@@ -1,14 +1,17 @@
 import logging
 from datetime import UTC, datetime
+from typing import cast
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from sqlalchemy import desc, func, nullslast, select
+from sqlalchemy import desc, func, nullslast, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from api.vector import search_by_text
+from constants.utc import UTC_CHAT_NO_CONTEXT_PROMPT, strip_inline_doc_citations
+from database.database import AsyncSessionLocal
 from database.models.conversation import Conversation, Message
 from database.models.user import User
 from dependencies import get_current_user
@@ -73,6 +76,24 @@ def _stream_headers(
     return headers
 
 
+async def _persist_assistant_message(
+    message_id: int,
+    conversation_id: int,
+    content: str,
+) -> None:
+    """Persist final assistant text in a fresh session (stream may outlive request session)."""
+    async with AsyncSessionLocal() as session:
+        await session.execute(
+            update(Message).where(Message.id == message_id).values(content=content)
+        )
+        await session.execute(
+            update(Conversation)
+            .where(Conversation.id == conversation_id)
+            .values(updated_at=datetime.now(UTC))
+        )
+        await session.commit()
+
+
 async def _stream_and_persist(
     *,
     db: AsyncSession,
@@ -86,6 +107,8 @@ async def _stream_and_persist(
     history_max_messages: int = 0,
     history_include_system: bool = True,
 ):
+    message_id = assistant_msg.id
+    conversation_id = conversation.id
     answer_content = ""
     try:
         async for chunk in chat.stream_answer(
@@ -99,13 +122,17 @@ async def _stream_and_persist(
             answer_content += chunk
             yield chunk
 
-        assistant_msg.content = answer_content
-        conversation.updated_at = datetime.now(UTC)
-        await db.commit()
+        await _persist_assistant_message(
+            message_id, conversation_id, strip_inline_doc_citations(answer_content)
+        )
     except Exception as e:
         logger.error(f"[chat/stream] Error in stream: {e}")
-        assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
-        await db.commit()
+        try:
+            await _persist_assistant_message(
+                message_id, conversation_id, f"Lỗi khi tạo response: {e!s}"
+            )
+        except Exception as persist_err:
+            logger.error(f"[chat/stream] Failed to persist error message: {persist_err}")
 
 
 async def _stream_fixed_answer(
@@ -115,10 +142,11 @@ async def _stream_fixed_answer(
     text: str,
     assistant_msg: Message,
 ):
-    assistant_msg.content = text
-    conversation.updated_at = datetime.now(UTC)
-    await db.commit()
-    yield text
+    message_id = assistant_msg.id
+    conversation_id = conversation.id
+    clean = strip_inline_doc_citations(text)
+    await _persist_assistant_message(message_id, conversation_id, clean)
+    yield clean
 
 
 async def _load_conversation_history(db: AsyncSession, conversation_id: int) -> list[dict]:
@@ -357,20 +385,9 @@ async def get_conversation(
         user_id=conversation.user_id,
         is_deleted=conversation.is_deleted,
         is_archived=conversation.is_archived,
-        created_at=conversation.created_at,
-        updated_at=conversation.updated_at,
-        messages=[
-            MessageResponse(
-                id=m.id,
-                conversation_id=m.conversation_id,
-                role=m.role,
-                content=m.content,
-                context_sources=m.context_sources,
-                citations=getattr(m, "citations", None),
-                created_at=m.created_at,
-            )
-            for m in messages
-        ],
+        created_at=cast("datetime", conversation.created_at),
+        updated_at=cast("datetime | None", conversation.updated_at),
+        messages=[MessageResponse.model_validate(m) for m in messages],
     )
 
 
@@ -587,6 +604,9 @@ async def create_conversation_with_message(
         citations_json = citations_header(cites) if cites else None
         sources_count = len(results)
         context_str = chat.build_context(results)
+    else:
+        # Greeting / chitchat: don't use RAG citation prompt
+        system_prompt = UTC_CHAT_NO_CONTEXT_PROMPT
 
     assistant_msg = Message(
         conversation_id=conversation.id,
@@ -740,6 +760,8 @@ async def add_message_stream(
         citations_json = citations_header(cites) if cites else None
         sources_count = len(results)
         context_str = chat.build_context(results)
+    else:
+        system_prompt = UTC_CHAT_NO_CONTEXT_PROMPT
 
     assistant_msg = Message(
         conversation_id=conversation.id,

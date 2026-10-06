@@ -171,7 +171,11 @@ const ThinkingIndicator = ({ isDark }) => {
 
 const normalizeAssistantText = (text) => {
   if (!text) return "";
-  return text.replace(/^"+|"+$/g, "");
+  return text
+    .replace(/^"+|"+$/g, "")
+    .replace(/[ \t]*\[Tài liệu\s*[Nn0-9]+\]/gi, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
 };
 
 const SimpleChatApp = () => {
@@ -191,6 +195,8 @@ const SimpleChatApp = () => {
   const [contextSources, setContextSources] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [errorSnackbar, setErrorSnackbar] = useState(false);
+  const [snackbarSeverity, setSnackbarSeverity] = useState("error");
+  const [feedbackPending, setFeedbackPending] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(true);
   const [userAnchor, setUserAnchor] = useState(null);
@@ -500,15 +506,17 @@ const SimpleChatApp = () => {
         }
       }
 
-      // Stream kết thúc → đổi status thành "done" để tắt spinner
+      // Stream kết thúc → đổi status thành "done"; gắn id thật từ DB để feedback hoạt động
+      const realMsgId = messageIdHeader ? parseInt(messageIdHeader, 10) : NaN;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
             ? {
                 ...m,
+                id: Number.isFinite(realMsgId) ? String(realMsgId) : m.id,
                 status: "done",
                 citations,
-                dbId: messageIdHeader ? parseInt(messageIdHeader, 10) : m.dbId,
+                dbId: Number.isFinite(realMsgId) ? realMsgId : m.dbId,
               }
             : m,
         ),
@@ -524,6 +532,7 @@ const SimpleChatApp = () => {
           ),
         );
         setErrorMessage(errMsg);
+        setSnackbarSeverity("error");
         setErrorSnackbar(true);
       }
     } finally {
@@ -546,10 +555,28 @@ const SimpleChatApp = () => {
     setInput(savedInput);
   };
 
+  const resolveDbMessageId = (message) => {
+    if (message?.dbId != null && Number.isFinite(Number(message.dbId))) {
+      return Number(message.dbId);
+    }
+    const raw = String(message?.id ?? "");
+    if (/^\d+$/.test(raw)) return Number(raw);
+    return null;
+  };
+
   const handleFeedback = async (message, isHelpful) => {
-    const messageId = message.dbId || parseInt(message.id, 10);
+    const messageId = resolveDbMessageId(message);
     const conversationId = activeChatId;
     if (!messageId || !conversationId) return;
+
+    const mapKey = String(messageId);
+    setFeedbackPending(mapKey);
+    // Optimistic UI: đổi màu ngay
+    setFeedbackMap((prev) => ({
+      ...prev,
+      [mapKey]: isHelpful ? "up" : "down",
+      [message.id]: isHelpful ? "up" : "down",
+    }));
     try {
       await postFetcher("/api/utc/feedback", {
         message_id: messageId,
@@ -558,10 +585,16 @@ const SimpleChatApp = () => {
         domain: lastDomainRef.current || null,
         comment: isHelpful ? null : "Không hữu ích",
       });
-      setFeedbackMap((prev) => ({ ...prev, [message.id]: isHelpful ? "up" : "down" }));
-    } catch (e) {
-      setErrorMessage(e.message || "Gửi đánh giá thất bại");
-      setErrorSnackbar(true);
+    } catch {
+      // Rollback màu nếu gửi thất bại
+      setFeedbackMap((prev) => {
+        const next = { ...prev };
+        delete next[mapKey];
+        delete next[message.id];
+        return next;
+      });
+    } finally {
+      setFeedbackPending(null);
     }
   };
 
@@ -1427,36 +1460,62 @@ const SimpleChatApp = () => {
                             </Tooltip>
                           )}
                           <Tooltip title="Hữu ích">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleFeedback(message, true)}
-                              sx={{
-                                opacity: feedbackMap[message.id] === "up" ? 1 : 0.5,
-                                color:
-                                  feedbackMap[message.id] === "up"
-                                    ? "success.main"
-                                    : undefined,
-                                "&:hover": { opacity: 1 },
-                              }}
-                            >
-                              <IconThumbUp size={14} />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={!!feedbackPending}
+                                onClick={() => handleFeedback(message, true)}
+                                sx={{
+                                  opacity: 1,
+                                  color:
+                                    feedbackMap[message.id] === "up" ||
+                                    feedbackMap[String(message.dbId)] === "up"
+                                      ? "#22c55e"
+                                      : isDark
+                                        ? "grey.500"
+                                        : "grey.500",
+                                  "& svg": {
+                                    fill:
+                                      feedbackMap[message.id] === "up" ||
+                                      feedbackMap[String(message.dbId)] === "up"
+                                        ? "currentColor"
+                                        : "none",
+                                  },
+                                  "&:hover": { color: "#22c55e" },
+                                }}
+                              >
+                                <IconThumbUp size={16} />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                           <Tooltip title="Không hữu ích">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleFeedback(message, false)}
-                              sx={{
-                                opacity: feedbackMap[message.id] === "down" ? 1 : 0.5,
-                                color:
-                                  feedbackMap[message.id] === "down"
-                                    ? "error.main"
-                                    : undefined,
-                                "&:hover": { opacity: 1 },
-                              }}
-                            >
-                              <IconThumbDown size={14} />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={!!feedbackPending}
+                                onClick={() => handleFeedback(message, false)}
+                                sx={{
+                                  opacity: 1,
+                                  color:
+                                    feedbackMap[message.id] === "down" ||
+                                    feedbackMap[String(message.dbId)] === "down"
+                                      ? "#ef4444"
+                                      : isDark
+                                        ? "grey.500"
+                                        : "grey.500",
+                                  "& svg": {
+                                    fill:
+                                      feedbackMap[message.id] === "down" ||
+                                      feedbackMap[String(message.dbId)] === "down"
+                                        ? "currentColor"
+                                        : "none",
+                                  },
+                                  "&:hover": { color: "#ef4444" },
+                                }}
+                              >
+                                <IconThumbDown size={16} />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </Box>
                       )}
@@ -1596,7 +1655,7 @@ const SimpleChatApp = () => {
       >
         <Alert
           onClose={() => setErrorSnackbar(false)}
-          severity="error"
+          severity={snackbarSeverity}
           variant="filled"
           sx={{ width: "100%" }}
         >
