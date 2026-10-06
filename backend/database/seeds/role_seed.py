@@ -5,8 +5,10 @@ from database.models import Role
 
 BASE_ROLES = [
     ("root", "Super Admin"),
-    ("admin", "Admin"),
-    ("user", "User"),
+    ("admin", "Admin — KB, RBAC, config, audit, stats"),
+    ("staff", "Cán bộ — FAQ và hàng chờ ticket"),
+    ("student", "Sinh viên — chat hỗ trợ"),
+    ("user", "User (legacy, tương đương student)"),
 ]
 
 

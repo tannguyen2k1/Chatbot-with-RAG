@@ -7,23 +7,9 @@ from services.llm_provider import LLMProviderBase, get_cached_provider
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SYSTEM_PROMPT = """Bạn là một trợ lý AI thông minh chuyên phân tích tài liệu.
+from constants.utc import DEFAULT_UTC_SYSTEM_PROMPT
 
-QUY TẮC:
-1. Chỉ trả lời DỰA TRÊN tài liệu được cung cấp bên dưới.
-2. Sau mỗi câu trả lời có thông tin từ tài liệu, phải trích dẫn nguồn bằng [Tài liệu N].
-3. Nếu tài liệu có thông tin nhưng không đầy đủ, hãy trả lời những gì có và nói rõ "Theo tài liệu...".
-4. Nếu tài liệu KHÔNG chứa thông tin, nói "Tôi không tìm thấy thông tin này trong tài liệu." TUYỆT ĐỐI KHÔNG bịa.
-5. Nếu câu hỏi không liên quan đến tài liệu, trả lời bằng kiến thức của bạn và ghi chú rõ.
-
-[TÀI LIỆU CUNG CẤP]:
-{context}
-
-[CÂU HỎI]:
-{query}
-
-Trả lời (kèm trích dẫn [Tài liệu N]):"""
-
+DEFAULT_SYSTEM_PROMPT = DEFAULT_UTC_SYSTEM_PROMPT
 
 class ChatService:
     def __init__(self, db=None, llm_provider: LLMProviderBase | None = None):

@@ -1,26 +1,29 @@
-# Chat Assistant
+# UTC Student Chatbot
 
-An enterprise-ready **Retrieval-Augmented Generation (RAG)** chat platform with a FastAPI backend and Next.js frontend. Users can upload documents, index them into a vector store, and chat with an LLM that answers using retrieved context. The system supports **multi-tenancy**, **role-based access control (RBAC)**, conversation management, and Vietnamese-optimized NLP models.
+Chatbot hỗ trợ sinh viên **Trường Đại học Giao thông Vận tải (UTC)** — FAQ-first + RAG có citation, hàng chờ cán bộ, kho tri thức có metadata.
+
+Stack: FastAPI + Next.js + PostgreSQL + Qdrant (hybrid search).
+
+Xem ghi chú ĐATN: [`docs/UTC_DATN_NOTES.md`](docs/UTC_DATN_NOTES.md).
 
 ## Features
 
 ### RAG & Chat
 - Document ingestion from **files** (PDF, DOCX, and more via Unstructured) and **databases**
 - Chunking, embedding, and vector search with **Qdrant**
-- Vietnamese embedding and reranking models (`AITeamVN/Vietnamese_Embedding`, `AITeamVN/Vietnamese_Reranker`)
-- Query intent classification and context building for LLM prompts
-- Streaming and non-streaming chat APIs
-- Conversation history: create, archive, rename, and delete threads
+- Embeddings via API (**Gemini** `gemini-embedding-001` by default, or Mistral) and reranking with **Cohere** `rerank-multilingual-v3.0`
+- Domain router + OOS + FAQ-first trước RAG; citation chips trên UI
+- Streaming chat, feedback hữu ích / không hữu ích → staff tickets
 
-### Enterprise
-- **Multi-tenant** architecture with tenant-scoped data isolation
-- **RBAC**: users, roles, permissions, and modules (`view`, `create`, `update`, `delete`)
+### Administration
+- **RBAC**: `student` / `staff` / `admin` / `root`
+- Kho tri thức (`/admin/knowledge`), FAQ, tickets, stats
 - JWT authentication with access and refresh tokens
 - Audit logging for CRUD operations
-- Per-tenant configuration (general and chat settings)
+- System configuration (general and chat settings)
 
 ### LLM Providers
-- Pluggable provider strategy: **Mistral** or **DeepSeek** (configurable via environment)
+- Pluggable provider strategy: **Gemini** (default, `gemini-2.5-flash`), **Mistral**, or **DeepSeek** (configurable via environment)
 
 ### Frontend
 - Next.js 15 + React 19 + Material UI dashboard
@@ -33,8 +36,8 @@ An enterprise-ready **Retrieval-Augmented Generation (RAG)** chat platform with 
 |-------|--------------|
 | Backend | FastAPI, SQLAlchemy (async), Alembic, PostgreSQL |
 | Vector DB | Qdrant |
-| ML / NLP | sentence-transformers, PyTorch, scikit-learn, Vietnamese NER |
-| LLM | Mistral API, DeepSeek API |
+| ML / NLP | Gemini Embedding API, Cohere Rerank API, BM25, Vietnamese NER |
+| LLM | Gemini API, Mistral API, DeepSeek API |
 | Frontend | Next.js, React, MUI, SWR |
 | DevOps | Docker, Docker Compose |
 
@@ -46,8 +49,8 @@ flowchart LR
   Frontend -->|/api proxy| Backend[FastAPI :8000]
   Backend --> Postgres[(PostgreSQL)]
   Backend --> Qdrant[(Qdrant)]
-  Backend --> LLM[Mistral / DeepSeek]
-  Backend --> Models[Embedding / Reranker / NER]
+  Backend --> LLM[Gemini / Mistral / DeepSeek]
+  Backend --> Models[Embedding / Reranker API, NER]
 ```
 
 ## Prerequisites
@@ -102,7 +105,6 @@ App: http://localhost:3000
 |-------|-------|
 | Username | `root` |
 | Password | `root123456` |
-| Tenant code | `default` |
 
 ```http
 POST /api/auth/login
@@ -110,8 +112,7 @@ Content-Type: application/json
 
 {
   "username": "root",
-  "password": "root123456",
-  "tenant_code": "default"
+  "password": "root123456"
 }
 ```
 
@@ -126,9 +127,11 @@ Copy `backend/.env.example` and configure:
 - `DATABASE_URL` — PostgreSQL connection string
 - `QDRANT_HOST`, `QDRANT_PORT` — Qdrant endpoints
 - `JWT_SECRET_KEY`, `JWT_REFRESH_SECRET_KEY` — token signing keys
-- `LLM_PROVIDER` — `mistral` or `deepseek`
-- `MISTRAL_API_KEY` / `DEEPSEEK_API_KEY` — LLM API credentials
-- `EMBEDDING_MODEL_NAME`, `RERANKER_MODEL_NAME`, `NER_MODEL_NAME` — NLP models
+- `LLM_PROVIDER` — `gemini` (default), `mistral`, or `deepseek`
+- `GEMINI_API_KEY` / `MISTRAL_API_KEY` / `DEEPSEEK_API_KEY` — LLM API credentials
+- `EMBEDDING_PROVIDER` — `gemini` (default) or `mistral`
+- `COHERE_API_KEY`, `RERANKER_MODEL_NAME` — reranking (skipped if no key)
+- `NER_MODEL_NAME` — Vietnamese NER model
 
 ### Frontend (`frontend/.env`)
 

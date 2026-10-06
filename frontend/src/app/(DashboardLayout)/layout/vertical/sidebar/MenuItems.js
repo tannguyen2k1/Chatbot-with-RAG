@@ -6,6 +6,10 @@ import {
   IconMessageCircle,
   IconLayoutDashboard,
   IconAdjustments,
+  IconBooks,
+  IconHelp,
+  IconTicket,
+  IconChartBar,
 } from "@tabler/icons-react";
 
 const Menuitems = [
@@ -22,6 +26,27 @@ const Menuitems = [
   },
   {
     navlabel: true,
+    subheader: "Cán bộ",
+    // shown if any following staff items visible
+  },
+  {
+    id: uniqueId(),
+    title: "StaffTickets",
+    icon: IconTicket,
+    href: "/admin/tickets",
+    chipColor: "secondary",
+    permission: "ticket.view",
+  },
+  {
+    id: uniqueId(),
+    title: "FAQ",
+    icon: IconHelp,
+    href: "/admin/faqs",
+    chipColor: "secondary",
+    permission: "faq.view",
+  },
+  {
+    navlabel: true,
     subheader: "Quản trị",
   },
   {
@@ -31,6 +56,22 @@ const Menuitems = [
     href: "/admin",
     chipColor: "secondary",
     permission: "user.view",
+  },
+  {
+    id: uniqueId(),
+    title: "KnowledgeBase",
+    icon: IconBooks,
+    href: "/admin/knowledge",
+    chipColor: "secondary",
+    permission: "document.view",
+  },
+  {
+    id: uniqueId(),
+    title: "Stats",
+    icon: IconChartBar,
+    href: "/admin/stats",
+    chipColor: "secondary",
+    permission: "stats.view",
   },
   {
     id: uniqueId(),

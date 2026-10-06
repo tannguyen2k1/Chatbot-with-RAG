@@ -16,6 +16,7 @@ from api import (
     ingestion,
     rbac,
     user,
+    utc_knowledge,
     vector,
 )
 from middleware import log_requests
@@ -25,8 +26,10 @@ from services import startup as startup_service
 if os.name == "nt":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+for _stream in (sys.stdout, sys.stderr):
+    reconfigure = getattr(_stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8", errors="replace")
 
 
 @asynccontextmanager
@@ -36,10 +39,8 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="Chat Assistant",
-    description="""
-    Chat Assistant - API Documentation
-    """,
+    title="UTC Student Chatbot",
+    description="Chatbot hỗ trợ sinh viên Trường Đại học Giao thông Vận tải",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -62,6 +63,7 @@ api_router.include_router(ingestion.router)
 api_router.include_router(chat.router)
 api_router.include_router(config.router)
 api_router.include_router(conversation.router)
+api_router.include_router(utc_knowledge.router)
 app.include_router(api_router)
 
 
@@ -71,6 +73,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[
+        "X-Conversation-Id",
+        "X-Context-Sources",
+        "X-Citations",
+        "X-Domain",
+        "X-Message-Id",
+    ],
 )
 
 

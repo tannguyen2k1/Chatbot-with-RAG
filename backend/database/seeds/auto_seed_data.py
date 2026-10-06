@@ -6,6 +6,7 @@ from database.seeds.global_permission_seed import seed_global_modules_and_permis
 from database.seeds.global_role_permission_seed import (
     seed_admin_role_permissions,
     seed_global_role_permissions,
+    seed_staff_role_permissions,
 )
 from database.seeds.global_role_seed import seed_global_roles
 from database.seeds.role_seed import seed_default_roles
@@ -28,6 +29,7 @@ async def auto_seed_all(db: AsyncSession) -> None:
         print("[SEED] Seeding global role permissions...")
         await seed_global_role_permissions(db)
         await seed_admin_role_permissions(db)
+        await seed_staff_role_permissions(db)
 
         print("[SEED] Seeding root user...")
         await seed_root_user(db)

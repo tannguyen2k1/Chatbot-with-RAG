@@ -5,8 +5,10 @@ from database.models import Role
 
 GLOBAL_ROLES = [
     ("root", "Super Admin - Full system access"),
-    ("admin", "Admin"),
-    ("user", "User"),
+    ("admin", "Admin — kho tri thức, RBAC, config, audit, thống kê"),
+    ("staff", "Cán bộ — FAQ và hàng chờ hỗ trợ sinh viên"),
+    ("student", "Sinh viên — chat hỗ trợ UTC"),
+    ("user", "User (legacy)"),
 ]
 
 

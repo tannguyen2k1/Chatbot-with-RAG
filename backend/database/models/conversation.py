@@ -32,6 +32,7 @@ class Message(BaseModel):
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # "user" hoặc "assistant"
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_sources: Mapped[int] = mapped_column(Integer, default=0)  # Số context sources được sử dụng
+    citations: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list of citation sources
 
     # Relationship
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")

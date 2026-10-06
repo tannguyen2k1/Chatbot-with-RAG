@@ -12,9 +12,19 @@ async def setup_database() -> None:
     from database.audit_event import register_audit_events
     from database.database import AsyncSessionLocal, engine
     from database.models.base import Base
+    from sqlalchemy import text
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Lightweight additive column for existing DBs (create_all does not ALTER)
+        try:
+            await conn.execute(
+                text(
+                    "ALTER TABLE messages ADD COLUMN IF NOT EXISTS citations TEXT"
+                )
+            )
+        except Exception:
+            pass
 
     register_audit_events()
 

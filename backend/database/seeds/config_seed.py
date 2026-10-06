@@ -1,11 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from constants.utc import DEFAULT_UTC_SYSTEM_PROMPT, UTC_SAMPLE_QUESTIONS
 from services.config import ConfigService
 
 
 async def seed_default_configs(db: AsyncSession) -> None:
-    """Seed các cấu hình mặc định cho hệ thống."""
+    """Seed các cấu hình mặc định cho chatbot UTC."""
     service = ConfigService(db)
+
+    import json
 
     default_configs = [
         {
@@ -52,15 +55,14 @@ async def seed_default_configs(db: AsyncSession) -> None:
         },
         {
             "key": "chat.system_prompt",
-            "value": """Bạn là một trợ lý AI thông minh.
-            Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
-            Nếu tài liệu không chứa thông tin để trả lời, hãy nói thẳng là "Tôi không có thông tin", TUYỆT ĐỐI KHÔNG được tự bịa ra câu trả lời.
-            [TÀI LIỆU CUNG CẤP]:
-            {context}
-            [CÂU HỎI CỦA NGƯỜI DÙNG]:
-            {query}
-            Câu trả lời của bạn:""",
-            "description": "System prompt cho AI chat (dùng {context} và {query} làm placeholder)",
+            "value": DEFAULT_UTC_SYSTEM_PROMPT,
+            "description": "System prompt UTC (dùng {context} và {query})",
+            "group_name": "chat",
+        },
+        {
+            "key": "chat.sample_questions",
+            "value": json.dumps(UTC_SAMPLE_QUESTIONS, ensure_ascii=False),
+            "description": "Gợi ý câu hỏi mẫu theo domain (JSON)",
             "group_name": "chat",
         },
     ]

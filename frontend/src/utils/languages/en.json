@@ -32,5 +32,10 @@
     "ChatConfig": "Chat Config",
     "Administration": "Administration",
     "Demo": "Demo",
-    "AuditLog": "Audit Log"
+    "AuditLog": "Audit Log",
+    "KnowledgeBase": "Knowledge Base",
+    "FAQ": "FAQ",
+    "StaffTickets": "Support Queue",
+    "Stats": "Statistics",
+    "Staff": "Staff"
 }

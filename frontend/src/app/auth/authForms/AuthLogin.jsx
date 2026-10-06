@@ -131,8 +131,12 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           disabled={loading}
           sx={{
             py: 1.5,
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: 15,
+            boxShadow: "0 8px 20px rgba(11, 77, 162, 0.28)",
+            "&:hover": {
+              boxShadow: "0 10px 24px rgba(11, 77, 162, 0.36)",
+            },
           }}
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}

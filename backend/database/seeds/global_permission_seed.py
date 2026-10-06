@@ -13,6 +13,10 @@ GLOBAL_MODULES = [
     ("vector", "Vector database management"),
     ("ingestion", "Data ingestion management"),
     ("config", "Configuration management"),
+    ("document", "UTC knowledge base documents"),
+    ("faq", "UTC FAQ management"),
+    ("ticket", "Staff support tickets"),
+    ("stats", "UTC chatbot statistics"),
 ]
 
 GLOBAL_PERMISSIONS = [
@@ -53,6 +57,19 @@ GLOBAL_PERMISSIONS = [
     ("config.create", "Create configuration"),
     ("config.update", "Update configuration"),
     ("config.delete", "Delete configuration"),
+    ("document.view", "View knowledge documents"),
+    ("document.create", "Upload knowledge documents"),
+    ("document.update", "Update document metadata"),
+    ("document.delete", "Delete knowledge documents"),
+    ("faq.view", "View FAQs"),
+    ("faq.create", "Create FAQs"),
+    ("faq.update", "Update FAQs"),
+    ("faq.delete", "Delete FAQs"),
+    ("ticket.view", "View staff tickets"),
+    ("ticket.create", "Create staff tickets"),
+    ("ticket.update", "Answer staff tickets"),
+    ("ticket.delete", "Delete staff tickets"),
+    ("stats.view", "View chatbot statistics"),
 ]
 
 

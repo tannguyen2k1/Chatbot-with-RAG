@@ -38,6 +38,8 @@ async def _do_ingest_file_bytes(
     collection_name: str,
     embedding_service: EmbeddingService,
     vector_service: VectorService,
+    extra_payload: dict | None = None,
+    document_id: int | None = None,
 ):
     await ingestion_job_service.update_job(job_id, status=JobStatus.PROCESSING)
     try:
@@ -50,6 +52,11 @@ async def _do_ingest_file_bytes(
         )
 
         chunks = chunking_service.group_and_chunk(parsed_elements, metadata)
+        extra = dict(extra_payload or {})
+        if document_id is not None:
+            extra["document_id"] = document_id
+        if filename:
+            extra.setdefault("filename", filename)
 
         if not chunks:
             result = IngestResponse(
@@ -60,6 +67,7 @@ async def _do_ingest_file_bytes(
                 metadata=metadata,
             )
             await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
+            await _mark_document(document_id, "ready", job_id=job_id)
             return
 
         # Ensure collection exists before inserting
@@ -83,7 +91,7 @@ async def _do_ingest_file_bytes(
             points = []
             for chunk, vector in zip(batch_chunks, vectors, strict=False):
                 point_id = str(uuid.uuid4())
-                payload = {**chunk.get("metadata", {}), "_text": chunk["text"]}
+                payload = {**chunk.get("metadata", {}), **extra, "_text": chunk["text"]}
                 points.append(PointUpsert(id=point_id, vector=vector, payload=payload))
 
             await vector_service.upsert_points(collection_name, points)
@@ -96,11 +104,32 @@ async def _do_ingest_file_bytes(
             metadata=metadata,
         )
         await ingestion_job_service.update_job(job_id, status=JobStatus.COMPLETED, result=result)
+        await _mark_document(document_id, "ready", job_id=job_id)
     except Exception as e:
         import traceback
 
         traceback.print_exc()
         await ingestion_job_service.update_job(job_id, status=JobStatus.FAILED, error=str(e))
+        await _mark_document(document_id, "failed", job_id=job_id, error=str(e))
+
+
+async def _mark_document(
+    document_id: int | None,
+    status: str,
+    job_id: str | None = None,
+    error: str | None = None,
+) -> None:
+    if document_id is None:
+        return
+    try:
+        from database.database import AsyncSessionLocal
+        from services.document import DocumentService
+
+        async with AsyncSessionLocal() as db:
+            svc = DocumentService(db)
+            await svc.mark_status(document_id, status, error_message=error, job_id=job_id)
+    except Exception:
+        pass
 
 
 async def _do_ingest_db(

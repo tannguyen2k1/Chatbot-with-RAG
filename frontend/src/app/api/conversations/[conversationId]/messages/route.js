@@ -1,3 +1,15 @@
+function streamHeaders(upstream, conversationIdFallback = "") {
+  return {
+    "Content-Type": upstream.headers.get("Content-Type") || "text/plain; charset=utf-8",
+    "X-Conversation-Id":
+      upstream.headers.get("X-Conversation-Id") || conversationIdFallback || "",
+    "X-Context-Sources": upstream.headers.get("X-Context-Sources") || "0",
+    "X-Citations": upstream.headers.get("X-Citations") || "",
+    "X-Domain": upstream.headers.get("X-Domain") || "",
+    "X-Message-Id": upstream.headers.get("X-Message-Id") || "",
+  };
+}
+
 export async function POST(req, { params }) {
   try {
     const authHeader = req.headers.get("Authorization");
@@ -24,25 +36,9 @@ export async function POST(req, { params }) {
       return new Response(errorText, { status: upstreamResponse.status });
     }
 
-    // For streaming responses, pass through the body
-    if (!upstreamResponse.body) {
-      return new Response(await upstreamResponse.text(), {
-        status: upstreamResponse.status,
-        headers: {
-          "Content-Type": upstreamResponse.headers.get("Content-Type") || "text/plain; charset=utf-8",
-          "X-Conversation-Id": upstreamResponse.headers.get("X-Conversation-Id") || conversationId,
-          "X-Context-Sources": upstreamResponse.headers.get("X-Context-Sources") || "0",
-        },
-      });
-    }
-
     return new Response(upstreamResponse.body, {
       status: 200,
-      headers: {
-        "Content-Type": upstreamResponse.headers.get("Content-Type") || "text/plain; charset=utf-8",
-        "X-Conversation-Id": upstreamResponse.headers.get("X-Conversation-Id") || conversationId,
-        "X-Context-Sources": upstreamResponse.headers.get("X-Context-Sources") || "0",
-      },
+      headers: streamHeaders(upstreamResponse, conversationId),
     });
   } catch (error) {
     return new Response(

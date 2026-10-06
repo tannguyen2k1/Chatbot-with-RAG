@@ -1,7 +1,9 @@
 import logging
 from datetime import UTC, datetime
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, nullslast, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -26,6 +28,12 @@ from services.embedding import EmbeddingService, get_embedding_service
 from services.query_classifier import QueryClassifier, get_query_classifier
 from services.reflection import ReflectionService, get_reflection_service
 from services.rerank import RerankService, get_rerank_service
+from services.utc_chat import (
+    citations_header,
+    prefer_effective,
+    resolve_utc_pre_rag,
+    results_to_citations,
+)
 from services.vector import VectorService, get_vector_service
 
 logger = logging.getLogger(__name__)
@@ -43,6 +51,74 @@ def generate_title(first_message: str, max_chars: int = 40) -> str:
     if len(clean) <= max_chars:
         return clean
     return clean[: max_chars - 3] + "..."
+
+
+def _stream_headers(
+    conversation_id: int,
+    sources: int = 0,
+    message_id: int | None = None,
+    citations_json: str | None = None,
+    domain: str | None = None,
+) -> dict:
+    headers = {
+        "X-Conversation-Id": str(conversation_id),
+        "X-Context-Sources": str(sources),
+    }
+    if message_id is not None:
+        headers["X-Message-Id"] = str(message_id)
+    if citations_json:
+        headers["X-Citations"] = quote(citations_json, safe="")
+    if domain:
+        headers["X-Domain"] = domain
+    return headers
+
+
+async def _stream_and_persist(
+    *,
+    db: AsyncSession,
+    conversation: Conversation,
+    chat,
+    query: str,
+    context: str,
+    system_prompt: str,
+    assistant_msg: Message,
+    conversation_history: list | None = None,
+    history_max_messages: int = 0,
+    history_include_system: bool = True,
+):
+    answer_content = ""
+    try:
+        async for chunk in chat.stream_answer(
+            query,
+            context,
+            system_prompt,
+            conversation_history=conversation_history,
+            history_max_messages=history_max_messages,
+            history_include_system=history_include_system,
+        ):
+            answer_content += chunk
+            yield chunk
+
+        assistant_msg.content = answer_content
+        conversation.updated_at = datetime.now(UTC)
+        await db.commit()
+    except Exception as e:
+        logger.error(f"[chat/stream] Error in stream: {e}")
+        assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
+        await db.commit()
+
+
+async def _stream_fixed_answer(
+    *,
+    db: AsyncSession,
+    conversation: Conversation,
+    text: str,
+    assistant_msg: Message,
+):
+    assistant_msg.content = text
+    conversation.updated_at = datetime.now(UTC)
+    await db.commit()
+    yield text
 
 
 async def _load_conversation_history(db: AsyncSession, conversation_id: int) -> list[dict]:
@@ -290,6 +366,7 @@ async def get_conversation(
                 role=m.role,
                 content=m.content,
                 context_sources=m.context_sources,
+                citations=getattr(m, "citations", None),
                 created_at=m.created_at,
             )
             for m in messages
@@ -422,20 +499,12 @@ async def create_conversation_with_message(
     reranker: RerankService = Depends(get_rerank_service),
     classifier: QueryClassifier = Depends(get_query_classifier),
 ):
-    """
-    Tạo cuộc hội thoại mới với message đầu tiên của user.
-    Trả về streaming response và tự động lưu user message vào DB.
-    """
-    # Tạo conversation
+    """Tạo cuộc hội thoại mới với message đầu tiên của user (UTC FAQ/OOS/RAG)."""
     title = request.title or generate_title(request.query)
-    conversation = Conversation(
-        user_id=current_user.id,
-        title=title,
-    )
+    conversation = Conversation(user_id=current_user.id, title=title)
     db.add(conversation)
-    await db.flush()  # Lấy ID của conversation
+    await db.flush()
 
-    # Lưu user message vào DB
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
@@ -446,14 +515,36 @@ async def create_conversation_with_message(
     await db.commit()
 
     logger.info(f"[chat/stream] Created conversation {conversation.id} with first message")
-
     chat = await get_chat_service_with_db(db)
+
+    utc_pre = await resolve_utc_pre_rag(db, request.query)
+    domain = utc_pre.get("domain")
+
+    if utc_pre.get("faq_answer"):
+        assistant_msg = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content="",
+            context_sources=0,
+        )
+        db.add(assistant_msg)
+        await db.flush()
+        await db.commit()
+        return StreamingResponse(
+            _stream_fixed_answer(
+                db=db,
+                conversation=conversation,
+                text=utc_pre["faq_answer"],
+                assistant_msg=assistant_msg,
+            ),
+            media_type="text/plain; charset=utf-8",
+            headers=_stream_headers(conversation.id, 0, assistant_msg.id, domain=domain),
+        )
 
     try:
         classification = classifier.classify(request.query)
     except Exception as e:
         logger.error(f"[chat/stream] Classification error: {e}")
-        from fastapi.responses import StreamingResponse
 
         async def error_stream(err=e):
             yield f"Lỗi khi phân loại câu hỏi: {err!s}"
@@ -461,131 +552,71 @@ async def create_conversation_with_message(
         return StreamingResponse(
             error_stream(),
             media_type="text/plain; charset=utf-8",
-            headers={
-                "X-Conversation-Id": str(conversation.id),
-                "X-Context-Sources": "0",
-            },
+            headers=_stream_headers(conversation.id, 0, domain=domain),
         )
 
-    if not classification.needs_context:
-        context = ""
-        system_prompt = request.system_prompt
-        if not system_prompt:
-            system_prompt = await chat.get_system_prompt()
-
-        async def stream_generator():
-            answer_content = ""
-            assistant_msg = Message(
-                conversation_id=conversation.id,
-                role="assistant",
-                content="",
-                context_sources=0,
-            )
-            db.add(assistant_msg)
-            await db.flush()
-
-            try:
-                async for chunk in chat.stream_answer(
-                    request.query,
-                    context,
-                    system_prompt,
-                    conversation_history=None,
-                    history_max_messages=0,
-                    history_include_system=True,
-                ):
-                    answer_content += chunk
-                    yield chunk
-
-                assistant_msg.content = answer_content
-                conversation.updated_at = datetime.now(UTC)
-                await db.commit()
-            except Exception as e:
-                logger.error(f"[chat/stream] Error in stream: {e}")
-                assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
-                await db.commit()
-
-        from fastapi.responses import StreamingResponse
-
-        return StreamingResponse(
-            stream_generator(),
-            media_type="text/plain; charset=utf-8",
-            headers={
-                "X-Conversation-Id": str(conversation.id),
-                "X-Context-Sources": "0",
-            },
-        )
-
-    search_req = TextSearchRequest(
-        query=request.query,
-        limit=request.limit,
-        use_reranker=request.use_reranker,
-        rerank_top_k=request.rerank_top_k,
-        score_threshold=request.score_threshold,
-        use_bm25=request.use_bm25,
-        bm25_top_k=request.bm25_top_k,
-        bm25_weight=request.bm25_weight,
-    )
-
-    vector_response = await search_by_text(
-        collection_name=request.collection_name,
-        search_req=search_req,
-        current_user=current_user,
-        service=vector,
-        embedding=embedding,
-        reranker=reranker,
-    )
-
-    context_str = chat.build_context(vector_response.results)
+    citations_json = None
+    sources_count = 0
+    context_str = ""
     system_prompt = request.system_prompt
     if not system_prompt:
         system_prompt = await chat.get_system_prompt()
 
-    async def stream_generator():
-        answer_content = ""
-        assistant_msg = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content="",
-            context_sources=vector_response.count,
+    if classification.needs_context:
+        search_req = TextSearchRequest(
+            query=request.query,
+            limit=request.limit,
+            use_reranker=request.use_reranker,
+            rerank_top_k=request.rerank_top_k,
+            score_threshold=request.score_threshold,
+            use_bm25=request.use_bm25,
+            bm25_top_k=request.bm25_top_k,
+            bm25_weight=request.bm25_weight,
+            filter=utc_pre.get("filter"),
         )
-        db.add(assistant_msg)
-        await db.flush()
+        vector_response = await search_by_text(
+            collection_name=request.collection_name,
+            search_req=search_req,
+            current_user=current_user,
+            service=vector,
+            embedding=embedding,
+            reranker=reranker,
+        )
+        results = prefer_effective(list(vector_response.results or []))
+        cites = results_to_citations(results)
+        citations_json = citations_header(cites) if cites else None
+        sources_count = len(results)
+        context_str = chat.build_context(results)
 
-        try:
-            async for chunk in chat.stream_answer(
-                request.query,
-                context_str,
-                system_prompt,
-                conversation_history=None,
-                history_max_messages=0,
-                history_include_system=True,
-            ):
-                answer_content += chunk
-                yield chunk
-
-            assistant_msg.content = answer_content
-            conversation.updated_at = datetime.now(UTC)
-            await db.commit()
-        except Exception as e:
-            logger.error(f"[chat/stream] Error in stream: {e}")
-            assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
-            await db.commit()
-
-    from fastapi.responses import StreamingResponse
+    assistant_msg = Message(
+        conversation_id=conversation.id,
+        role="assistant",
+        content="",
+        context_sources=sources_count,
+        citations=citations_json,
+    )
+    db.add(assistant_msg)
+    await db.flush()
+    await db.commit()
 
     return StreamingResponse(
-        stream_generator(),
+        _stream_and_persist(
+            db=db,
+            conversation=conversation,
+            chat=chat,
+            query=request.query,
+            context=context_str,
+            system_prompt=system_prompt,
+            assistant_msg=assistant_msg,
+            conversation_history=None,
+            history_max_messages=0,
+            history_include_system=True,
+        ),
         media_type="text/plain; charset=utf-8",
-        headers={
-            "X-Conversation-Id": str(conversation.id),
-            "X-Context-Sources": str(vector_response.count),
-        },
+        headers=_stream_headers(
+            conversation.id, sources_count, assistant_msg.id, citations_json, domain
+        ),
     )
-
-
-# =============================================================================
-# Streaming Chat API - Thêm message vào conversation có sẵn
-# =============================================================================
 
 
 @router.post("/{conversation_id}/messages", summary="Thêm message và bắt đầu chat (streaming)")
@@ -600,11 +631,7 @@ async def add_message_stream(
     classifier: QueryClassifier = Depends(get_query_classifier),
     reflection: ReflectionService = Depends(get_reflection_service),
 ):
-    """
-    Thêm message vào cuộc hội thoại có sẵn.
-    Trả về streaming response và tự động lưu user message vào DB.
-    """
-    # Kiểm tra conversation tồn tại và thuộc về user
+    """Thêm message vào cuộc hội thoại có sẵn (UTC FAQ/OOS/RAG)."""
     query = select(Conversation).where(
         Conversation.id == conversation_id,
         Conversation.user_id == current_user.id,
@@ -612,11 +639,9 @@ async def add_message_stream(
     )
     result = await db.execute(query)
     conversation = result.scalar_one_or_none()
-
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    # Lưu user message vào DB
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
@@ -624,20 +649,40 @@ async def add_message_stream(
         context_sources=0,
     )
     db.add(user_message)
-    await db.commit()  # Commit immediately to ensure user message is saved
+    await db.commit()
 
     logger.info(f"[chat/stream] Added message to conversation {conversation.id}")
-
-    # Load conversation history from DB before calling LLM
     conversation_history = await _load_conversation_history(db, conversation.id)
-
     chat = await get_chat_service_with_db(db)
+
+    utc_pre = await resolve_utc_pre_rag(db, request.query)
+    domain = utc_pre.get("domain")
+
+    if utc_pre.get("faq_answer"):
+        assistant_msg = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content="",
+            context_sources=0,
+        )
+        db.add(assistant_msg)
+        await db.flush()
+        await db.commit()
+        return StreamingResponse(
+            _stream_fixed_answer(
+                db=db,
+                conversation=conversation,
+                text=utc_pre["faq_answer"],
+                assistant_msg=assistant_msg,
+            ),
+            media_type="text/plain; charset=utf-8",
+            headers=_stream_headers(conversation.id, 0, assistant_msg.id, domain=domain),
+        )
 
     try:
         classification = classifier.classify(request.query)
     except Exception as e:
         logger.error(f"[chat/stream] Classification error: {e}")
-        from fastapi.responses import StreamingResponse
 
         async def error_stream(err=e):
             yield f"Lỗi khi phân loại câu hỏi: {err!s}"
@@ -645,142 +690,85 @@ async def add_message_stream(
         return StreamingResponse(
             error_stream(),
             media_type="text/plain; charset=utf-8",
-            headers={
-                "X-Conversation-Id": str(conversation.id),
-                "X-Context-Sources": "0",
-            },
+            headers=_stream_headers(conversation.id, 0, domain=domain),
         )
 
-    if not classification.needs_context:
-        context = ""
-        system_prompt = request.system_prompt
-        if not system_prompt:
-            system_prompt = await chat.get_system_prompt()
-
-        async def stream_generator():
-            answer_content = ""
-            assistant_msg = Message(
-                conversation_id=conversation.id,
-                role="assistant",
-                content="",
-                context_sources=0,
-            )
-            db.add(assistant_msg)
-            await db.flush()
-
-            try:
-                async for chunk in chat.stream_answer(
-                    request.query,
-                    context,
-                    system_prompt,
-                    conversation_history=conversation_history,
-                    history_max_messages=request.conversation_history_max_messages
-                    if request.conversation_history_enabled
-                    else 0,
-                    history_include_system=request.conversation_history_include_system,
-                ):
-                    answer_content += chunk
-                    yield chunk
-
-                assistant_msg.content = answer_content
-                conversation.updated_at = datetime.now(UTC)
-                await db.commit()
-            except Exception as e:
-                logger.error(f"[chat/stream] Error in stream: {e}")
-                assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
-                await db.commit()
-
-        from fastapi.responses import StreamingResponse
-
-        return StreamingResponse(
-            stream_generator(),
-            media_type="text/plain; charset=utf-8",
-            headers={
-                "X-Conversation-Id": str(conversation.id),
-                "X-Context-Sources": "0",
-            },
-        )
-
-    # --- Reflection: rewrite ambiguous query using history ---
     reflected_query = request.query
-    if request.reflection_enabled and len(conversation_history) > 0:
-        reflection_service = reflection
+    if classification.needs_context and request.reflection_enabled and len(conversation_history) > 0:
         try:
-            reflected_query = await reflection_service.reflect_async(
+            reflected_query = await reflection.reflect_async(
                 conversation_history=conversation_history,
                 last_query=request.query,
                 max_items=request.reflection_max_history,
             )
-            logger.info(f"[Reflection] conv={conversation.id} original='{request.query}' reflected='{reflected_query}'")
+            logger.info(
+                f"[Reflection] conv={conversation.id} original='{request.query}' reflected='{reflected_query}'"
+            )
         except Exception as e:
             logger.warning(f"[Reflection] Failed, falling back to original: {e}")
             reflected_query = request.query
 
-    search_req = TextSearchRequest(
-        query=reflected_query,
-        limit=request.limit,
-        use_reranker=request.use_reranker,
-        rerank_top_k=request.rerank_top_k,
-        score_threshold=request.score_threshold,
-        use_bm25=request.use_bm25,
-        bm25_top_k=request.bm25_top_k,
-        bm25_weight=request.bm25_weight,
-    )
-
-    vector_response = await search_by_text(
-        collection_name=request.collection_name,
-        search_req=search_req,
-        current_user=current_user,
-        service=vector,
-        embedding=embedding,
-        reranker=reranker,
-    )
-
-    context_str = chat.build_context(vector_response.results)
+    citations_json = None
+    sources_count = 0
+    context_str = ""
     system_prompt = request.system_prompt
     if not system_prompt:
         system_prompt = await chat.get_system_prompt()
 
-    async def stream_generator():
-        answer_content = ""
-        assistant_msg = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content="",
-            context_sources=vector_response.count,
+    if classification.needs_context:
+        search_req = TextSearchRequest(
+            query=reflected_query,
+            limit=request.limit,
+            use_reranker=request.use_reranker,
+            rerank_top_k=request.rerank_top_k,
+            score_threshold=request.score_threshold,
+            use_bm25=request.use_bm25,
+            bm25_top_k=request.bm25_top_k,
+            bm25_weight=request.bm25_weight,
+            filter=utc_pre.get("filter"),
         )
-        db.add(assistant_msg)
-        await db.flush()
+        vector_response = await search_by_text(
+            collection_name=request.collection_name,
+            search_req=search_req,
+            current_user=current_user,
+            service=vector,
+            embedding=embedding,
+            reranker=reranker,
+        )
+        results = prefer_effective(list(vector_response.results or []))
+        cites = results_to_citations(results)
+        citations_json = citations_header(cites) if cites else None
+        sources_count = len(results)
+        context_str = chat.build_context(results)
 
-        try:
-            async for chunk in chat.stream_answer(
-                reflected_query,
-                context_str,
-                system_prompt,
-                conversation_history=conversation_history,
-                history_max_messages=request.conversation_history_max_messages
-                if request.conversation_history_enabled
-                else 0,
-                history_include_system=request.conversation_history_include_system,
-            ):
-                answer_content += chunk
-                yield chunk
-
-            assistant_msg.content = answer_content
-            conversation.updated_at = datetime.now(UTC)
-            await db.commit()
-        except Exception as e:
-            logger.error(f"[chat/stream] Error in stream: {e}")
-            assistant_msg.content = f"Lỗi khi tạo response: {e!s}"
-            await db.commit()
-
-    from fastapi.responses import StreamingResponse
+    assistant_msg = Message(
+        conversation_id=conversation.id,
+        role="assistant",
+        content="",
+        context_sources=sources_count,
+        citations=citations_json,
+    )
+    db.add(assistant_msg)
+    await db.flush()
+    await db.commit()
 
     return StreamingResponse(
-        stream_generator(),
+        _stream_and_persist(
+            db=db,
+            conversation=conversation,
+            chat=chat,
+            query=reflected_query,
+            context=context_str,
+            system_prompt=system_prompt,
+            assistant_msg=assistant_msg,
+            conversation_history=conversation_history,
+            history_max_messages=request.conversation_history_max_messages
+            if request.conversation_history_enabled
+            else 0,
+            history_include_system=request.conversation_history_include_system,
+        ),
         media_type="text/plain; charset=utf-8",
-        headers={
-            "X-Conversation-Id": str(conversation.id),
-            "X-Context-Sources": str(vector_response.count),
-        },
+        headers=_stream_headers(
+            conversation.id, sources_count, assistant_msg.id, citations_json, domain
+        ),
     )

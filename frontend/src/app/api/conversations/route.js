@@ -1,4 +1,14 @@
-import { NextResponse } from "next/server";
+function streamHeaders(upstream, conversationIdFallback = "") {
+  return {
+    "Content-Type": upstream.headers.get("Content-Type") || "text/plain; charset=utf-8",
+    "X-Conversation-Id":
+      upstream.headers.get("X-Conversation-Id") || conversationIdFallback || "",
+    "X-Context-Sources": upstream.headers.get("X-Context-Sources") || "0",
+    "X-Citations": upstream.headers.get("X-Citations") || "",
+    "X-Domain": upstream.headers.get("X-Domain") || "",
+    "X-Message-Id": upstream.headers.get("X-Message-Id") || "",
+  };
+}
 
 export async function GET(req) {
   try {
@@ -40,7 +50,6 @@ export async function POST(req) {
     const body = await req.json();
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-    // If there's a query, create conversation with message and stream
     if (body.query) {
       const streamResponse = await fetch(`${baseUrl}/api/conversations/new-with-message`, {
         method: "POST",
@@ -48,16 +57,7 @@ export async function POST(req) {
           "Content-Type": "application/json",
           Authorization: authHeader,
         },
-        body: JSON.stringify({
-          title: body.title,
-          query: body.query,
-          collection_name: body.collection_name,
-          limit: body.limit,
-          use_reranker: body.use_reranker,
-          rerank_top_k: body.rerank_top_k,
-          score_threshold: body.score_threshold,
-          system_prompt: body.system_prompt,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!streamResponse.ok) {
@@ -65,18 +65,12 @@ export async function POST(req) {
         return new Response(errorText, { status: streamResponse.status });
       }
 
-      // Return streaming response with conversation ID header
       return new Response(streamResponse.body, {
         status: 200,
-        headers: {
-          "Content-Type": streamResponse.headers.get("Content-Type") || "text/plain; charset=utf-8",
-          "X-Conversation-Id": streamResponse.headers.get("X-Conversation-Id") || "",
-          "X-Context-Sources": streamResponse.headers.get("X-Context-Sources") || "0",
-        },
+        headers: streamHeaders(streamResponse),
       });
     }
 
-    // Create conversation with title only (no message)
     const convResponse = await fetch(`${baseUrl}/api/conversations`, {
       method: "POST",
       headers: {

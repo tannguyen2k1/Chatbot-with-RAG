@@ -1,3 +1,6 @@
+# UTC Student Chatbot — Docker Compose
+# Seeds (roles student/staff/admin/root + permissions document/faq/ticket/stats)
+# run automatically on backend startup via auto_seed_all. No corpus required.
 
 services:
   db:
@@ -18,8 +21,11 @@ services:
     restart: always
     depends_on:
       - db
+      - qdrant
     environment:
       DATABASE_URL: postgresql://admin:admin123456@db:5432/fastapi_db
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
     ports:
       - "8000:8000"
     volumes:
@@ -31,8 +37,8 @@ services:
     container_name: qdrant
     restart: always
     ports:
-      - "6333:6333"   # REST API
-      - "6334:6334"   # gRPC
+      - "6333:6333"
+      - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
 
@@ -43,6 +49,8 @@ services:
         NEXT_PUBLIC_API_BASE_URL: http://backend:8000
     container_name: frontend
     restart: always
+    depends_on:
+      - backend
     ports:
       - "3000:3000"
 

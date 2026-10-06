@@ -7,6 +7,7 @@ class MessageBase(BaseModel):
     role: str = Field(..., description="Vai trò: 'user' hoặc 'assistant'")
     content: str | None = Field(None, description="Nội dung tin nhắn")
     context_sources: int = Field(default=0, description="Số context sources được sử dụng")
+    citations: str | None = Field(None, description="JSON citations (sources)")
 
 
 class MessageCreate(MessageBase):

@@ -32,5 +32,10 @@
     "ChatConfig": "Cấu hình chat",
     "Administration": "Quản trị",
     "Demo": "Trình diễn (Demo mẫu)",
-    "AuditLog": "Nhật ký hệ thống"
+    "AuditLog": "Nhật ký hệ thống",
+    "KnowledgeBase": "Kho tri thức",
+    "FAQ": "FAQ",
+    "StaffTickets": "Hàng chờ",
+    "Stats": "Thống kê",
+    "Staff": "Cán bộ"
 }

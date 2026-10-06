@@ -2,65 +2,46 @@
 import { useContext } from "react";
 import { CustomizerContext } from "@/app/context/ClientCustomizerContext/customizerContext";
 import config from "@/utils/config";
+import { UTC_BRAND } from "@/utils/brand/utc";
 import Link from "next/link";
 import { styled } from "@mui/material/styles";
+import Box from "@mui/material/Box";
 import Image from "next/image";
 
 const Logo = () => {
-  const { isCollapse, isSidebarHover, activeDir, activeMode } =
-    useContext(CustomizerContext);
+  const { isCollapse, isSidebarHover } = useContext(CustomizerContext);
   const TopbarHeight = config.topbarHeight;
+  const mini = isCollapse == "mini-sidebar" && !isSidebarHover;
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,
-    width: isCollapse == "mini-sidebar" && !isSidebarHover ? "40px" : "180px",
+    width: mini ? "48px" : "200px",
     overflow: "hidden",
-    display: "block",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: mini ? "center" : "flex-start",
+    textDecoration: "none",
   }));
 
-  if (activeDir === "ltr") {
-    return (
-      <LinkStyled href="/">
-        {activeMode === "dark" ? (
-          <Image
-            src="/images/logos/light-logo.svg"
-            alt="logo"
-            height={TopbarHeight}
-            width={174}
-            priority
-          />
-        ) : (
-          <Image
-            src={"/images/logos/dark-logo.svg"}
-            alt="logo"
-            height={TopbarHeight}
-            width={174}
-            priority
-          />
-        )}
-      </LinkStyled>
-    );
-  }
-
   return (
-    <LinkStyled href="/">
-      {activeMode === "dark" ? (
+    <LinkStyled href="/" aria-label={UTC_BRAND.short}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: mini ? 0 : 1,
+          py: 1,
+        }}
+      >
         <Image
-          src="/images/logos/dark-rtl-logo.svg"
-          alt="logo"
-          height={TopbarHeight}
-          width={174}
+          src={mini ? UTC_BRAND.logos.emblem : UTC_BRAND.logos.full}
+          alt={UTC_BRAND.nameVi}
+          height={mini ? 40 : 44}
+          width={mini ? 40 : 190}
+          style={{ objectFit: "contain", width: "auto", height: mini ? 40 : 44 }}
           priority
         />
-      ) : (
-        <Image
-          src="/images/logos/light-logo-rtl.svg"
-          alt="logo"
-          height={TopbarHeight}
-          width={174}
-          priority
-        />
-      )}
+      </Box>
     </LinkStyled>
   );
 };

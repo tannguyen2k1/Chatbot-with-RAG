@@ -7,11 +7,13 @@ from services import UserService
 
 
 async def seed_default_accounts(db: AsyncSession) -> None:
-    """Seed default user accounts"""
+    """Seed default user accounts for UTC roles."""
     user_service = UserService(db)
     default_accounts = [
-        ("admin", "Admin", "admin@local.com", "admin123456", "admin"),
-        ("user", "User", "user@local.com", "user123456", "user"),
+        ("admin", "Admin UTC", "admin@utc.edu.vn", "admin123456", "admin"),
+        ("staff", "Can bo UTC", "staff@utc.edu.vn", "staff123456", "staff"),
+        ("student", "Sinh vien UTC", "student@utc.edu.vn", "student123456", "student"),
+        ("user", "User", "user@local.com", "user123456", "student"),
     ]
 
     for username, full_name, email, password, role in default_accounts:

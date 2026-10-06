@@ -86,7 +86,11 @@ const Sidebar = () => {
               {/* ------------------------------------------- */}
               <Box
                 sx={{
-                  px: 3,
+                  px: 2,
+                  borderBottom: "3px solid",
+                  borderColor: "secondary.main",
+                  background: (t) =>
+                    `linear-gradient(180deg, ${t.palette.primary.light} 0%, transparent 100%)`,
                 }}
               >
                 <Logo />
@@ -122,6 +126,10 @@ const Sidebar = () => {
           <Box
             sx={{
               px: 2,
+              borderBottom: "3px solid",
+              borderColor: "secondary.main",
+              background: (t) =>
+                `linear-gradient(180deg, ${t.palette.primary.light} 0%, transparent 100%)`,
             }}
           >
             <Logo />

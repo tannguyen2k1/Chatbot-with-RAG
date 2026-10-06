@@ -35,6 +35,7 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
+  Stack,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -56,9 +57,11 @@ import {
   IconRefresh,
   IconAlertTriangle,
   IconLayoutDashboard,
+  IconThumbUp,
+  IconThumbDown,
 } from "@tabler/icons-react";
 import { useAuth } from "@/app/context/AuthContext";
-import { getFetcher, deleteFetcher } from "@/app/api/globalFetcher";
+import { getFetcher, deleteFetcher, postFetcher } from "@/app/api/globalFetcher";
 import { authFetch } from "@/app/api/authFetch";
 import ProfileDialog from "@/app/components/user/ProfileDialog";
 import SettingsDialog from "@/app/components/user/SettingsDialog";
@@ -67,6 +70,29 @@ import { useRouter } from "next/navigation";
 
 const SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 48;
+
+const DOMAIN_LABELS = {
+  dao_tao: "Đào tạo",
+  cong_tac_sv: "Công tác SV",
+  tai_chinh: "Tài chính",
+  thu_tuc: "Thủ tục",
+  tuyen_sinh: "Tuyển sinh",
+};
+
+const parseCitationsHeader = (raw) => {
+  if (!raw) return [];
+  try {
+    const decoded = decodeURIComponent(raw);
+    const parsed = JSON.parse(decoded);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+};
 
 const THINKING_PHRASES = [
   "Đang suy nghĩ",
@@ -172,6 +198,9 @@ const SimpleChatApp = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", message: "", onConfirm: null });
+  const [sampleQuestions, setSampleQuestions] = useState({});
+  const [feedbackMap, setFeedbackMap] = useState({});
+  const lastDomainRef = useRef(null);
 
   const [chatConfig, setChatConfig] = useState({
     collection_name: null,
@@ -262,6 +291,12 @@ const SimpleChatApp = () => {
     fetchConfig();
   }, []);
 
+  useEffect(() => {
+    getFetcher("/api/utc/sample-questions")
+      .then((data) => setSampleQuestions(data.domains || {}))
+      .catch(() => {});
+  }, []);
+
   // Load messages when selecting a conversation
   const fetchMessages = useCallback(
     async (conversationId) => {
@@ -270,12 +305,24 @@ const SimpleChatApp = () => {
 
       try {
         const conv = await getFetcher(`/api/conversations/${conversationId}`);
-        const formattedMessages = conv.messages.map((msg) => ({
-          id: String(msg.id),
-          role: msg.role,
-          content: msg.content || "",
-          status: "done",
-        }));
+        const formattedMessages = conv.messages.map((msg) => {
+          let citations = [];
+          if (msg.citations) {
+            try {
+              citations = JSON.parse(msg.citations);
+            } catch {
+              citations = [];
+            }
+          }
+          return {
+            id: String(msg.id),
+            role: msg.role,
+            content: msg.content || "",
+            status: "done",
+            citations,
+            dbId: msg.id,
+          };
+        });
         setMessages(formattedMessages);
         // Set context sources from last assistant message
         const lastAssistant = [...formattedMessages]
@@ -322,13 +369,13 @@ const SimpleChatApp = () => {
     }
   }, [messages, isStreaming, scrollToBottom]);
 
-  const handleSend = async () => {
-    const prompt = input.trim();
+  const handleSend = async (overridePrompt) => {
+    const prompt = (overridePrompt ?? input).trim();
     if (!prompt) return;
 
     const token = getAccessToken?.();
     if (!token) {
-      setErrorMessage("Vui long dang nhap de su dung AI Assistant.");
+      setErrorMessage("Vui lòng đăng nhập để dùng Chatbot UTC.");
       setErrorSnackbar(true);
       return;
     }
@@ -339,7 +386,7 @@ const SimpleChatApp = () => {
       return;
     }
 
-    setSavedInput(input);
+    setSavedInput(typeof overridePrompt === "string" ? overridePrompt : input);
     setInput("");
     setIsStreaming(true);
     isStreamingRef.current = true;
@@ -398,6 +445,11 @@ const SimpleChatApp = () => {
 
       const conversationIdHeader = response.headers.get("X-Conversation-Id");
       const sourcesHeader = response.headers.get("X-Context-Sources");
+      const citationsHeader = response.headers.get("X-Citations");
+      const messageIdHeader = response.headers.get("X-Message-Id");
+      const domainHeader = response.headers.get("X-Domain");
+      const citations = parseCitationsHeader(citationsHeader);
+      if (domainHeader) lastDomainRef.current = domainHeader;
 
       if (isNewChat && conversationIdHeader) {
         const newId = parseInt(conversationIdHeader, 10);
@@ -435,7 +487,13 @@ const SimpleChatApp = () => {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: fullContent, status: "streaming" }
+                ? {
+                    ...m,
+                    content: fullContent,
+                    status: "streaming",
+                    citations,
+                    dbId: messageIdHeader ? parseInt(messageIdHeader, 10) : m.dbId,
+                  }
                 : m,
             ),
           );
@@ -445,7 +503,14 @@ const SimpleChatApp = () => {
       // Stream kết thúc → đổi status thành "done" để tắt spinner
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantId ? { ...m, status: "done" } : m,
+          m.id === assistantId
+            ? {
+                ...m,
+                status: "done",
+                citations,
+                dbId: messageIdHeader ? parseInt(messageIdHeader, 10) : m.dbId,
+              }
+            : m,
         ),
       );
     } catch (streamError) {
@@ -479,6 +544,25 @@ const SimpleChatApp = () => {
       ),
     );
     setInput(savedInput);
+  };
+
+  const handleFeedback = async (message, isHelpful) => {
+    const messageId = message.dbId || parseInt(message.id, 10);
+    const conversationId = activeChatId;
+    if (!messageId || !conversationId) return;
+    try {
+      await postFetcher("/api/utc/feedback", {
+        message_id: messageId,
+        conversation_id: conversationId,
+        is_helpful: isHelpful,
+        domain: lastDomainRef.current || null,
+        comment: isHelpful ? null : "Không hữu ích",
+      });
+      setFeedbackMap((prev) => ({ ...prev, [message.id]: isHelpful ? "up" : "down" }));
+    } catch (e) {
+      setErrorMessage(e.message || "Gửi đánh giá thất bại");
+      setErrorSnackbar(true);
+    }
   };
 
   const openConfirm = (title, message, onConfirm) =>
@@ -957,9 +1041,20 @@ const SimpleChatApp = () => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Typography variant="body1" fontWeight={700}>
-              AI Assistant
-            </Typography>
+            <Box
+              component="img"
+              src="/images/logos/utc-emblem.png"
+              alt="UTC"
+              sx={{ width: 36, height: 36, objectFit: "contain" }}
+            />
+            <Box>
+              <Typography variant="body1" fontWeight={700} lineHeight={1.2}>
+                Chatbot hỗ trợ sinh viên UTC
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Trường Đại học Giao thông Vận tải
+              </Typography>
+            </Box>
           </Box>
           <Box sx={{ display: "flex", gap: 0.5 }}>
             <Tooltip title="Xóa cuộc trò chuyện">
@@ -1003,21 +1098,49 @@ const SimpleChatApp = () => {
                   "50%": { transform: "translateY(-10px)" } 
                 } 
               }}>
-                <IconSparkles
-                  size={56}
-                  style={{ marginBottom: 16, color: theme.palette.primary.main, filter: "drop-shadow(0 0 10px rgba(25, 118, 210, 0.4))" }}
+                <Box
+                  component="img"
+                  src="/images/logos/utc-emblem.png"
+                  alt="UTC"
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    objectFit: "contain",
+                    mb: 2,
+                    filter: "drop-shadow(0 8px 20px rgba(11, 77, 162, 0.28))",
+                  }}
                 />
               </Box>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                Bạn muốn hỏi gì?
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 700, color: "primary.main" }}>
+                Bạn muốn hỏi gì về UTC?
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ maxWidth: 400, textAlign: "center", opacity: 0.8 }}
+                sx={{ maxWidth: 480, textAlign: "center", opacity: 0.8, mb: 3 }}
               >
-                Nhập câu hỏi và nhấn Gửi để bắt đầu cuộc trò chuyện với AI
-                Assistant.
+                Chọn gợi ý theo chủ đề hoặc nhập câu hỏi về quy chế, thủ tục,
+                học phí/học bổng chung, công tác sinh viên, tuyển sinh.
               </Typography>
+              <Stack spacing={2} sx={{ width: "100%", maxWidth: 720 }}>
+                {Object.entries(sampleQuestions).map(([domain, qs]) => (
+                  <Box key={domain}>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                      {DOMAIN_LABELS[domain] || domain}
+                    </Typography>
+                    <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1} mt={0.5}>
+                      {(qs || []).map((q) => (
+                        <Chip
+                          key={q}
+                          label={q}
+                          clickable
+                          onClick={() => handleSend(q)}
+                          sx={{ maxWidth: "100%" }}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
             </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -1218,6 +1341,25 @@ const SimpleChatApp = () => {
                             >
                               {normalizeAssistantText(message.content)}
                             </ReactMarkdown>
+                            {!!message.citations?.length && (
+                              <Stack
+                                direction="row"
+                                flexWrap="wrap"
+                                useFlexGap
+                                spacing={0.75}
+                                mt={1.5}
+                              >
+                                {message.citations.map((c, ci) => (
+                                  <Chip
+                                    key={`${c.title}-${ci}`}
+                                    size="small"
+                                    variant="outlined"
+                                    label={c.heading || c.title || "Nguồn"}
+                                    title={c.excerpt || c.title}
+                                  />
+                                ))}
+                              </Stack>
+                            )}
                             {isStreamingThis && message.content && (
                               <Box
                                 component="span"
@@ -1284,6 +1426,38 @@ const SimpleChatApp = () => {
                               </IconButton>
                             </Tooltip>
                           )}
+                          <Tooltip title="Hữu ích">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleFeedback(message, true)}
+                              sx={{
+                                opacity: feedbackMap[message.id] === "up" ? 1 : 0.5,
+                                color:
+                                  feedbackMap[message.id] === "up"
+                                    ? "success.main"
+                                    : undefined,
+                                "&:hover": { opacity: 1 },
+                              }}
+                            >
+                              <IconThumbUp size={14} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Không hữu ích">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleFeedback(message, false)}
+                              sx={{
+                                opacity: feedbackMap[message.id] === "down" ? 1 : 0.5,
+                                color:
+                                  feedbackMap[message.id] === "down"
+                                    ? "error.main"
+                                    : undefined,
+                                "&:hover": { opacity: 1 },
+                              }}
+                            >
+                              <IconThumbDown size={14} />
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       )}
 
