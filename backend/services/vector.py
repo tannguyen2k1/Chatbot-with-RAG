@@ -7,15 +7,20 @@ Cung cấp các thao tác:
 - Similarity search
 """
 
+import logging
 import math
 from typing import Any
 
 from qdrant_client import AsyncQdrantClient
+from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import (
     Distance,
     FieldCondition,
     Filter,
+    IsEmptyCondition,
+    MatchAny,
     MatchValue,
+    PayloadField,
     PointStruct,
     VectorParams,
 )
@@ -35,11 +40,47 @@ from services.rerank import RerankService
 
 from .rbac_helper import ensure_permission_global
 
+logger = logging.getLogger(__name__)
+
 DISTANCE_MAP = {
     "Cosine": Distance.COSINE,
     "Euclid": Distance.EUCLID,
     "Dot": Distance.DOT,
 }
+
+
+def _to_query_filter(filter_conditions: dict[str, Any] | None) -> Filter | None:
+    """Build a Qdrant filter.
+
+    A value of {"any": [...], "include_missing": True} matches those values OR a missing field.
+    A list matches any of the values. Anything else is an exact match.
+    """
+    if not filter_conditions:
+        return None
+    must: list[Any] = []
+    for key, value in filter_conditions.items():
+        if isinstance(value, dict) and "any" in value:
+            choices = [item for item in value.get("any") or [] if item is not None]
+            should: list[Any] = []
+            if choices:
+                should.append(FieldCondition(key=key, match=MatchAny(any=choices)))
+            if value.get("include_missing"):
+                should.append(IsEmptyCondition(is_empty=PayloadField(key=key)))
+            if should:
+                must.append(Filter(should=should))
+            continue
+        if isinstance(value, list):
+            if value:
+                must.append(FieldCondition(key=key, match=MatchAny(any=value)))
+            continue
+        must.append(FieldCondition(key=key, match=MatchValue(value=value)))
+    if not must:
+        return None
+    return Filter(must=must)
+
+
+def _document_id_filter(document_id: int) -> Filter:
+    return Filter(must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))])
 
 _vector_service: "VectorService | None" = None
 _async_qdrant_client: "AsyncQdrantClient | None" = None
@@ -139,6 +180,43 @@ class VectorService:
             points_selector=point_ids,
         )
 
+    async def delete_by_document_id(self, collection_name: str, document_id: int) -> None:
+        """Xóa mọi chunk của một tài liệu kho tri thức."""
+        try:
+            await self.client.delete(
+                collection_name=collection_name,
+                points_selector=_document_id_filter(document_id),
+            )
+        except UnexpectedResponse as e:
+            if getattr(e, "status_code", None) == 404:
+                logger.info("Collection %s missing while deleting document %s", collection_name, document_id)
+                return
+            raise
+
+    async def set_payload_by_document(self, collection_name: str, document_id: int, payload: dict[str, Any]) -> None:
+        """Cập nhật metadata chunk khi sửa tài liệu. Giá trị None thì xóa key đó."""
+        filt = _document_id_filter(document_id)
+        clean = {key: value for key, value in payload.items() if value is not None}
+        null_keys = [key for key, value in payload.items() if value is None]
+        try:
+            if clean:
+                await self.client.set_payload(
+                    collection_name=collection_name,
+                    payload=clean,
+                    points=filt,
+                )
+            if null_keys:
+                await self.client.delete_payload(
+                    collection_name=collection_name,
+                    keys=null_keys,
+                    points=filt,
+                )
+        except UnexpectedResponse as e:
+            if getattr(e, "status_code", None) == 404:
+                logger.info("Collection %s missing while updating document %s", collection_name, document_id)
+                return
+            raise
+
     async def clear_collection(self, collection_name: str) -> None:
         """Xoá sạch tất cả points trong một collection (giữ lại cấu hình)"""
         await self.client.delete(
@@ -174,13 +252,7 @@ class VectorService:
         filter_conditions: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """Tìm kiếm vector tương tự (similarity search)"""
-        # Build Qdrant filter nếu có
-        query_filter = None
-        if filter_conditions:
-            must_conditions = []
-            for key, value in filter_conditions.items():
-                must_conditions.append(FieldCondition(key=key, match=MatchValue(value=value)))
-            query_filter = Filter(must=must_conditions)
+        query_filter = _to_query_filter(filter_conditions)
 
         results = await self.client.query_points(
             collection_name=collection_name,
@@ -316,7 +388,16 @@ class VectorService:
                 Top-k final
         """
         await ensure_permission_global(current_user_id, "vector", "view")
+        return await self.search_by_text(collection_name, search_req, embedding, reranker)
 
+    async def search_by_text(
+        self,
+        collection_name: str,
+        search_req: TextSearchRequest,
+        embedding: EmbeddingService,
+        reranker: RerankService,
+    ) -> VectorSearchResponse:
+        """Hybrid search cho chatbot. Không kiểm tra quyền vector — caller đã xác thực."""
         query_vector = embedding.encode_single(search_req.query, is_query=True)
         fetch_limit = (
             search_req.rerank_top_k if search_req.use_reranker else max(search_req.limit, search_req.bm25_top_k)

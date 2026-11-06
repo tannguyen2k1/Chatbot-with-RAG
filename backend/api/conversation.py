@@ -9,7 +9,6 @@ from sqlalchemy import desc, func, nullslast, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from api.vector import search_by_text
 from constants.utc import UTC_CHAT_NO_CONTEXT_PROMPT, strip_inline_doc_citations
 from database.database import AsyncSessionLocal
 from database.models.conversation import Conversation, Message
@@ -591,11 +590,9 @@ async def create_conversation_with_message(
             bm25_weight=request.bm25_weight,
             filter=utc_pre.get("filter"),
         )
-        vector_response = await search_by_text(
+        vector_response = await vector.search_by_text(
             collection_name=request.collection_name,
             search_req=search_req,
-            current_user=current_user,
-            service=vector,
             embedding=embedding,
             reranker=reranker,
         )
@@ -662,16 +659,32 @@ async def add_message_stream(
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    user_message = Message(
-        conversation_id=conversation.id,
-        role="user",
-        content=request.query,
-        context_sources=0,
-    )
-    db.add(user_message)
-    await db.commit()
-
-    logger.info(f"[chat/stream] Added message to conversation {conversation.id}")
+    reused_assistant: Message | None = None
+    if request.regenerate:
+        last_result = await db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation.id)
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        last_message = last_result.scalar_one_or_none()
+        if last_message is not None and last_message.role == "assistant":
+            last_message.content = ""
+            last_message.citations = None
+            last_message.context_sources = 0
+            reused_assistant = last_message
+            await db.commit()
+        logger.info(f"[chat/stream] Regenerating answer in conversation {conversation.id}")
+    else:
+        user_message = Message(
+            conversation_id=conversation.id,
+            role="user",
+            content=request.query,
+            context_sources=0,
+        )
+        db.add(user_message)
+        await db.commit()
+        logger.info(f"[chat/stream] Added message to conversation {conversation.id}")
     conversation_history = await _load_conversation_history(db, conversation.id)
     chat = await get_chat_service_with_db(db)
 
@@ -679,14 +692,17 @@ async def add_message_stream(
     domain = utc_pre.get("domain")
 
     if utc_pre.get("faq_answer"):
-        assistant_msg = Message(
+        assistant_msg = reused_assistant or Message(
             conversation_id=conversation.id,
             role="assistant",
             content="",
             context_sources=0,
         )
-        db.add(assistant_msg)
-        await db.flush()
+        assistant_msg.context_sources = 0
+        assistant_msg.citations = None
+        if reused_assistant is None:
+            db.add(assistant_msg)
+            await db.flush()
         await db.commit()
         return StreamingResponse(
             _stream_fixed_answer(
@@ -747,11 +763,9 @@ async def add_message_stream(
             bm25_weight=request.bm25_weight,
             filter=utc_pre.get("filter"),
         )
-        vector_response = await search_by_text(
+        vector_response = await vector.search_by_text(
             collection_name=request.collection_name,
             search_req=search_req,
-            current_user=current_user,
-            service=vector,
             embedding=embedding,
             reranker=reranker,
         )
@@ -763,15 +777,21 @@ async def add_message_stream(
     else:
         system_prompt = UTC_CHAT_NO_CONTEXT_PROMPT
 
-    assistant_msg = Message(
-        conversation_id=conversation.id,
-        role="assistant",
-        content="",
-        context_sources=sources_count,
-        citations=citations_json,
-    )
-    db.add(assistant_msg)
-    await db.flush()
+    if reused_assistant is not None:
+        assistant_msg = reused_assistant
+        assistant_msg.content = ""
+        assistant_msg.context_sources = sources_count
+        assistant_msg.citations = citations_json
+    else:
+        assistant_msg = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content="",
+            context_sources=sources_count,
+            citations=citations_json,
+        )
+        db.add(assistant_msg)
+        await db.flush()
     await db.commit()
 
     return StreamingResponse(

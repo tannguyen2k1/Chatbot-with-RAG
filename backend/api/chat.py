@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.vector import search_by_text
 from database.models.user import User
 from dependencies import get_current_user
 from dependencies.database import get_db
@@ -57,11 +56,9 @@ async def context_chat_endpoint(
         bm25_weight=request.bm25_weight,
     )
 
-    vector_response = await search_by_text(
+    vector_response = await vector.search_by_text(
         collection_name=request.collection_name,
         search_req=search_req,
-        current_user=current_user,
-        service=vector,
         embedding=embedding,
         reranker=reranker,
     )
@@ -112,11 +109,9 @@ async def chat_endpoint(
         bm25_weight=request.bm25_weight,
     )
 
-    vector_response = await search_by_text(
+    vector_response = await vector.search_by_text(
         collection_name=request.collection_name,
         search_req=search_req,
-        current_user=current_user,
-        service=vector,
         embedding=embedding,
         reranker=reranker,
     )
@@ -186,11 +181,9 @@ async def chat_stream_endpoint(
         bm25_weight=request.bm25_weight,
     )
 
-    vector_response = await search_by_text(
+    vector_response = await vector.search_by_text(
         collection_name=request.collection_name,
         search_req=search_req,
-        current_user=current_user,
-        service=vector,
         embedding=embedding,
         reranker=reranker,
     )

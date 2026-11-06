@@ -94,7 +94,23 @@ async def update_document(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await DocumentService(db).update_for(current_user.id, doc_id, data)
+    updated = await DocumentService(db).update_for(current_user.id, doc_id, data)
+    payload = {
+        "title": updated.title,
+        "domain": updated.domain,
+        "audience": updated.audience,
+        "source": updated.source,
+        "effective_from": updated.effective_from.isoformat() if updated.effective_from else None,
+        "effective_to": updated.effective_to.isoformat() if updated.effective_to else None,
+    }
+    try:
+        await get_vector_service().set_payload_by_document(updated.collection_name, updated.id, payload)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Đã lưu metadata nhưng chưa cập nhật được dữ liệu tìm kiếm.",
+        ) from e
+    return updated
 
 
 @router.delete("/documents/{doc_id}")
@@ -103,7 +119,20 @@ async def delete_document(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await DocumentService(db).delete_for(current_user.id, doc_id)
+    await ensure_permission_global(current_user.id, "document", "delete")
+    svc = DocumentService(db)
+    doc = await svc.get_by_id(doc_id)
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+    try:
+        await get_vector_service().delete_by_document_id(doc.collection_name, doc.id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Không xóa được dữ liệu tìm kiếm của tài liệu.",
+        ) from e
+    await svc.delete(doc_id)
+    return {"message": f"Document {doc_id} deleted"}
 
 
 @router.post("/documents/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)

@@ -375,9 +375,11 @@ const SimpleChatApp = () => {
     }
   }, [messages, isStreaming, scrollToBottom]);
 
-  const handleSend = async (overridePrompt) => {
+  const handleSend = async (overridePrompt, options) => {
+    const regenerate = options?.regenerate === true;
     const prompt = (overridePrompt ?? input).trim();
     if (!prompt) return;
+    if (regenerate && !activeChatId) return;
 
     const token = getAccessToken?.();
     if (!token) {
@@ -392,8 +394,10 @@ const SimpleChatApp = () => {
       return;
     }
 
-    setSavedInput(typeof overridePrompt === "string" ? overridePrompt : input);
-    setInput("");
+    if (!regenerate) {
+      setSavedInput(typeof overridePrompt === "string" ? overridePrompt : input);
+      setInput("");
+    }
     setIsStreaming(true);
     isStreamingRef.current = true;
     setErrorMessage("");
@@ -415,7 +419,14 @@ const SimpleChatApp = () => {
       status: "streaming",
     };
 
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setMessages((prev) => {
+      const base = regenerate
+        ? prev.filter((m, i) => !(i === prev.length - 1 && m.role === "assistant"))
+        : prev;
+      return regenerate
+        ? [...base, assistantMessage]
+        : [...base, userMessage, assistantMessage];
+    });
 
     try {
       const controller = new AbortController();
@@ -437,6 +448,7 @@ const SimpleChatApp = () => {
         body = {
           query: prompt,
           ...chatConfig,
+          ...(regenerate ? { regenerate: true } : {}),
         };
       }
 
@@ -681,17 +693,10 @@ const SimpleChatApp = () => {
   };
 
   const handleRegenerate = () => {
-    const lastUserIdx = [...messages]
-      .reverse()
-      .findIndex((m) => m.role === "user");
-    if (lastUserIdx === -1) return;
-    const userMsg = messages[messages.length - 1 - lastUserIdx];
-    if (userMsg) {
-      // Remove last assistant message
-      setMessages((prev) => prev.slice(0, prev.length - 1));
-      setInput(userMsg.content);
-      setTimeout(() => handleSend(), 50);
-    }
+    if (isStreaming || !activeChatId) return;
+    const userMsg = [...messages].reverse().find((m) => m.role === "user" && m.content);
+    if (!userMsg) return;
+    handleSend(userMsg.content, { regenerate: true });
   };
 
   const codeTheme = isDark ? oneDark : oneLight;

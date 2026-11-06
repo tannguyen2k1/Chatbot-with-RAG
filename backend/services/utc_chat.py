@@ -12,9 +12,10 @@ from services.faq import FaqService
 
 
 def build_domain_filter(domain: str | None, audience: str | None = None) -> dict | None:
+    """Lọc theo lĩnh vực nhưng vẫn lấy tài liệu chung và tài liệu cũ không gắn domain."""
     cond: dict = {}
     if domain and domain not in ("chung", "out_of_scope"):
-        cond["domain"] = domain
+        cond["domain"] = {"any": [domain, "chung"], "include_missing": True}
     if audience and audience != "all":
         cond["audience"] = audience
     return cond or None

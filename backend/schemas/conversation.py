@@ -104,3 +104,7 @@ class AddMessageRequest(BaseModel):
     conversation_history_max_messages: int = Field(default=10, description="Số tin nhắn lịch sử đưa vào LLM")
     conversation_history_include_system: bool = Field(default=True, description="Đưa system prompt vào mỗi turn")
     system_prompt: str | None = Field(None, description="System prompt tùy chỉnh")
+    regenerate: bool = Field(
+        default=False,
+        description="Thay câu trả lời gần nhất, không tạo thêm câu hỏi của user",
+    )
