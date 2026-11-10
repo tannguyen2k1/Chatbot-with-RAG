@@ -186,7 +186,7 @@ class ConfigService:
         await ensure_permission_global(current_user_id, "config", "view")
 
         configs = await self.get_configs_by_group("chat")
-        config_dict = {cfg.key: cfg.value for cfg in configs}
+        config_dict: dict[str, str] = {cfg.key: cfg.value for cfg in configs if cfg.value is not None}
 
         default_prompt = """Bạn là một trợ lý AI thông minh.
             Dựa vào các tài liệu cung cấp dưới đây, hãy trả lời câu hỏi của người dùng một cách chính xác.
@@ -230,7 +230,7 @@ class ConfigService:
         await ensure_permission_global(current_user_id, "config", "view")
 
         configs = await self.get_configs_by_group("general")
-        config_dict = {cfg.key: cfg.value for cfg in configs}
+        config_dict: dict[str, str] = {cfg.key: cfg.value for cfg in configs if cfg.value is not None}
 
         return {
             "theme": config_dict.get("general.theme", "system"),

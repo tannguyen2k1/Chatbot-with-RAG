@@ -71,7 +71,7 @@ DOMAIN_KEYWORDS: dict[str, list[str]] = {
 
 def classify_domain(query: str) -> str:
     text = (query or "").lower()
-    scores: dict[str, int] = {d: 0 for d in UTC_DOMAINS}
+    scores: dict[str, int] = dict.fromkeys(UTC_DOMAINS, 0)
     for domain, kws in DOMAIN_KEYWORDS.items():
         for kw in kws:
             if kw in text:

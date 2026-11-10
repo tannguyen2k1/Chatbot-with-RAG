@@ -16,15 +16,13 @@ class DemoService:
     ) -> PaginatedDemoResponse:
         """Lấy tất cả demos với phân trang và tìm kiếm"""
         base_query = select(Demo)
+        count_query = select(func.count()).select_from(Demo)
 
         if search:
             like = f"%{search}%"
-            base_query = base_query.filter((Demo.title.ilike(like)) | (Demo.description.ilike(like)))
-
-        # COUNT
-        count_query = select(func.count()).select_from(Demo)
-        if search:
-            count_query = count_query.filter((Demo.title.ilike(like)) | (Demo.description.ilike(like)))
+            search_filter = Demo.title.ilike(like) | Demo.description.ilike(like)
+            base_query = base_query.filter(search_filter)
+            count_query = count_query.filter(search_filter)
 
         total = (await self.db.execute(count_query)).scalar_one()
 

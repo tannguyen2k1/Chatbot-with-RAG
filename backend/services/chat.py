@@ -2,12 +2,11 @@ import logging
 from collections.abc import AsyncIterator
 
 from config.settings import settings
+from constants.utc import DEFAULT_UTC_SYSTEM_PROMPT
 from schemas.vector import SearchResult
 from services.llm_provider import LLMProviderBase, get_cached_provider
 
 logger = logging.getLogger(__name__)
-
-from constants.utc import DEFAULT_UTC_SYSTEM_PROMPT
 
 DEFAULT_SYSTEM_PROMPT = DEFAULT_UTC_SYSTEM_PROMPT
 

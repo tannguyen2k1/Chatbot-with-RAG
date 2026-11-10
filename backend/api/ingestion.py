@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -129,7 +130,7 @@ async def _mark_document(
             svc = DocumentService(db)
             await svc.mark_status(document_id, status, error_message=error, job_id=job_id)
     except Exception:
-        pass
+        logging.getLogger(__name__).exception("Failed to update status for document %s", document_id)
 
 
 async def _do_ingest_db(

@@ -159,9 +159,7 @@ class DocumentService:
 
     @staticmethod
     def is_effective(doc: Document, on: date | None = None) -> bool:
-        on = on or date.today()
+        on = on or date.today()  # noqa: DTZ011 - local calendar date intended
         if doc.effective_from and on < doc.effective_from:
             return False
-        if doc.effective_to and on > doc.effective_to:
-            return False
-        return True
+        return not (doc.effective_to and on > doc.effective_to)

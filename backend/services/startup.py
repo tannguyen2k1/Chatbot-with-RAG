@@ -2,6 +2,7 @@
 Startup Service - Backend startup tasks
 """
 
+import logging
 from contextlib import asynccontextmanager
 
 DEFAULT_COLLECTION = "default"
@@ -9,22 +10,19 @@ DEFAULT_COLLECTION = "default"
 
 async def setup_database() -> None:
     """Initialize database: create tables, audit events, seed initial data."""
+    from sqlalchemy import text
+
     from database.audit_event import register_audit_events
     from database.database import AsyncSessionLocal, engine
     from database.models.base import Base
-    from sqlalchemy import text
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Lightweight additive column for existing DBs (create_all does not ALTER)
         try:
-            await conn.execute(
-                text(
-                    "ALTER TABLE messages ADD COLUMN IF NOT EXISTS citations TEXT"
-                )
-            )
+            await conn.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS citations TEXT"))
         except Exception:
-            pass
+            logging.getLogger(__name__).warning("Could not add messages.citations column", exc_info=True)
 
     register_audit_events()
 

@@ -1,20 +1,19 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Conversation, Document, Faq, MessageFeedback, StaffTicket
 from schemas.utc import (
+    FaqCreate,
     FeedbackCreate,
     FeedbackResponse,
-    FaqCreate,
     PaginatedTicketResponse,
     StatsOverview,
     TicketAnswer,
     TicketCreate,
     TicketResponse,
 )
-from services.document import DocumentService
 from services.faq import FaqService
 from services.rbac_helper import ensure_permission_global
 
@@ -43,8 +42,6 @@ class FeedbackService:
             # Try load message content as question context
             from database.models import Message
 
-            result = await self.db.execute(select(Message).filter(Message.id == data.message_id))
-            msg = result.scalar_one_or_none()
             # Prefer previous user message in conversation
             if data.conversation_id:
                 uresult = await self.db.execute(
@@ -165,7 +162,7 @@ class TicketService:
         ticket.staff_answer = data.staff_answer
         ticket.status = "answered"
         ticket.answered_by = staff_id
-        ticket.answered_at = datetime.now(timezone.utc)
+        ticket.answered_at = datetime.now(UTC)
         if data.domain:
             ticket.domain = data.domain
 

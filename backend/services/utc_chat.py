@@ -22,7 +22,7 @@ def build_domain_filter(domain: str | None, audience: str | None = None) -> dict
 
 
 def prefer_effective(results: list, today: date | None = None) -> list:
-    today = today or date.today()
+    today = today or date.today()  # noqa: DTZ011 - local calendar date intended
 
     def effective_rank(r) -> tuple:
         payload = getattr(r, "payload", None) or {}

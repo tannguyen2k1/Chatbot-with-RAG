@@ -1,3 +1,4 @@
+import contextlib
 from datetime import UTC, datetime
 
 from sqlalchemy import event
@@ -32,10 +33,8 @@ def create_audit_log_sync(
         user_id = None
         
         if user_id_raw is not None:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 user_id = int(user_id_raw)
-            except (ValueError, TypeError):
-                pass
 
         if user_id is None:
             return

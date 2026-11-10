@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from services.domain_router import classify_domain
+from services.domain_router import classify_domain  # noqa: E402
 
 # Expected domain per sample question (fill with real corpus later)
 EVAL_CASES: list[tuple[str, str]] = [
